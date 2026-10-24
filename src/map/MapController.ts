@@ -9,6 +9,7 @@ import {
   type Transform,
 } from "./geometry";
 import { paint, type PaintState } from "./paint";
+import { analytics } from "../data/analytics";
 /** Owns high-frequency gestures/rendering independently of React state. */
 export class MapController {
   private pendingFocus: Creator | null = null;
@@ -28,10 +29,23 @@ export class MapController {
   private velocity = { x: 0, y: 0 };
   private lastTime = 0;
   private lastTap = 0;
+  private gestureStart?: Transform;
+  private wheelStart?: Transform;
+  private wheelTimer?: ReturnType<typeof setTimeout>;
+  private reportInteraction(start?: Transform) {
+    if (!start) return;
+    const end = this.state.transform;
+    const pan = Math.hypot(start.x - end.x, start.y - end.y) > 1;
+    const zoom = Math.abs(start.scale - end.scale) > 0.001;
+    if (pan || zoom)
+      analytics.emit("map_interacted", {
+        action: pan && zoom ? "both" : pan ? "pan" : "zoom",
+      });
+  }
   constructor(
     private canvas: HTMLCanvasElement,
     map: MapDocument,
-    private onBooth: (id: string) => void,
+    private onBooth: (id: string | null) => void,
   ) {
     this.ctx = canvas.getContext("2d")!;
     this.index = new SpatialIndex(map.features);
@@ -166,6 +180,7 @@ export class MapController {
     });
   }
   zoom(factor: number) {
+    analytics.emit("map_interacted", { action: "zoom" });
     this.animate(
       zoomAt(this.state.transform, this.width / 2, this.height / 2, factor),
       200,
@@ -225,6 +240,7 @@ export class MapController {
   private pointerDown = (e: PointerEvent) => {
     if (e.button !== 0) return;
     this.stop();
+    if (!this.points.size) this.gestureStart = { ...this.state.transform };
     const p = this.local(e);
     this.points.set(e.pointerId, p);
     this.canvas.setPointerCapture(e.pointerId);
@@ -292,6 +308,8 @@ export class MapController {
       return;
     }
     this.canvas.style.cursor = "grab";
+    this.reportInteraction(this.gestureStart);
+    this.gestureStart = undefined;
     if (!this.moved) {
       const t = this.state.transform,
         hit = this.index.hit(
@@ -300,8 +318,11 @@ export class MapController {
           this.state.activeBooths,
         );
       if (hit?.id) this.onBooth(hit.id);
-      else if (e.timeStamp - this.lastTap < 300)
-        this.animate(zoomAt(t, p.x, p.y, 1.7), 250);
+      else {
+        this.onBooth(null);
+        if (e.timeStamp - this.lastTap < 300)
+          this.animate(zoomAt(t, p.x, p.y, 1.7), 250);
+      }
       this.lastTap = e.timeStamp;
     } else if (e.timeStamp - this.lastTime < 80) {
       const v = { ...this.velocity };
@@ -330,6 +351,12 @@ export class MapController {
   private wheel = (e: WheelEvent) => {
     e.preventDefault();
     this.stop();
+    this.wheelStart ??= { ...this.state.transform };
+    clearTimeout(this.wheelTimer);
+    this.wheelTimer = setTimeout(() => {
+      this.reportInteraction(this.wheelStart);
+      this.wheelStart = undefined;
+    }, 180);
     const p = this.local(e);
     this.state.transform = zoomAt(
       this.state.transform,
@@ -358,10 +385,12 @@ export class MapController {
       this.state.transform.y +=
         e.key === "ArrowUp" ? 60 : e.key === "ArrowDown" ? -60 : 0;
       this.constrain();
+      analytics.emit("map_interacted", { action: "pan" });
       this.draw();
     }
   };
   destroy() {
+    clearTimeout(this.wheelTimer);
     this.abort.abort();
     this.resize.disconnect();
     cancelAnimationFrame(this.frame);

@@ -5,6 +5,8 @@ import { MapController } from "../map/MapController";
 import { boothKey } from "../domain/search";
 import { analytics } from "../data/analytics";
 import { useMapCreators } from "../state/useMapCreators";
+import { APP_VERSION } from "../appVersion";
+import { launchForAnalytics } from "../data/analyticsActions";
 export function MapView({ app }: { app: AppModel }) {
   const mapCreators = useMapCreators(app);
   const visibleIds = useMemo(
@@ -22,6 +24,10 @@ export function MapView({ app }: { app: AppModel }) {
       latest.current.snapshot!.map,
       (id) => {
         const a = latest.current;
+        if (id === null) {
+          analytics.emit("booth_selected", { count: 0, outcome: "empty" });
+          return;
+        }
         const creators =
           a
             .catalog!.byBooth.get(boothKey(id))
@@ -35,7 +41,7 @@ export function MapView({ app }: { app: AppModel }) {
                 ? "opened"
                 : "chooser",
         });
-        if (creators.length === 1) a.select(creators[0]);
+        if (creators.length === 1) a.select(creators[0], true, "map");
         else if (creators.length > 1) a.setSelector({ booth: id, creators });
       },
     );
@@ -91,7 +97,7 @@ export function MapView({ app }: { app: AppModel }) {
           onClick={() => {
             const c =
               mapCreators[Math.floor(Math.random() * mapCreators.length)];
-            if (c) app.select(c);
+            if (c) app.select(c, true, "random");
           }}
           disabled={!mapCreators.length}
         >
@@ -104,6 +110,11 @@ export function MapView({ app }: { app: AppModel }) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="View source on GitHub"
+          title={`CF23 Map · App version ${APP_VERSION}`}
+          onClick={(e) => {
+            e.preventDefault();
+            launchForAnalytics(e.currentTarget.href, "source_code");
+          }}
         >
           <Code2 size={21} />
         </a>

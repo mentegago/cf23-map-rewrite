@@ -1,5 +1,6 @@
 import type { Snapshot } from "../domain/types";
 import { readSnapshot, cacheSnapshot } from "./storage";
+import { analytics } from "./analytics";
 const BASE = "https://cf23-config.nnt.gg/";
 async function json(url: string) {
   const response = await fetch(url, {
@@ -92,7 +93,17 @@ export async function loadSnapshot(): Promise<Snapshot> {
   ];
   const [catalog, registry, map, proximity, version, mapVersion] =
     await Promise.all(
-      names.map((name) => json(`${import.meta.env.BASE_URL}data/${name}.json`)),
+      names.map((name) =>
+        json(`${import.meta.env.BASE_URL}data/${name}.json`).catch((error) => {
+          analytics.emit("operation_failed", {
+            operation: ["map", "booth-proximity", "map-version"].includes(name)
+              ? "map_load"
+              : "catalog_load",
+            code: "unavailable",
+          });
+          throw error;
+        }),
+      ),
     );
   const bundled = {
     version: version.creator_data_version,
@@ -107,7 +118,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
     readSnapshot("snapshot_v3"),
     readSnapshot("map_v1"),
   ]);
-  let result = bundled;
+  let result: Snapshot = { ...bundled, source: "bundled" };
   // Each current record has its own version; one may be newer than the other.
   if (
     catalogCache &&
@@ -121,6 +132,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
       version: catalogCache.version,
       catalog: catalogCache.catalog,
       registry: catalogCache.fandomRegistry,
+      source: "cache" as const,
     };
     if (validSnapshot(candidate) && candidate.version >= result.version)
       result = candidate;

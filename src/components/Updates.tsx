@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw, X } from "lucide-react";
+import { X } from "lucide-react";
+import { analytics } from "../data/analytics";
+import { UpdatePrompt } from "./UpdatePrompt";
 /** Native worker lifecycle, without Workbox-window's time-based update heuristics. */
 export function Updates() {
   const registration = useRef<ServiceWorkerRegistration | null>(null);
   const requested = useRef(false);
+  const shown = useRef(false);
+  useEffect(() => {
+    if (needRefresh && !shown.current) {
+      shown.current = true;
+      analytics.emit("update_action", { action: "shown" });
+    }
+  });
   const [needRefresh, setNeedRefresh] = useState(false),
     [offlineReady, setOfflineReady] = useState(false);
   useEffect(() => {
@@ -74,16 +83,19 @@ export function Updates() {
     const waiting = registration.current?.waiting;
     if (!waiting) return;
     requested.current = true;
-    waiting.postMessage({ type: "SKIP_WAITING" });
+    analytics.emit("update_action", { action: "refresh" });
+    void analytics
+      .flushBeforeReload()
+      .then(() => waiting.postMessage({ type: "SKIP_WAITING" }));
   };
   return needRefresh ? (
-    <div className="update-banner" role="status">
-      <span>A new version is ready.</span>
-      <button className="text-button" onClick={update}>
-        <RefreshCw size={16} />
-        Update app
-      </button>
-    </div>
+    <UpdatePrompt
+      onUpdate={update}
+      onDismiss={() => {
+        setNeedRefresh(false);
+        analytics.emit("update_action", { action: "dismissed" });
+      }}
+    />
   ) : offlineReady ? (
     <div className="update-banner" role="status">
       <span>Map ready for offline use</span>

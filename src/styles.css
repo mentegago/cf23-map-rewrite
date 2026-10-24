@@ -1151,6 +1151,10 @@ dialog::backdrop {
     --detail-grip-height: 28px;
     --detail-top-padding: 10px;
   }
+  .detail-sheet.scroll-locked .sheet-scroll,
+  .detail-sheet.dragging .sheet-scroll {
+    overflow-y: hidden;
+  }
   .detail-actions {
     right: 24px;
   }
@@ -1620,5 +1624,123 @@ a.tag:active,
   }
   .grip:hover span {
     transform: scaleX(1.2);
+  }
+}
+.update-dialog {
+  padding: 28px 24px 22px;
+  text-align: center;
+  overflow-y: auto;
+}
+.update-dialog h2 {
+  font-size: clamp(22px, 5vw, 28px);
+}
+.update-dialog > p {
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 12px 0 24px;
+}
+.update-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.update-art {
+  height: 136px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.update-map {
+  position: relative;
+  width: 82px;
+  height: 84px;
+  border: 2px solid #191522;
+  border-radius: 18px 5px 18px 5px;
+  background: linear-gradient(
+    90deg,
+    var(--yellow) 33%,
+    #ffec91 33%,
+    #ffec91 66%,
+    var(--yellow) 66%
+  );
+  box-shadow: 5px 5px var(--cyan);
+  transform: rotate(-8deg);
+  animation: update-hop 850ms 250ms ease-in-out both;
+}
+.update-eyes {
+  position: absolute;
+  top: 31px;
+  left: 23px;
+  width: 6px;
+  height: 9px;
+  border-radius: 50%;
+  background: #191522;
+  box-shadow: 25px 0 #191522;
+}
+.update-smile {
+  position: absolute;
+  top: 45px;
+  left: 30px;
+  width: 19px;
+  height: 10px;
+  border: 2px solid #191522;
+  border-top: 0;
+  border-radius: 0 0 20px 20px;
+}
+.update-spark {
+  position: absolute;
+  color: var(--pink);
+  animation: update-twinkle 650ms 350ms both;
+}
+.spark-left {
+  left: calc(50% - 90px);
+  top: 62px;
+  color: var(--cyan);
+}
+.spark-right {
+  right: calc(50% - 94px);
+  top: 24px;
+  animation-delay: 500ms;
+}
+.update-buttons {
+  display: grid;
+  gap: 10px;
+}
+.update-buttons .action {
+  justify-content: center;
+  min-height: 48px;
+}
+.update-buttons .text-button {
+  justify-content: center;
+}
+@keyframes update-hop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  35% {
+    transform: translateY(-15px) rotate(8deg);
+  }
+  65% {
+    transform: translateY(2px) rotate(-12deg);
+  }
+}
+@keyframes update-twinkle {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-40deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .update-dialog,
+  .update-dialog::backdrop,
+  .update-art * {
+    animation: none !important;
   }
 }

@@ -5,7 +5,7 @@ import type { AppModel } from "../state/useApp";
 import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
 type Row =
-  | { type: "creator"; creator: Creator }
+  | { type: "creator"; creator: Creator; recommendation?: boolean }
   | { type: "heading"; title: string; action?: "favorites" }
   | { type: "curated" }
   | { type: "share" }
@@ -17,8 +17,10 @@ export function Directory({ app }: { app: AppModel }) {
   const previousFandom = useRef(app.fandomId);
   const rows = useMemo(() => {
     const r: Row[] = [];
-    const add = (list: Creator[]) =>
-      list.forEach((creator) => r.push({ type: "creator", creator }));
+    const add = (list: Creator[], recommendation = false) =>
+      list.forEach((creator) =>
+        r.push({ type: "creator", creator, recommendation }),
+      );
     if (app.query.trim()) {
       r.push({
         type: "heading",
@@ -35,7 +37,7 @@ export function Directory({ app }: { app: AppModel }) {
       if (app.custom) r.push({ type: "curated" });
       else if (app.recommendations.length) {
         r.push({ type: "heading", title: "Creators you may like" });
-        add(app.recommendations);
+        add(app.recommendations, true);
       }
       r.push({
         type: "heading",
@@ -116,7 +118,13 @@ export function Directory({ app }: { app: AppModel }) {
               {row.type === "creator" ? (
                 <CreatorRow
                   creator={row.creator}
-                  onSelect={app.select}
+                  onSelect={(c) =>
+                    app.select(
+                      c,
+                      true,
+                      row.recommendation ? "recommendation" : "list",
+                    )
+                  }
                   onGallery={app.openGallery}
                 />
               ) : row.type === "heading" ? (

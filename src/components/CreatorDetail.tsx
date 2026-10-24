@@ -14,6 +14,8 @@ import {
 import type { AppModel } from "../state/useApp";
 import { safeURL } from "../domain/links";
 import { Artwork } from "./CreatorRow";
+import { analytics } from "../data/analytics";
+import { launchForAnalytics } from "../data/analyticsActions";
 export function CreatorDetail({ app }: { app: AppModel }) {
   const c = app.selected!;
   const [expanded, setExpanded] = useState(false);
@@ -75,7 +77,16 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                   expanded ? "Collapse Circle Cut" : "Expand Circle Cut"
                 }
                 aria-expanded={expanded}
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => {
+                  analytics.emit("creator_action", {
+                    creator_id: c.id,
+                    action: "circle_cut",
+                    success: true,
+                    expanded: !expanded,
+                  });
+                  setExpanded(!expanded);
+                  if (!expanded) app.setDetailExtent(0.94);
+                }}
               >
                 {expanded ? <Minimize size={20} /> : <Maximize size={20} />}
               </button>
@@ -90,7 +101,11 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                     href={catalog}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => app.interaction(c.id, "link")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      app.interaction(c.id, "catalog");
+                      launchForAnalytics(catalog, "catalog", c.id);
+                    }}
                   >
                     <ExternalLink size={17} />
                     Circle Page
@@ -129,7 +144,11 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                         href={safeURL(link.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => app.interaction(c.id, "link")}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          app.interaction(c.id, "link");
+                          launchForAnalytics(link.url, "external_link", c.id);
+                        }}
                       >
                         <Link size={14} />
                         {label(link.type) || "Website"}
@@ -149,7 +168,9 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                   <button
                     key={f.id}
                     className="tag pink-tint"
-                    onClick={() => app.searchFandom(f.id)}
+                    onClick={() =>
+                      app.searchFandom(f.id, { source: "creator_fandom_chip" })
+                    }
                   >
                     <Heart size={13} />
                     {f.name}

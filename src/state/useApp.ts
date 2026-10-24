@@ -20,6 +20,13 @@ import { parseLink, encodeList, shareURL } from "../domain/links";
 import { searchCollapsed } from "../components/Sheet";
 import { useRecommendations } from "./useRecommendations";
 import { analytics } from "../data/analytics";
+import type {
+  ListScope,
+  SelectionSource,
+  SearchSource,
+} from "../data/analyticsEvents";
+import { SearchTracking, type SearchContext } from "../domain/searchTracking";
+import { telemetryId } from "../domain/eventId";
 export function useApp() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [error, setError] = useState(""),
@@ -57,6 +64,29 @@ export function useApp() {
       ? searchSelection.text
       : catalog?.fandoms.get(searchSelection.id)?.name || "";
   const started = useRef(performance.now());
+  const scope = useRef<{ current: ListScope; origin: ListScope }>({
+    current: "full_catalog",
+    origin: "full_catalog",
+  });
+  const searchContext = useRef<SearchContext | null>(null);
+  searchContext.current = catalog
+    ? {
+        catalog,
+        custom,
+        scope: scope.current.current,
+        origin: scope.current.origin,
+      }
+    : null;
+  const tracking = useRef<SearchTracking | null>(null);
+  tracking.current ??= new SearchTracking(
+    analytics.emit,
+    () => searchContext.current,
+    analytics.activity,
+  );
+  useEffect(() => {
+    analytics.start();
+    return () => tracking.current?.reset();
+  }, []);
   const announcedReady = useRef(false);
   useEffect(() => {
     if (catalog && snapshot) {
@@ -65,7 +95,7 @@ export function useApp() {
         announcedReady.current = true;
         analytics.emit("app_ready", {
           duration_ms: Math.round(performance.now() - started.current),
-          source: "bundled",
+          source: snapshot.source || "bundled",
         });
       }
     }
@@ -77,11 +107,11 @@ export function useApp() {
     setError("");
     loadSnapshot()
       .then(setSnapshot)
-      .catch(() =>
+      .catch(() => {
         setError(
           "Could not load the map. Check your connection and try again.",
-        ),
-      );
+        );
+      });
   }, []);
   useEffect(retry, [retry]);
   useEffect(() => {
@@ -105,6 +135,10 @@ export function useApp() {
         }
       } catch {
         /* Offline or partial deployments keep the current snapshot. */
+        analytics.emit("operation_failed", {
+          operation: "catalog_load",
+          code: "network",
+        });
       } finally {
         busy.current = false;
       }
@@ -141,22 +175,37 @@ export function useApp() {
   }, []);
   const interaction = (
     id: number,
-    action: "open" | "gallery" | "link" | "share" | "favorite",
+    action: "open" | "gallery" | "link" | "catalog" | "share" | "favorite",
     favorite?: boolean,
   ) => {
-    setProfile((p) => recordInteraction(p, id, action, favorite));
-    if (action === "link" || action === "share")
-      analytics.emit("creator_action", {
-        creator_id: id,
-        action: action === "link" ? "external_link" : "share",
-        success: true,
-      });
+    setProfile((p) =>
+      recordInteraction(
+        p,
+        id,
+        action === "catalog" ? "link" : action,
+        favorite,
+      ),
+    );
   };
-  const select = (c: Creator, push = true) => {
+  const select = (
+    c: Creator,
+    push = true,
+    source: SelectionSource = "list",
+  ) => {
+    const searchId =
+      source === "list" ? tracking.current!.result(query) : undefined;
+    if (source !== "list") tracking.current!.reset();
     analytics.emit("creator_opened", {
       creator_id: c.id,
-      source: !push ? "deeplink" : query ? "search_result" : "list",
+      source: !push ? "deeplink" : searchId ? "search_result" : source,
+      ...(searchId
+        ? {
+            search_id: searchId,
+            result_position: results.findIndex((r) => r.id === c.id) + 1,
+          }
+        : {}),
     });
+    analytics.emit("search_closed", { reason: "creator_selected" });
     setSelectedId(c.id);
     setShowDetail(true);
     setDetailExtent(0.56);
@@ -187,15 +236,44 @@ export function useApp() {
     if (!catalog) return false;
     const link = parseLink(text);
     if (!link) return false;
+    tracking.current!.reset();
+    const params = new URL(text, location.href).searchParams;
+    const type = (
+      ["list", "custom_list", "creator_id", "creator"] as const
+    ).find((k) => params.has(k));
+    const report = (success: boolean, count = 0) => {
+      if (type)
+        analytics.emit("deeplink_processed", {
+          type,
+          success,
+          count,
+          source: initial ? "initial" : "pasted",
+        });
+      if (!success)
+        analytics.emit("operation_failed", {
+          operation: "deeplink",
+          code: "invalid_input",
+        });
+    };
     if (link.kind === "fandom") {
       searchFandom(link.id, {
         history: initial ? "none" : "push",
         record: false,
       });
+      report(
+        catalog.fandoms.has(link.id),
+        catalog.fandoms.has(link.id) ? 1 : 0,
+      );
       return true;
     } else if (link.kind === "list") {
       if (link.ids.every((id) => catalog.byId.has(id))) {
         setCustom(new Set(link.ids));
+        scope.current = { current: "shared_list", origin: "shared_list" };
+        analytics.emit("list_scope_changed", {
+          scope: "shared_list",
+          count: link.ids.length,
+          origin_scope: "shared_list",
+        });
         setSearchSelection(emptySearch);
         setShowDetail(false);
         setSelectedId(null);
@@ -205,6 +283,7 @@ export function useApp() {
           u.searchParams.set("list", encodeList(link.ids));
           history.pushState(null, "", u);
         }
+        report(true, link.ids.length);
         return true;
       }
     } else if (link.kind === "creator" || link.kind === "name") {
@@ -223,11 +302,13 @@ export function useApp() {
         );
         if (fandom?.kind === "fandom")
           searchFandom(fandom.id, { history: "none", record: false });
-        select(c, false);
+        select(c, false, "deeplink");
+        report(true, 1);
         return true;
       }
     }
     notify("This link does not match the current creator catalog.");
+    report(false);
     return true;
   };
   const initialApplied = useRef(false);
@@ -242,6 +323,9 @@ export function useApp() {
       setSelectedId(null);
       setShowDetail(false);
       setCustom(null);
+      tracking.current!.reset();
+      scope.current = { current: "full_catalog", origin: "full_catalog" };
+      analytics.emit("creator_closed", { reason: "dismissed" });
       setSearchSelection(emptySearch);
       applyLink(location.href, true);
     };
@@ -273,24 +357,6 @@ export function useApp() {
     () => catalog?.creators.filter((c) => favorites.has(c.id)) || [],
     [catalog, favorites],
   );
-  useEffect(() => {
-    if (!query.trim() || !catalog) return;
-    const timer = setTimeout(
-      () =>
-        analytics.emit("search_performed", {
-          source: fandomId === undefined ? "typed" : "suggestion",
-          trigger: "settled",
-          resolution:
-            fandomId === undefined ? "unresolved" : "explicit_selection",
-          ...(fandomId === undefined ? {} : { fandom_id: fandomId }),
-          result_count: results.length,
-          catalog_result_count: catalog.search(query, fandomId).length,
-          scope: custom ? "shared_list" : "full_catalog",
-        }),
-      600,
-    );
-    return () => clearTimeout(timer);
-  }, [query, fandomId, catalog, results.length, custom]);
   useEffect(() => {
     if (!gallery) return;
     analytics.emit("gallery_action", {
@@ -333,6 +399,8 @@ export function useApp() {
     ].slice(0, 20);
   }, [catalog, query, profile, favorites]);
   const search = (text: string) => {
+    analytics.emit("creator_closed", { reason: "search_opened" });
+    tracking.current!.changed(text);
     const url = new URL(location.href);
     url.searchParams.delete("fandom");
     url.searchParams.delete("creator_id");
@@ -348,13 +416,31 @@ export function useApp() {
     {
       history: navigation = "push",
       record = true,
+      source = "suggestion",
     }: {
       history?: "push" | "none";
       record?: boolean;
+      source?: SearchSource;
     } = {},
   ) => {
     setSearchSelection({ kind: "fandom", id });
     setCustom(null);
+    if (custom) {
+      scope.current = { current: "full_catalog", origin: "full_catalog" };
+      if (searchContext.current)
+        searchContext.current = {
+          ...searchContext.current,
+          custom: null,
+          scope: "full_catalog",
+          origin: "full_catalog",
+        };
+      analytics.emit("list_scope_changed", {
+        scope: "full_catalog",
+        count: catalog?.creators.length || 0,
+      });
+    }
+    analytics.emit("creator_closed", { reason: "search_opened" });
+    if (record) tracking.current!.select(id, source);
     setSelectedId(null);
     setShowDetail(false);
     setSelector(null);
@@ -374,18 +460,24 @@ export function useApp() {
       const next = new Set(old);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      if (!saveFavorites(next))
+      if (!saveFavorites(next)) {
+        analytics.emit("operation_failed", {
+          operation: "favorites_persistence",
+          code: "storage",
+        });
         notify(
           "Favorites saved for this session; browser storage is unavailable.",
         );
+      }
       return next;
     });
     interaction(id, "favorite", !favorites.has(id));
   };
   const copy = async (text: string, message: string) => {
+    let success = false;
     try {
       await navigator.clipboard.writeText(text);
-      notify(message);
+      success = true;
     } catch {
       const field = document.createElement("textarea");
       field.value = text;
@@ -393,21 +485,49 @@ export function useApp() {
       field.style.opacity = "0";
       document.body.append(field);
       field.select();
-      const ok = document.execCommand("copy");
-      field.remove();
-      notify(
-        ok ? message : "Could not copy. Your browser blocked clipboard access.",
-      );
+      try {
+        success = document.execCommand("copy");
+      } catch {
+        /* Unavailable clipboard. */
+      } finally {
+        field.remove();
+      }
     }
+    if (!success)
+      analytics.emit("operation_failed", {
+        operation: "clipboard",
+        code: "unavailable",
+      });
+    notify(
+      success
+        ? message
+        : "Could not copy. Your browser blocked clipboard access.",
+    );
+    return success;
   };
   const shareCreator = (c: Creator) => {
     interaction(c.id, "share");
-    void copy(shareURL("creator_id", c.id), "Creator link copied!");
+    void copy(shareURL("creator_id", c.id), "Creator link copied!").then(
+      (success) =>
+        analytics.emit("creator_action", {
+          creator_id: c.id,
+          action: "share",
+          success,
+        }),
+    );
   };
   const showOnMap = (list: Creator[]) => {
+    tracking.current!.reset();
+    const nextScope = query ? "search_result_list" : "shared_list";
+    scope.current = {
+      current: nextScope,
+      origin:
+        nextScope === "search_result_list" ? scope.current.origin : nextScope,
+    };
     analytics.emit("list_scope_changed", {
-      scope: query ? "search_result_list" : "shared_list",
+      scope: nextScope,
       count: list.length,
+      origin_scope: scope.current.origin,
     });
     setCustom(new Set(list.map((c) => c.id)));
     setSearchSelection(emptySearch);
@@ -418,6 +538,8 @@ export function useApp() {
     setSearchExtent(searchCollapsed(innerHeight));
   };
   const fullList = () => {
+    tracking.current!.reset();
+    scope.current = { current: "full_catalog", origin: "full_catalog" };
     analytics.emit("list_scope_changed", {
       scope: "full_catalog",
       count: catalog?.creators.length || 0,
@@ -429,6 +551,7 @@ export function useApp() {
     history.replaceState(null, "", u);
   };
   const addAll = () => {
+    const operationId = telemetryId();
     const next = new Set(favorites);
     creators.forEach((c) => {
       if (!next.has(c.id))
@@ -436,10 +559,24 @@ export function useApp() {
           creator_id: c.id,
           action: "add",
           source: "bulk",
+          operation_id: operationId,
         });
       next.add(c.id);
     });
-    saveFavorites(next);
+    if (!saveFavorites(next))
+      analytics.emit("operation_failed", {
+        operation: "favorites_persistence",
+        code: "storage",
+      });
+    analytics.emit("favorites_action", {
+      action: "bulk_add",
+      success: true,
+      operation_id: operationId,
+      requested: creators.length,
+      added: next.size - favorites.size,
+      skipped: creators.length - (next.size - favorites.size),
+      failed: 0,
+    });
     setFavorites(next);
     notify(`${next.size - favorites.size} creators added to favorites`);
   };
@@ -479,6 +616,31 @@ export function useApp() {
     recommendations,
     suggestions,
     search,
+    openSearch: () => {
+      analytics.emit("search_opened", {});
+      analytics.emit("creator_closed", { reason: "search_opened" });
+      setShowDetail(false);
+      setSearchExtent(0.94);
+    },
+    submitSearch: () => tracking.current!.submit(query),
+    clearSearch: () => {
+      analytics.emit("search_cleared", {});
+      tracking.current!.reset();
+      const url = new URL(location.href);
+      url.searchParams.delete("fandom");
+      history.replaceState(null, "", url);
+      setSearchSelection(emptySearch);
+      close();
+    },
+    resumeDetail: () => {
+      analytics.emit("search_closed", { reason: "back" });
+      if (selectedId !== null)
+        analytics.emit("creator_opened", {
+          creator_id: selectedId,
+          source: "list",
+        });
+      setShowDetail(true);
+    },
     searchFandom,
     toggleFavorite,
     copy,
@@ -489,16 +651,30 @@ export function useApp() {
     openGallery,
     interaction,
     setShowDetail,
-    shareFavorites: () =>
-      copy(
+    shareFavorites: () => {
+      void copy(
         shareURL("list", encodeList(favorites)),
         "Shareable Favorites URL copied!",
-      ),
-    copyBooths: () =>
-      copy(
+      ).then((success) =>
+        analytics.emit("favorites_action", {
+          action: "share",
+          success,
+          count: favorites.size,
+        }),
+      );
+    },
+    copyBooths: () => {
+      void copy(
         favoriteCreators.flatMap((c) => c.booths).join(","),
         "Favorites booth codes copied!",
-      ),
+      ).then((success) =>
+        analytics.emit("favorites_action", {
+          action: "copy_booths",
+          success,
+          count: favorites.size,
+        }),
+      );
+    },
   };
 }
 export type AppModel = ReturnType<typeof useApp>;

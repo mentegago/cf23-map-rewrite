@@ -16,6 +16,7 @@ export function Gallery({
   const dialog = useRef<HTMLDialogElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const currentIndex = useRef(0);
+  const hasChanged = useRef(false);
   const [index, setIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const [closing, setClosing] = useState(false);
@@ -64,11 +65,12 @@ export function Gallery({
   }, [closing, onClose]);
   useEffect(() => {
     setScale(1);
+    if (index === 0 && !hasChanged.current) return;
+    hasChanged.current = true;
     analytics.emit("gallery_action", {
       creator_id: creator.id,
       action: "image_changed",
       index,
-      count: total,
     });
   }, [index]);
   return (

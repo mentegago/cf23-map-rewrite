@@ -32,6 +32,23 @@ export function Sheet({
   const ref = useRef<HTMLElement>(null),
     callback = useRef(onExtent);
   callback.current = onExtent;
+  const reported = useRef<string | null>(null);
+  const report = (value: number, source: "gesture" | "programmatic") => {
+    const state =
+      value < 0.3
+        ? "collapsed"
+        : value < 0.9
+          ? "partiallyExpanded"
+          : "expanded";
+    if (reported.current === state) return;
+    reported.current = state;
+    analytics.emit("sheet_state_changed", { state, sheet: kind, source });
+    if (kind === "search" && state === "collapsed")
+      analytics.emit("search_closed", { reason: "dismissed" });
+  };
+  useLayoutEffect(() => {
+    if (!hidden) report(extent, "programmatic");
+  }, [extent, hidden]);
   useLayoutEffect(() => {
     const el = ref.current!;
     el.style.setProperty("--extent", String(extent));
@@ -78,6 +95,7 @@ export function Sheet({
       const visibleExtent = el.getBoundingClientRect().height / height();
       dragging = true;
       el.classList.add("dragging");
+      if (kind === "detail") el.classList.add("scroll-locked");
       el.style.setProperty(
         "--extent",
         String(clamp(visibleExtent, min(), 0.94)),
@@ -185,17 +203,9 @@ export function Sheet({
         kind === "detail" ? [0.28, 0.56, 0.94] : [min(), 0.94],
       );
       el.style.setProperty("--extent", String(target));
+      el.classList.toggle("scroll-locked", target < 0.9);
       callback.current(target);
-      analytics.emit("sheet_state_changed", {
-        state:
-          target < 0.3
-            ? "collapsed"
-            : target < 0.9
-              ? "partiallyExpanded"
-              : "expanded",
-        sheet: kind,
-        source: "gesture",
-      });
+      report(target, "gesture");
     };
     // Decide ownership once per touch sequence. Never take over a native scroll
     // that merely reaches the top, and never write scrollTop or simulate momentum.
@@ -312,7 +322,7 @@ export function Sheet({
   return (
     <section
       ref={ref}
-      className={`sheet ${kind}-sheet ${extent < 0.3 ? "collapsed" : ""} ${hidden ? "sheet-hidden" : ""}`}
+      className={`sheet ${kind}-sheet ${extent < 0.9 ? "scroll-locked" : ""} ${extent < 0.3 ? "collapsed" : ""} ${hidden ? "sheet-hidden" : ""}`}
       aria-label={kind === "search" ? "Creator directory" : "Creator details"}
       inert={hidden}
       aria-hidden={hidden}

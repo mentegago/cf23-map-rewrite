@@ -62,6 +62,7 @@ export interface Proximity {
   neighbors: [number, number][][];
 }
 export interface Snapshot {
+  source?: "bundled" | "cache";
   version: number;
   catalog: CatalogDocument;
   registry: RegistryDocument;

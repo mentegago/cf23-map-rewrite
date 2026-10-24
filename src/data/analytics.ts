@@ -1,8 +1,9 @@
 import type { Catalog } from "../domain/search";
 import type { Analytics, Fields } from "./analyticsDelivery";
+import { captureOccurrence } from "./analyticsEvents";
 
-// The UI only enqueues work. No browser APIs, IDs, storage, or delivery code run
-// during module initialization or inside a UI event handler.
+// Capture occurrence metadata at the action; initialization, storage and network
+// delivery remain deferred and never run inside a UI event handler.
 const enabled = !!(
   import.meta.env.PROD &&
   import.meta.env.VITE_UMAMI_ENDPOINT &&
@@ -18,7 +19,7 @@ let delivery: Promise<Analytics> | undefined;
 function enqueue(job: Job): void {
   try {
     if (!enabled || unavailable) return;
-    if (pending.length >= 128) pending.shift();
+    if (pending.length >= 2000) pending.shift();
     pending.push(job);
     schedule();
   } catch {
@@ -61,10 +62,41 @@ function schedule(): void {
 }
 
 export const analytics = {
+  flushBeforeReload(): Promise<void> {
+    if (!enabled || unavailable) return Promise.resolve();
+    return new Promise((resolve) => {
+      const deadline = setTimeout(resolve, 300);
+      enqueue(async (client) => {
+        try {
+          await client.flushBeforeReload();
+        } finally {
+          clearTimeout(deadline);
+          resolve();
+        }
+      });
+    });
+  },
+  start(): void {
+    enqueue(() => {});
+  },
+  activity(): void {
+    try {
+      const occurrence = captureOccurrence();
+      enqueue((client) => client.activity(occurrence));
+    } catch {
+      /* Telemetry must not interrupt user actions. */
+    }
+  },
   configure(catalog: Catalog, version: number): void {
     enqueue((client) => client.configure(catalog, version));
   },
   emit<K extends keyof Fields>(name: K, fields: Fields[K]): void {
-    enqueue((client) => client.emit(name, fields));
+    try {
+      const occurrence = captureOccurrence();
+      const captured = { ...fields };
+      enqueue((client) => client.emit(name, captured, occurrence));
+    } catch {
+      /* Telemetry must not interrupt user actions. */
+    }
   },
 };

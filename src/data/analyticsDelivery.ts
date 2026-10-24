@@ -1,60 +1,14 @@
 import type { Catalog } from "../domain/search";
 import { eventId } from "../domain/eventId";
+import { APP_VERSION } from "../appVersion";
 
-export type Fields = {
-  app_ready: { duration_ms: number; source: "bundled" | "cache" };
-  creator_opened: {
-    creator_id: number;
-    source:
-      | "map"
-      | "list"
-      | "search_result"
-      | "recommendation"
-      | "random"
-      | "deeplink";
-  };
-  creator_closed: {
-    creator_id: number;
-    reason: "dismissed" | "replaced" | "search_opened";
-  };
-  bookmark_changed: {
-    creator_id: number;
-    action: "add" | "remove";
-    source: "individual" | "bulk";
-  };
-  creator_action: {
-    creator_id: number;
-    action: "external_link" | "share";
-    success: boolean;
-  };
-  gallery_action: {
-    creator_id: number;
-    action: "open" | "close" | "image_changed";
-    index?: number;
-    count?: number;
-  };
-  booth_selected: { count: number; outcome: "empty" | "opened" | "chooser" };
-  list_scope_changed: {
-    scope: "full_catalog" | "shared_list" | "search_result_list";
-    count: number;
-  };
-  search_performed: {
-    source: "typed" | "suggestion";
-    trigger: "settled";
-    resolution: "explicit_selection" | "unresolved";
-    fandom_id?: number;
-    result_count: number;
-    catalog_result_count: number;
-    scope: "full_catalog" | "shared_list";
-  };
-  map_interacted: { action: "pan" | "zoom" | "both" };
-  sheet_state_changed: {
-    state: "collapsed" | "partiallyExpanded" | "expanded";
-    sheet: "search" | "detail";
-    source: "gesture" | "programmatic";
-  };
-  active_minute: Record<string, never>;
-};
+export type { Fields } from "./analyticsEvents";
+import {
+  AnalyticsLifecycle,
+  captureOccurrence,
+  type Fields,
+  type Occurrence,
+} from "./analyticsEvents";
 interface EventRecord {
   id: string;
   created: number;
@@ -73,32 +27,70 @@ export class Analytics {
   );
   private owner = eventId();
   private sequence = 0;
-  private version = 0;
+  private version?: number;
   private catalog: Catalog | null = null;
-  private busy = false;
+  private flushing?: Promise<void>;
+  private flushRequested = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private cache = "";
   private failures = 0;
   private memory = new Map<string, EventRecord>();
   private dbPromise: Promise<IDBDatabase> | undefined;
+  private writes: Promise<void> = Promise.resolve();
+  private fallback = false;
+  private notBefore = 0;
+  private occurrence?: Occurrence;
+  private lifecycle = new AnalyticsLifecycle(
+    (name, fields) => this.record(name, fields),
+    () => this.occurrence!.at,
+    () => this.occurrence!.visible,
+  );
+  constructor() {
+    if (!this.enabled) return;
+    try {
+      const endpoint = new URL(this.endpoint!);
+      this.enabled = ["https:", "http:"].includes(endpoint.protocol);
+    } catch {
+      this.enabled = false;
+    }
+    if (!this.enabled) return;
+    window.addEventListener("online", () => {
+      this.notBefore = 0;
+      void this.flush().catch(() => {});
+    });
+    this.queue({
+      id: `page-${this.owner}-${Date.now()}`,
+      created: Date.now(),
+      event: { type: "event", payload: { url: "/", title: "CF23 Booth Map" } },
+    });
+  }
   configure(catalog: Catalog, version: number) {
     this.catalog = catalog;
     this.version = version;
     if (this.enabled) {
-      window.addEventListener(
-        "online",
-        () => void this.flush().catch(() => {}),
-        {
-          once: true,
-        },
-      );
       void this.flush().catch(() => {});
     }
   }
-  emit<K extends keyof Fields>(name: K, fields: Fields[K]) {
+  emit<K extends keyof Fields>(
+    name: K,
+    fields: Fields[K],
+    occurrence = captureOccurrence(),
+  ) {
+    this.occurrence = occurrence;
+    if (this.enabled) this.lifecycle.emit(name, fields);
+  }
+  activity(occurrence = captureOccurrence()) {
+    this.occurrence = occurrence;
+    if (this.enabled) this.lifecycle.activity();
+  }
+  async flushBeforeReload() {
+    await this.writes;
+    await this.flush();
+  }
+  private record<K extends keyof Fields>(name: K, fields: Fields[K]) {
     if (!this.enabled) return;
     const id = eventId(),
-      now = Date.now();
+      now = this.occurrence!.at;
     const typed = fields as Record<string, unknown>;
     const creator =
       typeof typed.creator_id === "number"
@@ -110,36 +102,49 @@ export class Analytics {
         : undefined;
     const event: EventRecord = {
       id,
-      created: now,
+      created: Date.now(),
       event: {
         type: "event",
         payload: {
           url: "/",
           name,
           data: {
-            schema_version: 1,
+            schema_version: 2,
             event_edition: "comic-frontier-23",
-            app_version: "web-1",
-            catalog_version: this.version,
+            app_version: APP_VERSION,
+            ...(this.version === undefined
+              ? {}
+              : { catalog_version: this.version }),
             client_event_id: id,
             occurred_at_ms: now,
             app_run_id: this.owner,
             sequence: ++this.sequence,
             ...fields,
-            ...(name === "search_performed" ? { search_id: id } : {}),
-            ...(creator ? { creator_name: creator.name } : {}),
-            ...(fandom ? { fandom_name: fandom.name } : {}),
+            ...(creator?.name
+              ? { creator_name: displayName(creator.name) }
+              : {}),
+            ...(fandom?.name ? { fandom_name: displayName(fandom.name) } : {}),
           },
         },
       },
     };
-    return this.put(event).then(() => {
+    this.queue(event);
+  }
+  private queue(event: EventRecord) {
+    this.writes = this.writes.then(() => this.put(event)).catch(() => {});
+    void this.writes.then(() => {
       void this.flush().catch(() => {});
     });
   }
   private db() {
+    if (this.fallback) return Promise.reject(Error("Memory-only analytics"));
     return (this.dbPromise ??= new Promise((resolve, reject) => {
       const r = indexedDB.open("cf23-analytics", 1);
+      let settled = false;
+      const timeout = setTimeout(() => {
+        settled = true;
+        reject(Error("Analytics storage timed out"));
+      }, 1000);
       r.onupgradeneeded = () => {
         try {
           if (!r.result.objectStoreNames.contains("events"))
@@ -150,9 +155,25 @@ export class Analytics {
           reject(error);
         }
       };
-      r.onsuccess = () => resolve(r.result);
-      r.onerror = () => reject(r.error);
-      r.onblocked = () => reject(Error("Analytics database blocked"));
+      r.onsuccess = () => {
+        clearTimeout(timeout);
+        if (settled) {
+          r.result.close();
+          return;
+        }
+        settled = true;
+        resolve(r.result);
+      };
+      r.onerror = () => {
+        clearTimeout(timeout);
+        settled = true;
+        reject(r.error);
+      };
+      r.onblocked = () => {
+        clearTimeout(timeout);
+        settled = true;
+        reject(Error("Analytics database blocked"));
+      };
     }));
   }
   private async put(record: EventRecord) {
@@ -160,12 +181,22 @@ export class Analytics {
       const db = await this.db();
       await new Promise<void>((resolve, reject) => {
         const tx = db.transaction("events", "readwrite");
-        tx.objectStore("events").put(record);
+        const store = tx.objectStore("events");
+        store.put(record);
+        const all = store.getAll();
+        all.onsuccess = () => {
+          const records = (all.result as EventRecord[]).sort(recordOrder);
+          records.forEach((r, i) => {
+            if (Date.now() - r.created > 259200000 || i < records.length - 2000)
+              store.delete(r.id);
+          });
+        };
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
         tx.onabort = () => reject(tx.error);
       });
     } catch {
+      this.fallback = true;
       this.memory.set(record.id, record);
       while (this.memory.size > 2000)
         this.memory.delete(this.memory.keys().next().value!);
@@ -181,9 +212,7 @@ export class Analytics {
         let result: EventRecord[] = [];
         r.onsuccess = () => {
           try {
-            const all = (r.result as EventRecord[]).sort(
-              (a, b) => a.created - b.created || a.id.localeCompare(b.id),
-            );
+            const all = (r.result as EventRecord[]).sort(recordOrder);
             result = all.filter((v, i) => {
               const keep =
                 Date.now() - v.created <= 259200000 && i >= all.length - 2000;
@@ -199,9 +228,9 @@ export class Analytics {
         tx.onabort = () => reject(tx.error);
       });
     } catch {
-      return [...this.memory.values()].filter(
-        (r) => Date.now() - r.created < 259200000,
-      );
+      return [...this.memory.values()]
+        .filter((r) => Date.now() - r.created <= 259200000)
+        .sort(recordOrder);
     }
   }
   private async lease(release = false) {
@@ -251,14 +280,36 @@ export class Analytics {
       /* Memory-only storage remains usable. */
     }
   }
-  private async flush() {
-    if (!this.enabled || this.busy || !navigator.onLine) return;
-    this.busy = true;
+  private flush(): Promise<void> {
+    if (this.flushing) {
+      this.flushRequested = true;
+      return this.flushing;
+    }
+    this.flushRequested = false;
+    this.flushing = this.drain().finally(() => {
+      this.flushing = undefined;
+      if (this.flushRequested) void this.flush().catch(() => {});
+    });
+    return this.flushing;
+  }
+  private async drain() {
+    if (!this.enabled || !navigator.onLine) return;
+    if (Date.now() < this.notBefore) return;
+    let leaseContended = false;
     clearTimeout(this.timer);
     try {
-      if (!(await this.lease())) return;
-      for (const record of await this.pending()) {
-        if (!(await this.lease())) return;
+      if (!(await this.lease())) {
+        leaseContended = true;
+        return;
+      }
+      while (true) {
+        await this.writes;
+        const record = (await this.pending())[0];
+        if (!record) break;
+        if (!(await this.lease())) {
+          leaseContended = true;
+          return;
+        }
         const response = await fetch(this.endpoint!, {
           method: "POST",
           headers: {
@@ -292,17 +343,43 @@ export class Analytics {
           if (typeof data?.cache === "string") this.cache = data.cache;
         }
         await this.remove(record.id);
+        this.failures = 0;
+        this.notBefore = 0;
       }
       this.failures = 0;
     } catch {
-      this.failures++;
+      const seconds = Math.min(60, 2 ** Math.min(this.failures++, 6));
+      this.notBefore =
+        Date.now() +
+        Math.min(
+          60000,
+          Math.round(seconds * 1000 * (0.75 + Math.random() * 0.5)),
+        );
     } finally {
       await this.lease(true);
-      this.busy = false;
-      this.timer = setTimeout(
-        () => void this.flush().catch(() => {}),
-        Math.min(60000, 5000 * 2 ** Math.min(this.failures, 4)),
-      );
+      if (leaseContended || this.notBefore > Date.now())
+        this.timer = setTimeout(
+          () => void this.flush().catch(() => {}),
+          this.notBefore > Date.now() ? this.notBefore - Date.now() : 5000,
+        );
     }
   }
+}
+
+export function displayName(name: string) {
+  if (name.length <= 500) return name;
+  const last = name.charCodeAt(499);
+  return name.slice(0, last >= 0xd800 && last <= 0xdbff ? 499 : 500);
+}
+export function recordOrder(a: EventRecord, b: EventRecord) {
+  const ad = a.event.payload.data as
+    { app_run_id?: string; sequence?: number } | undefined;
+  const bd = b.event.payload.data as typeof ad;
+  return (
+    a.created - b.created ||
+    Number(!!ad) - Number(!!bd) ||
+    (ad?.app_run_id || "").localeCompare(bd?.app_run_id || "") ||
+    (ad?.sequence ?? 0) - (bd?.sequence ?? 0) ||
+    a.id.localeCompare(b.id)
+  );
 }
