@@ -1,13 +1,11 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowLeft, Plus } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
 type Row =
   | { type: "creator"; creator: Creator; recommendation?: boolean }
   | { type: "heading"; title: string }
-  | { type: "curated" }
   | { type: "empty" };
 export function Directory({ app }: { app: AppModel }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -28,26 +26,24 @@ export function Directory({ app }: { app: AppModel }) {
       if (!app.results.length) r.push({ type: "empty" });
       add(app.results);
     } else {
-      if (app.custom) r.push({ type: "curated" });
-      else if (app.recommendations.length) {
+      if (app.recommendations.length) {
         r.push({ type: "heading", title: "Creators you may like" });
         add(app.recommendations, true);
       }
       r.push({
         type: "heading",
-        title: app.custom ? "Custom Creators List" : "All Comifuro 23 Creators",
+        title: "All Comifuro 23 Creators",
       });
       add(app.creators);
     }
     return r;
-  }, [app.query, app.results, app.custom, app.recommendations, app.creators]);
+  }, [app.query, app.results, app.recommendations, app.creators]);
   const virtual = useVirtualizer({
     enabled: !app.showDetail,
     initialOffset: () => savedScroll.current,
     count: rows.length,
     getScrollElement: () => ref.current,
-    estimateSize: (i) =>
-      rows[i].type === "creator" ? 110 : rows[i].type === "curated" ? 225 : 54,
+    estimateSize: (i) => (rows[i].type === "creator" ? 110 : 54),
     overscan: 6,
     getItemKey: (i) =>
       rows[i].type === "creator"
@@ -119,22 +115,6 @@ export function Directory({ app }: { app: AppModel }) {
               ) : row.type === "heading" ? (
                 <div className="section-heading">
                   <span>{row.title}</span>
-                </div>
-              ) : row.type === "curated" ? (
-                <div className="curated panel">
-                  <span className="kicker">Curated route</span>
-                  <p>
-                    You’re viewing a curated creator list. Only the creators
-                    selected by the list owner are shown on the map.
-                  </p>
-                  <button className="action pink" onClick={app.fullList}>
-                    <ArrowLeft size={17} />
-                    Return to Full Creator List
-                  </button>
-                  <button className="text-button" onClick={app.addAll}>
-                    <Plus size={17} />
-                    Add All to Favorites
-                  </button>
                 </div>
               ) : (
                 <div className="empty">

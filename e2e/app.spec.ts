@@ -125,23 +125,23 @@ test("mobile sheet can expand, scroll, restore, and collapse without selecting o
     )
     .toBeLessThan(0.25);
 });
-test("shared list links restrict the map and allow bulk favorites", async ({
+test("shared list opens its own sheet, keeps rows after saving, and returns to global search", async ({
   page,
 }) => {
   const ids = catalog.exhibitors.slice(0, 2).map((c: { id: string }) => c.id);
   await page.goto(`/?custom_list=${ids.join(",")}`);
-  await expect(
-    page.getByRole("textbox", { name: "Search name, booth, or fandom" }),
-  ).toBeVisible();
-  const expand = page.getByRole("button", {
+  const sheet = page.getByRole("region", { name: "Booth list", exact: true });
+  await expect(sheet).toBeVisible();
+  await expect(page.getByRole("textbox")).toBeHidden();
+  const expand = sheet.getByRole("button", {
     name: "Expand panel",
     exact: true,
   });
   if (await expand.isVisible()) await expand.click();
-  await expect(
-    page.getByText("Custom Creators List", { exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Add All to Favorites" }).click();
+  await expect(sheet.locator(".creator-select")).toHaveCount(2);
+  await sheet
+    .getByRole("button", { name: "Add all to favorites", exact: true })
+    .click();
   await expect
     .poll(() =>
       page.evaluate(
@@ -151,11 +151,29 @@ test("shared list links restrict the map and allow bulk favorites", async ({
       ),
     )
     .toBe(2);
-  await page
-    .getByRole("button", { name: "Return to Full Creator List" })
-    .click();
   await expect(
-    page.getByRole("button", { name: "Return to Full Creator List" }),
-  ).toHaveCount(0);
+    sheet.getByRole("button", { name: "All added to favorites" }),
+  ).toBeDisabled();
+  await sheet
+    .getByRole("button", { name: /Remove .* from favorites/ })
+    .first()
+    .click();
+  await expect(sheet.locator(".creator-select")).toHaveCount(2);
+  await sheet.locator(".creator-select").first().click();
+  await expect(
+    page.getByRole("region", { name: "Creator details", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Close creator details", exact: true })
+    .click();
+  await expect(sheet).toBeVisible();
+  await sheet.locator(".creator-select").first().click();
+  await page.goBack();
+  await expect(sheet).toBeVisible();
+  await sheet
+    .getByRole("button", { name: "Close booth list", exact: true })
+    .click();
+  await expect(sheet).toHaveCount(0);
   await expect(page).not.toHaveURL(/custom_list/);
+  await expect(page.getByRole("textbox")).toBeVisible();
 });

@@ -6,13 +6,15 @@ import { Sheet } from "./Sheet";
 export function ResponsivePanel({
   mobile,
   kind,
+  label,
   visible,
   extent,
   onExtent,
   children,
 }: {
   mobile: boolean;
-  kind: "search" | "detail" | "favorites";
+  kind: "search" | "detail" | "list";
+  label?: string;
   visible: boolean;
   extent: number;
   onExtent: (extent: number) => void;
@@ -31,8 +33,8 @@ export function ResponsivePanel({
           aria-label={
             search
               ? "Creator directory"
-              : kind === "favorites"
-                ? "Favorites"
+              : kind === "list"
+                ? label || "Booth list"
                 : "Creator details"
           }
         >
@@ -42,7 +44,13 @@ export function ResponsivePanel({
     );
   }
   const sheet = (
-    <Sheet kind={kind} extent={extent} onExtent={onExtent} hidden={!visible}>
+    <Sheet
+      label={label}
+      kind={kind}
+      extent={extent}
+      onExtent={onExtent}
+      hidden={!visible}
+    >
       {children}
     </Sheet>
   );

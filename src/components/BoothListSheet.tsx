@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Heart, X, Share2 } from "lucide-react";
+import { Heart, X, Share2, List, Plus } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { CreatorRow } from "./CreatorRow";
 
@@ -47,16 +47,19 @@ function FavoriteRowExit({
 }
 
 /** Shared content for the mobile sheet and desktop sidebar. */
-export function FavoritesSheet({
+export function BoothListSheet({
   app,
   onClose,
 }: {
   app: AppModel;
   onClose: () => void;
 }) {
+  const isFavorites = app.boothList?.kind === "favorites";
+  const title = isFavorites ? "Favorites" : "Booth list";
+  const allSaved = app.listCreators.every((c) => app.favorites.has(c.id));
   const scroll = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const creators = app.filteredFavoriteCreators;
+  const creators = app.filteredListCreators;
   const [rows, setRows] = useState(creators);
   useLayoutEffect(() => {
     setRows((previous) => {
@@ -64,6 +67,7 @@ export function FavoritesSheet({
       // Keep unsaved rows only for their exit animation, not for filter changes.
       previous.forEach((creator, index) => {
         if (
+          isFavorites &&
           !app.favorites.has(creator.id) &&
           !next.some((c) => c.id === creator.id)
         )
@@ -74,7 +78,7 @@ export function FavoritesSheet({
     // Virtual rows may leave the viewport mid-animation; still retire them.
     const timer = setTimeout(() => setRows(creators), 260);
     return () => clearTimeout(timer);
-  }, [creators, app.favorites]);
+  }, [creators, app.favorites, isFavorites]);
   const virtual = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scroll.current,
@@ -89,62 +93,89 @@ export function FavoritesSheet({
   useLayoutEffect(() => {
     scroll.current?.scrollTo({ top: 0, behavior: "instant" });
     virtual.measure();
-  }, [app.favoriteFandomIds]);
+  }, [app.listFandomIds]);
   return (
     <>
       <header className="favorites-header" data-drag>
         <span className="favorites-heart" aria-hidden="true">
-          <Heart size={24} fill="currentColor" />
+          {isFavorites ? (
+            <Heart size={24} fill="currentColor" />
+          ) : (
+            <List size={24} />
+          )}
         </span>
         <div>
-          <h2 id="favorites-title">Favorites</h2>
+          <h2>{title}</h2>
           <p>
-            {app.favoriteFandomIds.length ? `${creators.length} of ` : ""}
-            {app.favoriteCreators.length} saved creator
-            {app.favoriteCreators.length === 1 ? "" : "s"}
+            {app.listFandomIds.length ? `${creators.length} of ` : ""}
+            {app.listCreators.length}{" "}
+            {isFavorites ? "saved creator" : "creator"}
+            {app.listCreators.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="favorites-actions">
-          <div className="detail-action-group">
-            <button
-              className="icon-button"
-              aria-label="Share Favorites"
-              onClick={app.shareFavorites}
-              disabled={!app.favoriteCreators.length}
-            >
-              <Share2 size={21} />
-            </button>
-          </div>
+          {isFavorites && (
+            <div className="detail-action-group">
+              <button
+                className="icon-button"
+                aria-label="Share Favorites"
+                onClick={app.shareFavorites}
+                disabled={!app.listCreators.length}
+              >
+                <Share2 size={21} />
+              </button>
+            </div>
+          )}
           <button
             ref={closeButton}
             className="icon-button favorites-close"
-            aria-label="Close favorites"
+            aria-label={isFavorites ? "Close favorites" : "Close booth list"}
             onClick={onClose}
           >
             <X size={22} />
           </button>
         </div>
       </header>
-      {!!app.favoriteFandoms.length && (
+      {!isFavorites && (
+        <div className="booth-list-bulk">
+          <button
+            className="action pink"
+            onClick={app.addAll}
+            disabled={allSaved}
+          >
+            {allSaved ? (
+              <Heart size={17} fill="currentColor" />
+            ) : (
+              <Plus size={17} />
+            )}
+            {allSaved ? "All added to favorites" : "Add all to favorites"}
+          </button>
+        </div>
+      )}
+      {!!app.listFandoms.length && (
         <div
           className="suggestions favorites-filters"
           role="group"
-          aria-label="Filter favorites by fandom"
+          aria-label={
+            isFavorites
+              ? "Filter favorites by fandom"
+              : "Filter booth list by fandom"
+          }
           tabIndex={0}
         >
           <button
             className="tag cyan-tint"
-            aria-pressed={!app.favoriteFandomIds.length}
-            onClick={app.clearFavoriteFandoms}
+            aria-pressed={!app.listFandomIds.length}
+            onClick={app.clearListFandoms}
           >
             All
           </button>
-          {app.favoriteFandoms.map((f) => (
+          {app.listFandoms.map((f) => (
             <button
               key={f.id}
               className="tag cyan-tint"
-              aria-pressed={app.favoriteFandomIds.includes(f.id)}
-              onClick={() => app.toggleFavoriteFandom(f.id)}
+              aria-pressed={app.listFandomIds.includes(f.id)}
+              onClick={() => app.toggleListFandom(f.id)}
             >
               {f.name}
               <span className="favorites-filter-count">{f.count}</span>
@@ -155,7 +186,7 @@ export function FavoritesSheet({
       <div
         ref={scroll}
         className="sheet-scroll favorites-list"
-        aria-label="Saved creators"
+        aria-label={isFavorites ? "Saved creators" : "Listed creators"}
       >
         {rows.length ? (
           <div style={{ height: virtual.getTotalSize(), position: "relative" }}>
@@ -173,7 +204,7 @@ export function FavoritesSheet({
                 }}
               >
                 <FavoriteRowExit
-                  exiting={!app.favorites.has(rows[v.index].id)}
+                  exiting={isFavorites && !app.favorites.has(rows[v.index].id)}
                   onExit={() =>
                     setRows((current) =>
                       current.filter((c) => c.id !== rows[v.index].id),
@@ -194,19 +225,20 @@ export function FavoritesSheet({
         ) : (
           <div className="favorites-empty">
             <Heart size={40} aria-hidden="true" />
-            <h3>No favorites yet</h3>
-            <p>Tap the heart on a creator to save them here.</p>
+            <h3>
+              {isFavorites ? "No favorites yet" : "No creators available"}
+            </h3>
+            <p>
+              {isFavorites
+                ? "Tap the heart on a creator to save them here."
+                : "The creators in this list are no longer in the catalog."}
+            </p>
             <button className="action cyan" onClick={onClose}>
               Browse creators
             </button>
           </div>
         )}
       </div>
-      {app.toast && (
-        <p className="favorites-feedback" role="status">
-          {app.toast}
-        </p>
-      )}
     </>
   );
 }

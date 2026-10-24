@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Search, X, Heart } from "lucide-react";
-import { FavoritesSheet } from "./components/FavoritesSheet";
+import { BoothListSheet } from "./components/BoothListSheet";
 import { useApp } from "./state/useApp";
 import { MapView } from "./components/MapView";
 import { ResponsivePanel } from "./components/ResponsivePanel";
@@ -13,16 +13,19 @@ import { FandomSuggestions } from "./components/FandomSuggestions";
 import { analytics } from "./data/analytics";
 export default function App() {
   const app = useApp();
-  const favoritesOpen = app.favoritesMode && !app.showDetail;
-  const [favoritesExtent, setFavoritesExtent] = useState(0.56);
-  const closeFavorites = () => {
-    app.closeFavorites();
+  const listOpen = !!app.boothList && !app.showDetail;
+  const [listExtent, setListExtent] = useState(0.56);
+  const closeBoothList = () => {
+    app.closeBoothList();
     requestAnimationFrame(() =>
       document
         .querySelector<HTMLButtonElement>(".favorites-tag")
         ?.focus({ preventScroll: true }),
     );
   };
+  useEffect(() => {
+    setListExtent(0.56);
+  }, [app.boothList]);
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   useEffect(() => {
     const activity = () => analytics.activity();
@@ -79,14 +82,14 @@ export default function App() {
         !app.selector &&
         !document.querySelector("dialog[open]")
       ) {
-        if (favoritesOpen) closeFavorites();
+        if (listOpen) closeBoothList();
         else if (app.showDetail) app.close();
         else app.setSearchExtent(0.2);
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [app.showDetail, app.gallery, app.selector, favoritesOpen]);
+  }, [app.showDetail, app.gallery, app.selector, listOpen]);
   if (app.error)
     return (
       <div className="loading">
@@ -150,7 +153,7 @@ export default function App() {
               className="tag pink-tint favorites-tag"
               aria-label="Favorites"
               onClick={() => {
-                setFavoritesExtent(0.56);
+                setListExtent(0.56);
                 app.openFavorites();
               }}
             >
@@ -170,7 +173,7 @@ export default function App() {
           <ResponsivePanel
             mobile={mobile}
             kind="search"
-            visible={!detail && !favoritesOpen}
+            visible={!detail && !listOpen}
             extent={app.searchExtent}
             onExtent={app.setSearchExtent}
           >
@@ -188,14 +191,13 @@ export default function App() {
           </ResponsivePanel>
           <ResponsivePanel
             mobile={mobile}
-            kind="favorites"
-            visible={favoritesOpen}
-            extent={favoritesExtent}
-            onExtent={setFavoritesExtent}
+            kind="list"
+            label={app.favoritesMode ? "Favorites" : "Booth list"}
+            visible={listOpen}
+            extent={listExtent}
+            onExtent={setListExtent}
           >
-            {favoritesOpen && (
-              <FavoritesSheet app={app} onClose={closeFavorites} />
-            )}
+            {listOpen && <BoothListSheet app={app} onClose={closeBoothList} />}
           </ResponsivePanel>
         </div>
         <Updates />

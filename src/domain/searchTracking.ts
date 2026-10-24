@@ -22,7 +22,6 @@ export interface SearchContext {
   catalog: Catalog;
   scope: ListScope;
   origin: ListScope;
-  custom: Set<number> | null;
 }
 /** Raw query text remains local; only resolved registry IDs cross the event boundary. */
 export class SearchTracking {
@@ -152,8 +151,7 @@ export class SearchTracking {
       trigger,
       resolution,
       ...(fandomId === undefined ? {} : { fandom_id: fandomId }),
-      result_count: results.filter((r) => !c.custom || c.custom.has(r.id))
-        .length,
+      result_count: results.length,
       catalog_result_count: results.length,
       scope: c.scope,
       origin_scope: c.origin,

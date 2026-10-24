@@ -37,9 +37,11 @@ test("bulk bookmarks share an operation ID and clipboard failure reports the act
     name: "Expand panel",
     exact: true,
   });
-  await expect(page.getByRole("textbox")).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Booth list", exact: true }),
+  ).toBeVisible();
   if (await expand.isVisible()) await expand.click();
-  await page.getByRole("button", { name: "Add All to Favorites" }).click();
+  await page.getByRole("button", { name: "Add all to favorites" }).click();
   const named = (name: string) =>
     events.filter((e) => e.name === name).map((e) => e.data);
   await expect.poll(() => named("favorites_action").length).toBe(1);
@@ -55,6 +57,9 @@ test("bulk bookmarks share an operation ID and clipboard failure reports the act
   expect(named("bookmark_changed")).toHaveLength(2);
   for (const bookmark of named("bookmark_changed"))
     expect(bookmark.operation_id).toBe(bulk.operation_id);
+  await page
+    .getByRole("button", { name: "Close booth list", exact: true })
+    .click();
   await page.getByRole("button", { name: "Favorites", exact: true }).click();
   await page
     .getByRole("button", { name: "Share Favorites", exact: true })
@@ -109,12 +114,14 @@ test("real UI emits Flutter-compatible events with search correlation and no pri
     expect.objectContaining({ title: "CF23 Booth Map", url: "/" }),
   ]);
   await expect.poll(() => named("creator_opened")[0]?.source).toBe("deeplink");
-  await expect.poll(() => named("deeplink_processed")[0]).toMatchObject({
-    type: "creator_id",
-    source: "initial",
-    count: 1,
-    success: true,
-  });
+  await expect
+    .poll(() => named("deeplink_processed")[0])
+    .toMatchObject({
+      type: "creator_id",
+      source: "initial",
+      count: 1,
+      success: true,
+    });
   await page
     .getByRole("button", { name: "Add to favorites", exact: true })
     .click();

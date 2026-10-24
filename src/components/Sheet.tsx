@@ -18,12 +18,14 @@ export function snapExtent(
 }
 export function Sheet({
   kind,
+  label,
   extent,
   onExtent,
   children,
   hidden = false,
 }: {
-  kind: "search" | "detail" | "favorites";
+  kind: "search" | "detail" | "list";
+  label?: string;
   extent: number;
   onExtent: (n: number) => void;
   children: ReactNode;
@@ -42,7 +44,7 @@ export function Sheet({
           : "expanded";
     if (reported.current === state) return;
     reported.current = state;
-    if (kind !== "favorites")
+    if (kind !== "list")
       analytics.emit("sheet_state_changed", { state, sheet: kind, source });
     if (kind === "search" && state === "collapsed")
       analytics.emit("search_closed", { reason: "dismissed" });
@@ -327,8 +329,8 @@ export function Sheet({
       aria-label={
         kind === "search"
           ? "Creator directory"
-          : kind === "favorites"
-            ? "Favorites"
+          : kind === "list"
+            ? label || "Booth list"
             : "Creator details"
       }
       inert={hidden}

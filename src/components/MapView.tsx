@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Plus, Minus, Expand, Sparkles, Code2 } from "lucide-react";
+import { Plus, Minus, Expand, Sparkles } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { MapController } from "../map/MapController";
 import { boothKey } from "../domain/search";
 import { analytics } from "../data/analytics";
 import { useMapCreators } from "../state/useMapCreators";
-import { APP_VERSION } from "../appVersion";
-import { launchForAnalytics } from "../data/analyticsActions";
 export function MapView({ app }: { app: AppModel }) {
   const mapCreators = useMapCreators(app);
   const visibleIds = useMemo(
@@ -54,16 +52,9 @@ export function MapView({ app }: { app: AppModel }) {
       app.snapshot!.map,
       mapCreators,
       app.selected,
-      !!app.custom || app.favoritesMode,
+      !!app.boothList,
     );
-  }, [
-    app.snapshot?.map,
-    mapCreators,
-    visibleIds,
-    app.selected,
-    app.custom,
-    app.favoritesMode,
-  ]);
+  }, [app.snapshot?.map, mapCreators, visibleIds, app.selected, app.boothList]);
   useEffect(() => {
     if (app.selected) controller.current!.focus(app.selected);
   }, [app.selected?.id]);
@@ -111,20 +102,6 @@ export function MapView({ app }: { app: AppModel }) {
           <Sparkles size={18} />
           Surprise me!
         </button>
-        <a
-          className="icon-button source-button"
-          href="https://github.com/mentegago/cf23-map"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View source on GitHub"
-          title={`CF23 Map · App version ${APP_VERSION}`}
-          onClick={(e) => {
-            e.preventDefault();
-            launchForAnalytics(e.currentTarget.href, "source_code");
-          }}
-        >
-          <Code2 size={21} />
-        </a>
       </div>
       {!app.online && (
         <span className="offline-badge" role="status">

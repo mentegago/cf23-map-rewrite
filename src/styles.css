@@ -248,12 +248,6 @@ h2 {
 .icon-button:hover {
   background: color-mix(in srgb, var(--cyan) 14%, transparent);
 }
-.source-button {
-  background: var(--raised);
-  border: 1.5px solid var(--ink);
-  border-radius: 10px;
-  box-shadow: 3px 3px var(--pink);
-}
 .kicker {
   display: block;
   font-size: 10px;
@@ -551,22 +545,11 @@ h2 {
   padding: 16px;
   margin: 12px 16px;
 }
-.curated {
-  text-align: center;
+.booth-list-bulk {
+  padding: 0 16px 16px;
 }
-.curated .kicker {
-  text-align: left;
-}
-.curated p {
-  line-height: 1.5;
-  margin: 14px 0;
-}
-.curated .action {
-  font-size: 12px;
-}
-.curated > .text-button {
-  display: flex;
-  margin: 10px auto 0;
+.booth-list-bulk .action {
+  width: 100%;
 }
 .empty {
   text-align: center;
@@ -1893,16 +1876,9 @@ a.tag:active,
   line-height: 1.6;
   margin: 10px 0 24px;
 }
-.favorites-feedback {
-  margin: 0;
-  padding: 12px 20px;
-  font-size: 12px;
-  background: var(--low);
-  flex-shrink: 0;
-}
 @media (max-width: 768px) {
-  .favorites-sheet.scroll-locked .sheet-scroll,
-  .favorites-sheet.dragging .sheet-scroll {
+  .list-sheet.scroll-locked .sheet-scroll,
+  .list-sheet.dragging .sheet-scroll {
     overflow-y: hidden;
   }
   .favorites-header {

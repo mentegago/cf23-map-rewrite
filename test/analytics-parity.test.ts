@@ -84,7 +84,6 @@ it("matches Flutter's one-second search attempts, resolutions, sources, scope, a
     catalog,
     scope: "full_catalog",
     origin: "full_catalog",
-    custom: null,
   };
   const tracker = new SearchTracking(send, () => context, vi.fn());
   tracker.changed("Blue");
@@ -115,7 +114,6 @@ it("matches Flutter's one-second search attempts, resolutions, sources, scope, a
   tracker.submit("https://example.org/?list=abc");
   tracker.select(1, "creator_fandom_chip");
   context.scope = context.origin = "shared_list";
-  context.custom = new Set();
   tracker.submit("Blue Archive");
   const searches = send.mock.calls
     .filter(([n]) => n === "search_performed")
@@ -139,7 +137,7 @@ it("matches Flutter's one-second search attempts, resolutions, sources, scope, a
     fandom_id: 1,
   });
   expect(searches.at(-1)).toMatchObject({
-    result_count: 0,
+    result_count: 1,
     catalog_result_count: 1,
     scope: "shared_list",
     origin_scope: "shared_list",
@@ -321,7 +319,6 @@ it("resolves unique prefixes across the entire registry, deduplicates aliases, a
       catalog,
       scope: "shared_list",
       origin: "shared_list",
-      custom: new Set(),
     }),
     vi.fn(),
   );
@@ -351,7 +348,7 @@ it("resolves unique prefixes across the entire registry, deduplicates aliases, a
     ["alias", 1],
     ["canonical", 1],
   ]);
-  expect(events[0].result_count).toBe(0);
+  expect(events[0].result_count).toBe(1);
   const validate = new Ajv2020({ strict: false }).compile(schema);
   const common = {
     schema_version: 2,
@@ -508,7 +505,6 @@ it("does not let unavailable crypto break search tracking callers", () => {
       catalog,
       scope: "full_catalog",
       origin: "full_catalog",
-      custom: null,
     }),
     vi.fn(),
   );

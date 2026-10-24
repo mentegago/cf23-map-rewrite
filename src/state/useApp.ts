@@ -23,16 +23,18 @@ import type {
 } from "../data/analyticsEvents";
 import { SearchTracking, type SearchContext } from "../domain/searchTracking";
 import { telemetryId } from "../domain/eventId";
+import { resetStandaloneURL, updateNavigationURL } from "./navigation";
 export function useApp() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
-    [favoritesMode, setFavoritesMode] = useState(false),
-    [favoriteFandomIds, setFavoriteFandomIds] = useState<number[]>([]),
+    [boothList, setBoothList] = useState<
+      { kind: "favorites" } | { kind: "custom"; ids: Set<number> } | null
+    >(null),
+    [listFandomIds, setListFandomIds] = useState<number[]>([]),
     [error, setError] = useState(""),
     [searchSelection, setSearchSelection] =
       useState<SearchSelection>(emptySearch),
     [selectedId, setSelectedId] = useState<number | null>(null),
     [showDetail, setShowDetail] = useState(false),
-    [custom, setCustom] = useState<Set<number> | null>(null),
     [favorites, setFavorites] = useState(loadFavorites),
     [profile, setProfile] = useState(loadProfile),
     [toast, setToast] = useState(""),
@@ -48,6 +50,7 @@ export function useApp() {
     () => (snapshot ? new Catalog(snapshot.catalog, snapshot.registry) : null),
     [snapshot?.catalog, snapshot?.registry],
   );
+  const favoritesMode = boothList?.kind === "favorites";
   const current = useRef(snapshot);
   const fandomId =
     searchSelection.kind === "fandom" ? searchSelection.id : undefined;
@@ -64,7 +67,6 @@ export function useApp() {
   searchContext.current = catalog
     ? {
         catalog,
-        custom,
         scope: scope.current.current,
         origin: scope.current.origin,
       }
@@ -186,7 +188,9 @@ export function useApp() {
     source: SelectionSource = "list",
   ) => {
     const searchId =
-      source === "list" ? tracking.current!.result(query) : undefined;
+      source === "list" && !boothList
+        ? tracking.current!.result(query)
+        : undefined;
     if (source !== "list") tracking.current!.reset();
     analytics.emit("creator_opened", {
       creator_id: c.id,
@@ -213,7 +217,7 @@ export function useApp() {
           ? source
           : favoritesMode
             ? "favorites"
-            : custom
+            : boothList?.kind === "custom"
               ? "custom_list"
               : query.trim()
                 ? "search_result"
@@ -224,7 +228,7 @@ export function useApp() {
       const u = new URL(location.href);
       u.searchParams.delete("creator");
       u.searchParams.set("creator_id", String(c.id));
-      history.pushState(null, "", u);
+      updateNavigationURL(u, "push");
     }
   };
   const close = () => {
@@ -238,7 +242,7 @@ export function useApp() {
     const u = new URL(location.href);
     u.searchParams.delete("creator_id");
     u.searchParams.delete("creator");
-    history.replaceState(null, "", u);
+    updateNavigationURL(u, "replace");
   };
   const applyLink = (text: string, initial = false) => {
     if (!catalog) return false;
@@ -275,7 +279,13 @@ export function useApp() {
       return true;
     } else if (link.kind === "list") {
       if (link.ids.every((id) => catalog.byId.has(id))) {
-        setCustom(new Set(link.ids));
+        setBoothList({ kind: "custom", ids: new Set(link.ids) });
+        if (
+          boothList?.kind !== "custom" ||
+          boothList.ids.size !== link.ids.length ||
+          link.ids.some((id) => !boothList.ids.has(id))
+        )
+          setListFandomIds([]);
         scope.current = { current: "shared_list", origin: "shared_list" };
         analytics.emit("list_scope_changed", {
           scope: "shared_list",
@@ -289,8 +299,11 @@ export function useApp() {
           const u = new URL(location.href);
           u.search = "";
           u.searchParams.set("list", encodeList(link.ids));
-          history.pushState(null, "", u);
+          updateNavigationURL(u, "push");
         }
+        const creatorId = Number(params.get("creator_id"));
+        if (params.has("creator_id") && catalog.byId.has(creatorId))
+          select(catalog.byId.get(creatorId)!, false, "deeplink");
         report(true, link.ids.length);
         return true;
       }
@@ -324,50 +337,55 @@ export function useApp() {
     if (catalog && !initialApplied.current) {
       initialApplied.current = true;
       applyLink(location.href, true);
+      resetStandaloneURL();
     }
   }, [catalog]);
   useEffect(() => {
     const pop = () => {
       setSelectedId(null);
       setShowDetail(false);
-      setCustom(null);
+      setBoothList((previous) =>
+        previous?.kind === "favorites" ? previous : null,
+      );
       tracking.current!.reset();
       scope.current = { current: "full_catalog", origin: "full_catalog" };
       analytics.emit("creator_closed", { reason: "dismissed" });
       setSearchSelection(emptySearch);
       applyLink(location.href, true);
+      resetStandaloneURL();
     };
     window.addEventListener("popstate", pop);
     return () => window.removeEventListener("popstate", pop);
-  }, [catalog]);
+  }, [catalog, boothList, query]);
   useEffect(() => {
     if (!catalog || fandomId === undefined) return;
     if (!catalog.fandoms.has(fandomId)) {
       setSearchSelection(emptySearch);
       const url = new URL(location.href);
       url.searchParams.delete("fandom");
-      history.replaceState(null, "", url);
+      updateNavigationURL(url, "replace");
       notify("This fandom is no longer in the catalog. Showing all creators.");
     }
   }, [catalog, fandomId, notify]);
-  const creators = useMemo(
-    () => catalog?.creators.filter((c) => !custom || custom.has(c.id)) || [],
-    [catalog, custom],
-  );
+  const creators = catalog?.creators || [];
   const results = useMemo(
-    () =>
-      catalog
-        ?.search(query, fandomId)
-        .filter((c) => !custom || custom.has(c.id)) || [],
-    [catalog, query, fandomId, custom],
+    () => catalog?.search(query, fandomId) || [],
+    [catalog, query, fandomId],
   );
   const favoriteCreators = useMemo(
     () => catalog?.creators.filter((c) => favorites.has(c.id)) || [],
     [catalog, favorites],
   );
-  const favoriteFandoms = useMemo(() => {
+  const listCreators = useMemo(
+    () =>
+      boothList?.kind === "custom"
+        ? catalog?.creators.filter((c) => boothList.ids.has(c.id)) || []
+        : favoriteCreators,
+    [catalog, boothList, favoriteCreators],
+  );
+  const listFandoms = useMemo(() => {
     const counts = new Map<number, number>();
-    for (const creator of favoriteCreators)
+    for (const creator of listCreators)
       for (const id of new Set(creator.fandomIds))
         if (catalog?.fandoms.has(id)) counts.set(id, (counts.get(id) || 0) + 1);
     return [...counts]
@@ -376,26 +394,22 @@ export function useApp() {
         (a, b) =>
           b.count - a.count || a.name.localeCompare(b.name) || a.id - b.id,
       );
-  }, [favoriteCreators, catalog]);
+  }, [listCreators, catalog]);
   useEffect(() => {
-    const available = new Set(favoriteFandoms.map((f) => f.id));
-    setFavoriteFandomIds((ids) =>
+    const available = new Set(listFandoms.map((f) => f.id));
+    setListFandomIds((ids) =>
       ids.every((id) => available.has(id))
         ? ids
         : ids.filter((id) => available.has(id)),
     );
-  }, [favoriteFandoms]);
-  const filteredFavoriteCreators = useMemo(() => {
-    const available = new Set(favoriteFandoms.map((f) => f.id));
-    const selected = new Set(
-      favoriteFandomIds.filter((id) => available.has(id)),
-    );
+  }, [listFandoms]);
+  const filteredListCreators = useMemo(() => {
+    const available = new Set(listFandoms.map((f) => f.id));
+    const selected = new Set(listFandomIds.filter((id) => available.has(id)));
     return selected.size
-      ? favoriteCreators.filter((c) =>
-          c.fandomIds.some((id) => selected.has(id)),
-        )
-      : favoriteCreators;
-  }, [favoriteCreators, favoriteFandoms, favoriteFandomIds]);
+      ? listCreators.filter((c) => c.fandomIds.some((id) => selected.has(id)))
+      : listCreators;
+  }, [listCreators, listFandoms, listFandomIds]);
   useEffect(() => {
     if (!gallery) return;
     analytics.emit("gallery_action", {
@@ -413,16 +427,14 @@ export function useApp() {
     snapshot,
     profile,
     favorites,
-    !query.trim() && !showDetail && !favoritesMode && !gallery && !custom,
+    !query.trim() && !showDetail && !boothList && !gallery,
   );
   const recommendations = useMemo(
     () =>
-      custom
-        ? []
-        : recommendationIds
-            .map((id) => catalog?.byId.get(id))
-            .filter((c): c is Creator => !!c),
-    [recommendationIds, catalog, custom],
+      recommendationIds
+        .map((id) => catalog?.byId.get(id))
+        .filter((c): c is Creator => !!c),
+    [recommendationIds, catalog],
   );
   const suggestions = useMemo(() => {
     if (!catalog) return [];
@@ -440,14 +452,14 @@ export function useApp() {
       .slice(0, 20);
   }, [catalog, query, fandomId, profile, favorites]);
   const search = (text: string) => {
-    setFavoritesMode(false);
+    setBoothList(null);
     analytics.emit("creator_closed", { reason: "search_opened" });
     tracking.current!.changed(text);
     const url = new URL(location.href);
     url.searchParams.delete("fandom");
     url.searchParams.delete("creator_id");
     url.searchParams.delete("creator");
-    history.replaceState(null, "", url);
+    updateNavigationURL(url, "replace");
     setSearchSelection({ kind: "text", text });
     setSelectedId(null);
     setShowDetail(false);
@@ -466,14 +478,12 @@ export function useApp() {
     } = {},
   ) => {
     setSearchSelection({ kind: "fandom", id });
-    setFavoritesMode(false);
-    setCustom(null);
-    if (custom || favoritesMode) {
+    setBoothList(null);
+    if (boothList) {
       scope.current = { current: "full_catalog", origin: "full_catalog" };
       if (searchContext.current)
         searchContext.current = {
           ...searchContext.current,
-          custom: null,
           scope: "full_catalog",
           origin: "full_catalog",
         };
@@ -489,7 +499,7 @@ export function useApp() {
     setSelector(null);
     const url = shareURL("fandom", id);
     if (navigation === "push" && url !== location.href)
-      history.pushState(null, "", url);
+      updateNavigationURL(url, "push");
     if (record) setProfile((p) => recordFandom(p, id));
     setSearchExtent(0.94);
   };
@@ -559,45 +569,23 @@ export function useApp() {
         }),
     );
   };
-  const showOnMap = (list: Creator[]) => {
-    tracking.current!.reset();
-    const nextScope = query ? "search_result_list" : "shared_list";
-    scope.current = {
-      current: nextScope,
-      origin:
-        nextScope === "search_result_list" ? scope.current.origin : nextScope,
-    };
-    analytics.emit("list_scope_changed", {
-      scope: nextScope,
-      count: list.length,
-      origin_scope: scope.current.origin,
-    });
-    setCustom(new Set(list.map((c) => c.id)));
-    setSearchSelection(emptySearch);
-    close();
-    const url = new URL(location.href);
-    url.searchParams.delete("fandom");
-    history.replaceState(null, "", url);
-    setSearchExtent(searchCollapsed(innerHeight));
-  };
   const fullList = () => {
-    setFavoritesMode(false);
+    setBoothList(null);
     tracking.current!.reset();
     scope.current = { current: "full_catalog", origin: "full_catalog" };
     analytics.emit("list_scope_changed", {
       scope: "full_catalog",
       count: catalog?.creators.length || 0,
     });
-    setCustom(null);
     setSearchSelection(emptySearch);
     const u = new URL(location.href);
     u.search = "";
-    history.replaceState(null, "", u);
+    updateNavigationURL(u, "replace");
   };
   const addAll = () => {
     const operationId = telemetryId();
     const next = new Set(favorites);
-    creators.forEach((c) => {
+    listCreators.forEach((c) => {
       if (!next.has(c.id))
         analytics.emit("bookmark_changed", {
           creator_id: c.id,
@@ -616,9 +604,9 @@ export function useApp() {
       action: "bulk_add",
       success: true,
       operation_id: operationId,
-      requested: creators.length,
+      requested: listCreators.length,
       added: next.size - favorites.size,
-      skipped: creators.length - (next.size - favorites.size),
+      skipped: listCreators.length - (next.size - favorites.size),
       failed: 0,
     });
     setFavorites(next);
@@ -630,11 +618,12 @@ export function useApp() {
   };
   return {
     favoritesMode,
+    boothList,
     openFavorites: () => {
-      setFavoriteFandomIds([]);
+      setListFandomIds([]);
       fullList();
       close();
-      setFavoritesMode(true);
+      setBoothList({ kind: "favorites" });
       scope.current = { current: "shared_list", origin: "shared_list" };
       analytics.emit("list_scope_changed", {
         scope: "shared_list",
@@ -642,8 +631,8 @@ export function useApp() {
         count: favoriteCreators.length,
       });
     },
-    closeFavorites: () => {
-      setFavoritesMode(false);
+    closeBoothList: () => {
+      setBoothList(null);
       close();
       fullList();
     },
@@ -656,7 +645,6 @@ export function useApp() {
     searchSelection,
     selected: catalog?.byId.get(selectedId!) || null,
     showDetail,
-    custom,
     favorites,
     toast,
     gallery,
@@ -675,19 +663,20 @@ export function useApp() {
     creators,
     results,
     favoriteCreators,
-    favoriteFandoms,
-    favoriteFandomIds,
-    filteredFavoriteCreators,
-    toggleFavoriteFandom: (id: number) =>
-      setFavoriteFandomIds((ids) =>
+    listCreators,
+    listFandoms,
+    listFandomIds,
+    filteredListCreators,
+    toggleListFandom: (id: number) =>
+      setListFandomIds((ids) =>
         ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id],
       ),
-    clearFavoriteFandoms: () => setFavoriteFandomIds([]),
+    clearListFandoms: () => setListFandomIds([]),
     recommendations,
     suggestions,
     search,
     openSearch: () => {
-      if (favoritesMode) fullList();
+      if (boothList) fullList();
       analytics.emit("search_opened", {});
       analytics.emit("creator_closed", { reason: "search_opened" });
       setShowDetail(false);
@@ -699,7 +688,7 @@ export function useApp() {
       tracking.current!.reset();
       const url = new URL(location.href);
       url.searchParams.delete("fandom");
-      history.replaceState(null, "", url);
+      updateNavigationURL(url, "replace");
       setSearchSelection(emptySearch);
       close();
     },
@@ -707,8 +696,6 @@ export function useApp() {
     toggleFavorite,
     copy,
     shareCreator,
-    showOnMap,
-    fullList,
     addAll,
     openGallery,
     interaction,
@@ -720,18 +707,6 @@ export function useApp() {
       ).then((success) =>
         analytics.emit("favorites_action", {
           action: "share",
-          success,
-          count: favorites.size,
-        }),
-      );
-    },
-    copyBooths: () => {
-      void copy(
-        favoriteCreators.flatMap((c) => c.booths).join(","),
-        "Favorites booth codes copied!",
-      ).then((success) =>
-        analytics.emit("favorites_action", {
-          action: "copy_booths",
           success,
           count: favorites.size,
         }),
