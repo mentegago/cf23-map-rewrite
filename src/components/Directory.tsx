@@ -14,6 +14,7 @@ export function Directory({ app }: { app: AppModel }) {
   const ref = useRef<HTMLDivElement>(null);
   const savedScroll = useRef(0);
   const previousQuery = useRef(app.query);
+  const previousFandom = useRef(app.fandomId);
   const rows = useMemo(() => {
     const r: Row[] = [];
     const add = (list: Creator[]) =>
@@ -66,17 +67,22 @@ export function Directory({ app }: { app: AppModel }) {
         : `${i}-${rows[i].type}`,
   });
   useLayoutEffect(() => {
-    if (previousQuery.current !== app.query) {
-      savedScroll.current = 0;
-      previousQuery.current = app.query;
-    }
+    const queryChanged =
+      previousQuery.current !== app.query ||
+      previousFandom.current !== app.fandomId;
+    const offset = queryChanged ? 0 : savedScroll.current;
+    savedScroll.current = offset;
+    previousQuery.current = app.query;
+    previousFandom.current = app.fandomId;
     if (!app.showDetail) {
-      const frame = requestAnimationFrame(() =>
-        virtual.scrollToOffset(savedScroll.current),
-      );
+      // Reset before paint, then reapply after virtual rows are measured. Capture
+      // the target so a queued scroll event cannot replace it with the old offset.
+      if (queryChanged) ref.current?.scrollTo({ top: 0, behavior: "instant" });
+      virtual.scrollToOffset(offset);
+      const frame = requestAnimationFrame(() => virtual.scrollToOffset(offset));
       return () => cancelAnimationFrame(frame);
     }
-  }, [app.showDetail, app.query, virtual]);
+  }, [app.showDetail, app.query, app.fandomId, virtual]);
   return (
     <div
       ref={ref}

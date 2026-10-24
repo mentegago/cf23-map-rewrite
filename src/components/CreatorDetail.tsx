@@ -149,7 +149,7 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                   <button
                     key={f.id}
                     className="tag pink-tint"
-                    onClick={() => app.searchFandom(f)}
+                    onClick={() => app.searchFandom(f.id)}
                   >
                     <Heart size={13} />
                     {f.name}

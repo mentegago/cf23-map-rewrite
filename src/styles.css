@@ -315,33 +315,49 @@ h2 {
   padding: 5px 9px;
   min-height: 28px;
 }
-.suggestions-arrow {
-  display: none;
+@property --fandom-scroll-thumb {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
 }
 @media (min-width: 769px) {
-  .suggestions-browser {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) 28px;
-    align-items: center;
-    gap: 4px;
+  .suggestions {
+    scrollbar-width: thin;
+    scrollbar-color: var(--fandom-scroll-thumb) transparent;
+    transition: --fandom-scroll-thumb 180ms ease;
   }
-  .suggestions-browser .suggestions {
-    margin-inline: 0;
-    padding-inline: 3px;
-    scroll-padding-inline: 3px;
+  .suggestions:hover,
+  .suggestions:focus-within {
+    --fandom-scroll-thumb: color-mix(in srgb, var(--muted) 65%, transparent);
   }
-  .suggestions-arrow {
-    display: inline-flex;
-    width: 28px;
-    height: 32px;
-    border: 1px solid var(--outline);
-    border-radius: 8px;
-    background: var(--paper);
-  }
-  .suggestions-arrow:disabled {
-    visibility: hidden;
+  @supports selector(::-webkit-scrollbar) {
+    .suggestions {
+      /* Non-auto standard properties override the native scrollbar parts. */
+      scrollbar-width: auto;
+      scrollbar-color: auto;
+    }
+    .suggestions::-webkit-scrollbar {
+      height: 6px;
+    }
+    .suggestions::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .suggestions::-webkit-scrollbar-thumb {
+      background: var(--fandom-scroll-thumb);
+      border-radius: 999px;
+    }
+    .suggestions::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
   }
 }
+.suggestions:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: -2px;
+}
+
 .tag {
   display: inline-flex;
   align-items: center;
@@ -496,7 +512,8 @@ h2 {
 .row-gallery {
   position: absolute;
   right: 6px;
-  top: 12px;
+  /* Align the 21px icon with the name, retaining its 44px hit target. */
+  top: calc(12px - (44px - 21px) / 2);
 }
 .share-actions {
   display: flex;

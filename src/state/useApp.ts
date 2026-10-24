@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Catalog } from "../domain/search";
-import type { Creator, Fandom, Snapshot } from "../domain/types";
+import type { Creator, Snapshot } from "../domain/types";
+import { emptySearch, type SearchSelection } from "../domain/searchSelection";
 import { loadSnapshot, refreshSnapshot } from "../data/snapshots";
 import {
   loadFavorites,
@@ -22,8 +23,8 @@ import { analytics } from "../data/analytics";
 export function useApp() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [error, setError] = useState(""),
-    [query, setQuery] = useState(""),
-    [fandomId, setFandomId] = useState<number>(),
+    [searchSelection, setSearchSelection] =
+      useState<SearchSelection>(emptySearch),
     [selectedId, setSelectedId] = useState<number | null>(null),
     [showDetail, setShowDetail] = useState(false),
     [custom, setCustom] = useState<Set<number> | null>(null),
@@ -49,6 +50,12 @@ export function useApp() {
     [snapshot?.catalog, snapshot?.registry],
   );
   const current = useRef(snapshot);
+  const fandomId =
+    searchSelection.kind === "fandom" ? searchSelection.id : undefined;
+  const query =
+    searchSelection.kind === "text"
+      ? searchSelection.text
+      : catalog?.fandoms.get(searchSelection.id)?.name || "";
   const started = useRef(performance.now());
   const announcedReady = useRef(false);
   useEffect(() => {
@@ -180,11 +187,16 @@ export function useApp() {
     if (!catalog) return false;
     const link = parseLink(text);
     if (!link) return false;
-    if (link.kind === "list") {
+    if (link.kind === "fandom") {
+      searchFandom(link.id, {
+        history: initial ? "none" : "push",
+        record: false,
+      });
+      return true;
+    } else if (link.kind === "list") {
       if (link.ids.every((id) => catalog.byId.has(id))) {
         setCustom(new Set(link.ids));
-        setQuery("");
-        setFandomId(undefined);
+        setSearchSelection(emptySearch);
         setShowDetail(false);
         setSelectedId(null);
         if (!initial) {
@@ -206,6 +218,11 @@ export function useApp() {
               c.name.toLowerCase().includes(link.name.toLowerCase()),
             );
       if (c) {
+        const fandom = parseLink(
+          `?fandom=${new URL(text, location.href).searchParams.get("fandom") ?? ""}`,
+        );
+        if (fandom?.kind === "fandom")
+          searchFandom(fandom.id, { history: "none", record: false });
         select(c, false);
         return true;
       }
@@ -225,11 +242,22 @@ export function useApp() {
       setSelectedId(null);
       setShowDetail(false);
       setCustom(null);
+      setSearchSelection(emptySearch);
       applyLink(location.href, true);
     };
     window.addEventListener("popstate", pop);
     return () => window.removeEventListener("popstate", pop);
   }, [catalog]);
+  useEffect(() => {
+    if (!catalog || fandomId === undefined) return;
+    if (!catalog.fandoms.has(fandomId)) {
+      setSearchSelection(emptySearch);
+      const url = new URL(location.href);
+      url.searchParams.delete("fandom");
+      history.replaceState(null, "", url);
+      notify("This fandom is no longer in the catalog. Showing all creators.");
+    }
+  }, [catalog, fandomId, notify]);
   const creators = useMemo(
     () => catalog?.creators.filter((c) => !custom || custom.has(c.id)) || [],
     [catalog, custom],
@@ -305,16 +333,35 @@ export function useApp() {
     ].slice(0, 20);
   }, [catalog, query, profile, favorites]);
   const search = (text: string) => {
-    setQuery(text);
-    setFandomId(undefined);
+    const url = new URL(location.href);
+    url.searchParams.delete("fandom");
+    url.searchParams.delete("creator_id");
+    url.searchParams.delete("creator");
+    history.replaceState(null, "", url);
+    setSearchSelection({ kind: "text", text });
+    setSelectedId(null);
     setShowDetail(false);
     setSearchExtent(0.94);
   };
-  const searchFandom = (f: Fandom) => {
-    setQuery(f.name);
-    setFandomId(f.id);
-    setProfile((p) => recordFandom(p, f.id));
-    close();
+  const searchFandom = (
+    id: number,
+    {
+      history: navigation = "push",
+      record = true,
+    }: {
+      history?: "push" | "none";
+      record?: boolean;
+    } = {},
+  ) => {
+    setSearchSelection({ kind: "fandom", id });
+    setCustom(null);
+    setSelectedId(null);
+    setShowDetail(false);
+    setSelector(null);
+    const url = shareURL("fandom", id);
+    if (navigation === "push" && url !== location.href)
+      history.pushState(null, "", url);
+    if (record) setProfile((p) => recordFandom(p, id));
     setSearchExtent(0.94);
   };
   const toggleFavorite = (id: number) => {
@@ -363,9 +410,11 @@ export function useApp() {
       count: list.length,
     });
     setCustom(new Set(list.map((c) => c.id)));
-    setQuery("");
-    setFandomId(undefined);
+    setSearchSelection(emptySearch);
     close();
+    const url = new URL(location.href);
+    url.searchParams.delete("fandom");
+    history.replaceState(null, "", url);
     setSearchExtent(searchCollapsed(innerHeight));
   };
   const fullList = () => {
@@ -374,8 +423,7 @@ export function useApp() {
       count: catalog?.creators.length || 0,
     });
     setCustom(null);
-    setQuery("");
-    setFandomId(undefined);
+    setSearchSelection(emptySearch);
     const u = new URL(location.href);
     u.search = "";
     history.replaceState(null, "", u);
@@ -405,6 +453,8 @@ export function useApp() {
     retry,
     catalog,
     query,
+    fandomId,
+    searchSelection,
     selected: catalog?.byId.get(selectedId!) || null,
     showDetail,
     custom,

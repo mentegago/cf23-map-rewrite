@@ -54,6 +54,10 @@ describe("Flutter link compatibility", () => {
       ids: [12, 42],
     });
     expect(parseLink("/?creator_id=42")).toEqual({ kind: "creator", id: 42 });
+    expect(parseLink("/?fandom=42")).toEqual({ kind: "fandom", id: 42 });
+    for (const value of ["", "-1", "1.2", "abc", "9007199254740992"]) {
+      expect(parseLink(`/?fandom=${value}`)).toEqual({ kind: "invalid" });
+    }
     expect(parseLink("/?creator=Hello%20World")).toEqual({
       kind: "name",
       name: "Hello World",

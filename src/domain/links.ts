@@ -49,6 +49,7 @@ export function decodeList(code: string): number[] {
 export type DeepLink =
   | { kind: "list"; ids: number[] }
   | { kind: "creator"; id: number }
+  | { kind: "fandom"; id: number }
   | { kind: "name"; name: string }
   | { kind: "invalid" }
   | null;
@@ -73,12 +74,22 @@ export function parseLink(input: string): DeepLink {
       return p.get("creator")!.trim()
         ? { kind: "name", name: p.get("creator")!.trim() }
         : { kind: "invalid" };
+    if (p.has("fandom")) {
+      const value = p.get("fandom")!;
+      const id = Number(value);
+      return /^\d+$/.test(value) && Number.isSafeInteger(id)
+        ? { kind: "fandom", id }
+        : { kind: "invalid" };
+    }
     return null;
   } catch {
     return null;
   }
 }
-export function shareURL(kind: "creator_id" | "list", value: string | number) {
+export function shareURL(
+  kind: "creator_id" | "list" | "fandom",
+  value: string | number,
+) {
   const u = new URL(location.href);
   u.search = "";
   u.hash = "";
