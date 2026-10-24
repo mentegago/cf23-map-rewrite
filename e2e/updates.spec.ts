@@ -109,7 +109,12 @@ test("a new app worker waits for approval, activates, and still reloads offline"
         ),
       )
       .toBe(true);
-    await page.getByRole("button", { name: "Update app" }).click();
+    // The existing textbox remains visible until the approved worker reloads.
+    // Wait for that navigation before exercising the next update attempt.
+    await Promise.all([
+      page.waitForEvent("load"),
+      page.getByRole("button", { name: "Update app" }).click(),
+    ]);
     await expect(page.getByRole("textbox")).toBeVisible();
     await expect(page.getByRole("button", { name: "Update app" })).toHaveCount(
       0,
