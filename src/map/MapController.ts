@@ -89,7 +89,16 @@ export class MapController {
       }
     });
     this.resize.observe(canvas);
-    document.fonts.ready.then(() => this.draw());
+    Promise.all([
+      document.fonts.load('600 16px "Plus Jakarta Sans"'),
+      document.fonts.load('700 16px "Plus Jakarta Sans"'),
+    ])
+      .then(() => {
+        if (!signal.aborted) this.draw();
+      })
+      .catch(() => {
+        /* System fallback remains usable if a font fails. */
+      });
   }
   update(
     map: MapDocument,

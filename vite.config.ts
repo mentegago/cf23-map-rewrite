@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: false,
       workbox: {
         importScripts: ["flutter-compat.js"],
-        globPatterns: ["**/*.{js,css,html,json,png,svg,jpg,ttf}"],
+        globPatterns: ["**/*.{js,css,html,json,png,svg,jpg,woff2}"],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         clientsClaim: true,

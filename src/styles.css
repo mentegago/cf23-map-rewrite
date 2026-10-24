@@ -1,12 +1,32 @@
+/* Upstream variable webfonts: github.com/tokotype/PlusJakartaSans.
+   License: public/fonts/OFL-PlusJakartaSans.txt. Keep weights within 200–800. */
 @font-face {
-  font-family: Roboto;
-  src: url("/fonts/Roboto-VariableFont_wdth,wght.ttf") format("truetype");
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-Variable.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-Italic-Variable.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: italic;
   font-display: swap;
 }
 :root {
-  font-family: Roboto, Arial, sans-serif;
+  --font-ui:
+    "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Display titles carry the personality; metadata stays quiet and readable. */
+  --weight-body: 400;
+  --weight-meta: 500;
+  --weight-label: 600;
+  --weight-strong: 700;
+  --weight-display: 800;
+  font-family: var(--font-ui);
+  font-weight: var(--weight-body);
+  font-synthesis: none;
+  line-height: 1.5;
   color-scheme: light dark;
   --ink: #191522;
   --paper: #fff8ed;
@@ -115,14 +135,18 @@ p {
 }
 h1 {
   font-size: 26px;
-  font-weight: 900;
-  font-stretch: 82%;
-  letter-spacing: -0.5px;
-  line-height: 1.15;
+  font-weight: var(--weight-display);
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
   margin: 7px 0 12px;
 }
 h2 {
   font-size: 20px;
+  font-weight: var(--weight-strong);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 .app-shell {
   width: 100%;
@@ -191,7 +215,7 @@ h2 {
   gap: 8px;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: var(--weight-display);
   box-shadow: 3px 3px var(--shadow);
   font-size: 14px;
 }
@@ -233,9 +257,9 @@ h2 {
 .kicker {
   display: block;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: var(--weight-strong);
   text-transform: uppercase;
-  letter-spacing: 1.4px;
+  letter-spacing: 0.1em;
   padding-left: 10px;
   border-left: 4px solid var(--cyan);
   line-height: 14px;
@@ -287,9 +311,36 @@ h2 {
 .suggestions .tag {
   white-space: nowrap;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 12px;
   padding: 5px 9px;
   min-height: 28px;
+}
+.suggestions-arrow {
+  display: none;
+}
+@media (min-width: 769px) {
+  .suggestions-browser {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 4px;
+  }
+  .suggestions-browser .suggestions {
+    margin-inline: 0;
+    padding-inline: 3px;
+    scroll-padding-inline: 3px;
+  }
+  .suggestions-arrow {
+    display: inline-flex;
+    width: 28px;
+    height: 32px;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+  .suggestions-arrow:disabled {
+    visibility: hidden;
+  }
 }
 .tag {
   display: inline-flex;
@@ -299,8 +350,8 @@ h2 {
   border-radius: 4px 12px 4px 12px;
   padding: 7px 10px;
   font-size: 12px;
-  line-height: 1.2;
-  font-weight: 700;
+  line-height: 1.4;
+  font-weight: var(--weight-label);
   max-width: 100%;
   overflow-wrap: anywhere;
 }
@@ -347,8 +398,8 @@ h2 {
   min-height: 44px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
+  font-weight: var(--weight-label);
+  letter-spacing: 0;
 }
 .section-heading > span {
   flex: 1;
@@ -361,7 +412,7 @@ h2 {
   padding: 7px 4px;
   min-height: 36px;
   color: var(--muted);
-  font-weight: 600;
+  font-weight: var(--weight-label);
 }
 .text-button:hover {
   color: var(--pink);
@@ -405,7 +456,7 @@ h2 {
   justify-content: center;
   background: var(--low);
   color: var(--pink);
-  font-weight: 900;
+  font-weight: var(--weight-display);
   font-size: 23px;
 }
 .row-copy {
@@ -417,27 +468,30 @@ h2 {
   padding-right: 29px;
 }
 .row-copy strong {
-  font-size: 16px;
-  line-height: 20px;
+  font-size: 15px;
+  font-weight: var(--weight-strong);
+  letter-spacing: -0.015em;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 .metadata {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: var(--weight-meta);
   color: var(--muted);
-  letter-spacing: 0.2px;
-  line-height: 17px;
+  letter-spacing: 0;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
 .fandom-summary {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 15px;
+  font-size: 12px;
+  font-weight: var(--weight-body);
+  line-height: 1.45;
   color: var(--muted);
   padding-top: 4px;
 }
 .more {
   color: var(--pink);
-  font-weight: 800;
+  font-weight: var(--weight-display);
 }
 .row-gallery {
   position: absolute;
@@ -513,8 +567,15 @@ h2 {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: color-mix(in srgb, var(--raised) 85%, transparent);
+  background: color-mix(in srgb, var(--raised) 92%, transparent);
   border: 1px solid var(--outline);
+}
+.artwork-toggle:hover {
+  background: color-mix(
+    in srgb,
+    var(--ink) 12%,
+    color-mix(in srgb, var(--raised) 92%, transparent)
+  );
 }
 .profile-title {
   padding: 16px;
@@ -572,7 +633,7 @@ h2 {
   align-items: center;
   gap: 8px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: var(--weight-strong);
   margin: 18px 0;
 }
 .both {
@@ -707,13 +768,6 @@ dialog::backdrop {
   flex: 1;
   min-width: 0;
 }
-.selector-header .kicker {
-  font-size: 9px;
-  letter-spacing: 1px;
-}
-.selector-header .kicker:before {
-  display: none;
-}
 .selector-pin {
   width: 48px;
   height: 52px;
@@ -728,9 +782,9 @@ dialog::backdrop {
   flex-shrink: 0;
 }
 .selector-dialog h2 {
-  margin: 5px 0 0;
-  font-size: 25px;
-  font-weight: 900;
+  margin: 0;
+  font-size: 24px;
+  font-weight: var(--weight-display);
 }
 .selector-dialog > p {
   padding: 0 20px;
@@ -793,7 +847,7 @@ dialog::backdrop {
   padding: 5px 9px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--weight-display);
   background: color-mix(in srgb, var(--violet) 18%, var(--raised));
 }
 .selector-day.sat {
@@ -1144,8 +1198,8 @@ dialog::backdrop {
   justify-content: center;
   color: #191522;
   font-size: 14px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
   border: 1.5px solid #191522;
   border-radius: 12px 3px 12px 3px;
   box-shadow: 2px 2px var(--shadow);
@@ -1311,7 +1365,7 @@ dialog::backdrop {
   align-items: center;
   gap: 7px;
   font-size: 11px;
-  font-weight: 650;
+  font-weight: var(--weight-label);
   letter-spacing: 0.08em;
 }
 .loading-dots {

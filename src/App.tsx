@@ -9,6 +9,7 @@ import { BoothSelector } from "./components/BoothSelector";
 import { Gallery } from "./components/Gallery";
 import { Updates } from "./components/Updates";
 import { Presence } from "./components/Presence";
+import { FandomSuggestions } from "./components/FandomSuggestions";
 export default function App() {
   const app = useApp();
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
@@ -130,17 +131,10 @@ export default function App() {
         )}
       </form>
       {(!detail || mobile) && (
-        <div className="suggestions" aria-label="Suggested fandoms">
-          {app.suggestions.map((f) => (
-            <button
-              className="tag cyan-tint"
-              key={f.id}
-              onClick={() => app.searchFandom(f)}
-            >
-              {f.name}
-            </button>
-          ))}
-        </div>
+        <FandomSuggestions
+          fandoms={app.suggestions}
+          onSelect={app.searchFandom}
+        />
       )}
     </header>
   );

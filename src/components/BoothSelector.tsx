@@ -88,7 +88,6 @@ export function BoothSelector({
           <MapPin size={26} />
         </span>
         <div>
-          <span className="kicker">One booth, more to explore</span>
           <h2>Booth {booth}</h2>
         </div>
         <button
@@ -101,7 +100,8 @@ export function BoothSelector({
         </button>
       </header>
       <p id="booth-selector-description">
-        Who's on your list? Pick a creator to explore.
+        This booth has different creators on different days. Which one are you
+        looking for?
       </p>
       <div className="selector-choices">
         {[...creators]

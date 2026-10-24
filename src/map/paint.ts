@@ -183,10 +183,20 @@ function feature(ctx: CanvasRenderingContext2D, f: Feature, s: PaintState) {
       ctx.translate(g.x + g.width / 2, g.y + g.height / 2);
       ctx.rotate(((f.rotation || 0) * Math.PI) / 180);
       ctx.fillStyle = c.text;
-      ctx.font = `${f.kind === "booth" || f.kind === "highlight" ? 700 : 500} ${size}px Roboto, sans-serif`;
+      const weight = f.kind === "booth" || f.kind === "highlight" ? 700 : 600;
+      const font = (px: number) =>
+        `${weight} ${px}px "Plus Jakarta Sans", system-ui, sans-serif`;
+      ctx.font = font(size);
+      // Fit the actual glyph widths uniformly; fillText(maxWidth) would squash
+      // the wider Jakarta letterforms horizontally in narrow booth cells.
+      const fitted = Math.min(
+        size,
+        (size * (w * 0.88)) / Math.max(1, ctx.measureText(text).width),
+      );
+      ctx.font = font(fitted);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(text, 0, 0, w);
+      ctx.fillText(text, 0, 0);
     }
   }
   ctx.restore();
