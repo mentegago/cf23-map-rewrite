@@ -1,0 +1,70 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Build browser test target
+        run: npm run build
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests
+        run: npm run test:e2e
+      - name: Build deployment
+        env:
+          VITE_BASE_PATH: ${{ vars.PAGES_BASE_PATH || '/cf23-map-rewrite/' }}
+          VITE_UMAMI_ENDPOINT: ${{ secrets.UMAMI_ENDPOINT }}
+          VITE_UMAMI_WEBSITE_ID: ${{ secrets.UMAMI_WEBSITE_ID }}
+          VITE_UMAMI_HOSTNAME: ${{ secrets.UMAMI_HOSTNAME }}
+        run: npm run build
+      - name: Disable Jekyll
+        run: touch dist/.nojekyll
+      - name: Verify deployment paths and offline support
+        env:
+          VITE_BASE_PATH: ${{ vars.PAGES_BASE_PATH || '/cf23-map-rewrite/' }}
+          PAGES_TEST_BASE: ${{ vars.PAGES_BASE_PATH || '/cf23-map-rewrite/' }}
+        run: npx playwright test e2e/pages.spec.ts --project=desktop
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

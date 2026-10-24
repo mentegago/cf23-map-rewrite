@@ -91,7 +91,9 @@ export async function loadSnapshot(): Promise<Snapshot> {
     "map-version",
   ];
   const [catalog, registry, map, proximity, version, mapVersion] =
-    await Promise.all(names.map((name) => json(`/data/${name}.json`)));
+    await Promise.all(
+      names.map((name) => json(`${import.meta.env.BASE_URL}data/${name}.json`)),
+    );
   const bundled = {
     version: version.creator_data_version,
     catalog,

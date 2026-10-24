@@ -72,7 +72,7 @@ test("circle artwork interpolates and gallery pages follow a drag before settlin
     for (let i = 1; i <= 8; i++)
       await touch.send("Input.dispatchTouchEvent", {
         type: "touchMove",
-        touchPoints: [{ id: 1, x: x - (box.width * 0.35 * i) / 8, y }],
+        touchPoints: [{ id: 1, x: x - (box.width * 0.65 * i) / 8, y }],
       });
   } else {
     await page.mouse.move(x, y);

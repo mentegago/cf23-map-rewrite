@@ -26,8 +26,8 @@ export function Updates() {
         void registration.current?.update().catch(() => {});
     };
     navigator.serviceWorker
-      .register("/flutter_service_worker.js", {
-        scope: "/",
+      .register(`${import.meta.env.BASE_URL}flutter_service_worker.js`, {
+        scope: import.meta.env.BASE_URL,
         updateViaCache: "none",
       })
       .then((r) => {

@@ -41,7 +41,8 @@ export function Gallery({
     const before = document.activeElement;
     dialog.current!.showModal();
     const resize = new ResizeObserver(() => {
-      const el = stage.current!;
+      const el = stage.current;
+      if (!el) return;
       el.scrollTo({
         left: currentIndex.current * el.clientWidth,
         behavior: "instant",

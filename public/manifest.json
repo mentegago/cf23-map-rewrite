@@ -1,1 +1,20 @@
-{"name":"CF23 Booth Map","short_name":"CF23 Map","start_url":"/","display":"standalone","background_color":"#fff8ed","theme_color":"#fff8ed","icons":[{"src":"/icons/Icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icons/Icon-512.png","sizes":"512x512","type":"image/png"}]}
+{
+  "name": "CF23 Booth Map",
+  "short_name": "CF23 Map",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff8ed",
+  "theme_color": "#fff8ed",
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

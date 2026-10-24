@@ -92,22 +92,24 @@ test("native content scrolling recovers and close works after scrolling settles"
   await expect
     .poll(() => page.locator(".detail-scroll").evaluate((el) => el.scrollTop))
     .toBeLessThan(before - 30);
-  const settled = page.locator(".detail-scroll").evaluate(
-    (el) =>
-      new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, 2000);
-        el.addEventListener(
-          "scrollend",
-          () => {
-            clearTimeout(timer);
-            resolve();
-          },
-          { once: true },
-        );
-      }),
-  );
   await touch("touchEnd", []);
-  await settled;
+  // A queued scrollend from the interrupted first gesture can arrive before
+  // the second fling settles. Observe stability after releasing the finger.
+  let previous = -1,
+    stable = 0;
+  await expect
+    .poll(
+      async () => {
+        const top = await page
+          .locator(".detail-scroll")
+          .evaluate((el) => el.scrollTop);
+        stable = Math.abs(top - previous) < 0.5 ? stable + 1 : 0;
+        previous = top;
+        return stable;
+      },
+      { intervals: [100] },
+    )
+    .toBeGreaterThanOrEqual(4);
   await page.getByRole("button", { name: "Close creator details" }).tap();
   await expect(sheet).toHaveCount(0);
 });

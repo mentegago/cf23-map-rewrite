@@ -8,6 +8,7 @@ self.addEventListener("message", (event) => {
 // later React builds use the explicit Update app button. Install success still
 // depends on Workbox precaching every required file.
 self.addEventListener("install", (event) => {
+  if (new URL(self.registration.scope).pathname !== "/") return;
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
@@ -21,6 +22,7 @@ self.addEventListener("install", (event) => {
   );
 });
 self.addEventListener("activate", (event) => {
+  if (new URL(self.registration.scope).pathname !== "/") return;
   event.waitUntil(
     (async () => {
       const names = await caches.keys();

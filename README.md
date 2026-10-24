@@ -32,6 +32,18 @@ Browser tests use Playwright with Microsoft Edge installed locally. Start the pr
 
 The map controller owns its transform and requestAnimationFrame loop. Pointer motion does not update React state. Creator rows are virtualized with TanStack Virtual. Recommendations run in a module Web Worker; obsolete results are ignored. Search results are cached in the catalog index. All rendered source strings use React text rendering; external links are restricted to HTTP(S).
 
+## GitHub Pages deployment
+
+The `master` branch deploys through `.github/workflows/deploy.yml`. Pull requests run the same unit, browser, and build checks without publishing. CI installs Chromium and starts its own production preview; local browser tests continue to use Microsoft Edge.
+
+In `mentegago/cf23-map-rewrite`, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. Push `master` or run the workflow manually. The default site is `https://mentegago.github.io/cf23-map-rewrite/`.
+
+For optional analytics, configure repository secrets `UMAMI_ENDPOINT`, `UMAMI_WEBSITE_ID`, and `UMAMI_HOSTNAME`; the workflow maps these to the Vite build variables. Without them, analytics stays disabled.
+
+For a custom domain serving the app at `/`, configure the domain in Pages settings and set the repository variable `PAGES_BASE_PATH` to `/` before deploying. The default is `/cf23-map-rewrite/`. App assets, bundled data, the manifest, and the service worker follow this base path. The Flutter worker compatibility handler only runs for root-scope deployments.
+
+Browser storage is origin-scoped: the new GitHub Pages origin cannot read favorites from the old custom domain. Deploying later at the original origin preserves the existing storage compatibility. GitHub Pages does not apply `public/_headers`; those rules are for hosts that support that file.
+
 ## Offline and updates
 
 Production builds precache the app, worker, fonts, icons, and all bundled map/catalog/fandom/proximity data (about 6.5 MB uncompressed). Once the offline-ready notice appears, map browsing, search, favorites, recommendations, and saved links work offline. Viewed external images are cached separately, up to 500 images for 60 days; images that have never been loaded still need a connection.
