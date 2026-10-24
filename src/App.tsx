@@ -1,17 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, X, ArrowLeft } from "lucide-react";
 import { useApp } from "./state/useApp";
 import { MapView } from "./components/MapView";
 import { Sheet } from "./components/Sheet";
 import { Directory } from "./components/Directory";
 import { CreatorDetail } from "./components/CreatorDetail";
-import { CreatorRow } from "./components/CreatorRow";
+import { BoothSelector } from "./components/BoothSelector";
 import { Gallery } from "./components/Gallery";
 import { Updates } from "./components/Updates";
 import { Presence } from "./components/Presence";
 export default function App() {
   const app = useApp();
-  const selectorDialog = useRef<HTMLDialogElement>(null);
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   useEffect(() => {
     const mq = matchMedia("(max-width:768px)");
@@ -51,9 +50,6 @@ export default function App() {
       window.removeEventListener("scroll", resize);
     };
   }, []);
-  useEffect(() => {
-    if (app.selector) selectorDialog.current?.showModal();
-  }, [app.selector]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !app.gallery && !app.selector) {
@@ -203,38 +199,16 @@ export default function App() {
         <Gallery creator={app.gallery} onClose={() => app.setGallery(null)} />
       )}
       {app.selector && (
-        <dialog
-          ref={selectorDialog}
-          className="selector-dialog"
-          aria-label={`Creators at booth ${app.selector.booth}`}
-          onCancel={() => app.setSelector(null)}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) app.setSelector(null);
+        <BoothSelector
+          booth={app.selector.booth}
+          creators={app.selector.creators}
+          onSelect={app.select}
+          onGallery={(creator) => {
+            app.setSelector(null);
+            app.openGallery(creator);
           }}
-        >
-          <header>
-            <h2>Booth {app.selector.booth}</h2>
-            <button
-              className="icon-button"
-              aria-label="Close booth selector"
-              onClick={() => app.setSelector(null)}
-            >
-              <X />
-            </button>
-          </header>
-          <p>Choose a creator at this booth</p>
-          {app.selector.creators.map((c) => (
-            <CreatorRow
-              key={c.id}
-              creator={c}
-              onSelect={app.select}
-              onGallery={(c) => {
-                app.setSelector(null);
-                app.openGallery(c);
-              }}
-            />
-          ))}
-        </dialog>
+          onClose={() => app.setSelector(null)}
+        />
       )}
     </>
   );
