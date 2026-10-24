@@ -1,14 +1,22 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { AppModel } from "../state/useApp";
 import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
+import { useDismissKeyboardOnSwipe } from "../state/useDismissKeyboardOnSwipe";
 type Row =
   | { type: "creator"; creator: Creator; recommendation?: boolean }
   | { type: "heading"; title: string }
   | { type: "empty" };
-export function Directory({ app }: { app: AppModel }) {
+export function Directory({
+  app,
+  searchInput,
+}: {
+  app: AppModel;
+  searchInput: RefObject<HTMLInputElement | null>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+  useDismissKeyboardOnSwipe(ref, searchInput);
   const savedScroll = useRef(0);
   const previousQuery = useRef(app.query);
   const previousFandom = useRef(app.fandomId);

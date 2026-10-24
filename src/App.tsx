@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, X, Heart } from "lucide-react";
 import { BoothListSheet } from "./components/BoothListSheet";
 import { useApp } from "./state/useApp";
@@ -14,6 +14,7 @@ import { analytics } from "./data/analytics";
 export default function App() {
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   const app = useApp(mobile);
+  const searchInput = useRef<HTMLInputElement>(null);
   const listOpen = !!app.boothList && !app.showDetail;
   const [listExtent, setListExtent] = useState(0.56);
   const closeBoothList = () => {
@@ -122,6 +123,7 @@ export default function App() {
       >
         <Search className="search-icon" size={22} />
         <input
+          ref={searchInput}
           aria-label="Search name, booth, or fandom"
           placeholder="Search name, booth, or fandom..."
           value={app.query}
@@ -135,7 +137,12 @@ export default function App() {
             type="button"
             className="icon-button"
             aria-label="Clear search"
-            onClick={app.clearSearch}
+            onPointerDown={(e) => e.preventDefault()}
+            onClick={() => {
+              app.clearSearch();
+              // Keep this synchronous with the tap so iOS can open the keyboard.
+              searchInput.current?.focus({ preventScroll: true });
+            }}
           >
             <X size={19} />
           </button>
@@ -178,7 +185,7 @@ export default function App() {
             onExtent={app.setSearchExtent}
           >
             {searchHeader}
-            <Directory app={app} />
+            <Directory app={app} searchInput={searchInput} />
           </ResponsivePanel>
           <ResponsivePanel
             mobile={mobile}
