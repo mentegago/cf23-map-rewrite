@@ -6,7 +6,7 @@ import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
 type Row =
   | { type: "creator"; creator: Creator }
-  | { type: "heading"; title: string; action?: "results" | "favorites" }
+  | { type: "heading"; title: string; action?: "favorites" }
   | { type: "curated" }
   | { type: "share" }
   | { type: "empty" };
@@ -23,7 +23,6 @@ export function Directory({ app }: { app: AppModel }) {
       r.push({
         type: "heading",
         title: `${app.results.length} result${app.results.length === 1 ? "" : "s"}`,
-        action: "results",
       });
       if (!app.results.length) r.push({ type: "empty" });
       add(app.results);
@@ -126,14 +125,7 @@ export function Directory({ app }: { app: AppModel }) {
                   {row.action && (
                     <button
                       className="text-button"
-                      onClick={() =>
-                        app.showOnMap(
-                          row.action === "results"
-                            ? app.results
-                            : app.favoriteCreators,
-                        )
-                      }
-                      disabled={row.action === "results" && !app.results.length}
+                      onClick={() => app.showOnMap(app.favoriteCreators)}
                     >
                       <MapIcon size={15} />
                       Show on Map

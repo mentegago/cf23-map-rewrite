@@ -1,10 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Plus, Minus, Expand, Sparkles, Code2 } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { MapController } from "../map/MapController";
 import { boothKey } from "../domain/search";
 import { analytics } from "../data/analytics";
+import { useMapCreators } from "../state/useMapCreators";
 export function MapView({ app }: { app: AppModel }) {
+  const mapCreators = useMapCreators(app);
+  const visibleIds = useMemo(
+    () => new Set(mapCreators.map((c) => c.id)),
+    [mapCreators],
+  );
+  const displayedIds = useRef(visibleIds);
   const canvas = useRef<HTMLCanvasElement>(null),
     controller = useRef<MapController | null>(null),
     latest = useRef(app);
@@ -18,7 +25,7 @@ export function MapView({ app }: { app: AppModel }) {
         const creators =
           a
             .catalog!.byBooth.get(boothKey(id))
-            ?.filter((c) => !a.custom || a.custom.has(c.id)) || [];
+            ?.filter((c) => displayedIds.current.has(c.id)) || [];
         analytics.emit("booth_selected", {
           count: creators.length,
           outcome:
@@ -36,13 +43,14 @@ export function MapView({ app }: { app: AppModel }) {
     return () => map.destroy();
   }, []);
   useEffect(() => {
+    displayedIds.current = visibleIds;
     controller.current!.update(
       app.snapshot!.map,
-      app.creators,
+      mapCreators,
       app.selected,
       !!app.custom,
     );
-  }, [app.snapshot?.map, app.creators, app.selected, app.custom]);
+  }, [app.snapshot?.map, mapCreators, visibleIds, app.selected, app.custom]);
   useEffect(() => {
     if (app.selected) controller.current!.focus(app.selected);
   }, [app.selected?.id]);
@@ -82,9 +90,10 @@ export function MapView({ app }: { app: AppModel }) {
           className="action yellow"
           onClick={() => {
             const c =
-              app.creators[Math.floor(Math.random() * app.creators.length)];
+              mapCreators[Math.floor(Math.random() * mapCreators.length)];
             if (c) app.select(c);
           }}
+          disabled={!mapCreators.length}
         >
           <Sparkles size={18} />
           Surprise me!

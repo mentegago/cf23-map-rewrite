@@ -55,6 +55,33 @@ async function prepare(page: Page, mobile: boolean) {
   return { open };
 }
 
+test("live search restricts a shared booth to the matching creator", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "desktop");
+  const { open } = await prepare(page, false);
+  await page
+    .getByRole("button", { name: "Back to directory", exact: true })
+    .click();
+  await page.getByRole("textbox").fill(creators[0].name);
+  await page.waitForTimeout(250);
+  await open();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: creators[0].name, exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to directory", exact: true })
+    .click();
+  await page.getByRole("textbox").fill("zzzzzz-no-match");
+  await page.waitForTimeout(250);
+  await open();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: creators[0].name, exact: true }),
+  ).toHaveCount(0);
+});
+
 test("shared booth opens repeatedly and each day's creator can be selected", async ({
   page,
 }, info) => {
