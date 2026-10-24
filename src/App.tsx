@@ -12,7 +12,8 @@ import { Updates } from "./components/Updates";
 import { FandomSuggestions } from "./components/FandomSuggestions";
 import { analytics } from "./data/analytics";
 export default function App() {
-  const app = useApp();
+  const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
+  const app = useApp(mobile);
   const listOpen = !!app.boothList && !app.showDetail;
   const [listExtent, setListExtent] = useState(0.56);
   const closeBoothList = () => {
@@ -26,7 +27,6 @@ export default function App() {
   useEffect(() => {
     setListExtent(0.56);
   }, [app.boothList]);
-  const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   useEffect(() => {
     const activity = () => analytics.activity();
     window.addEventListener("wheel", activity, { passive: true });

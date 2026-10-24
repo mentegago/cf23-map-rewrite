@@ -1,3 +1,4 @@
+import { APP_VERSION } from "../src/appVersion";
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -195,7 +196,7 @@ test("real UI emits Flutter-compatible events with search correlation and no pri
       validate({ name: e.name, data: e.data }),
       JSON.stringify(validate.errors),
     ).toBe(true);
-    expect(e.data!.app_version).toBe(100);
+    expect(e.data!.app_version).toBe(APP_VERSION);
     expect(e.url).toBe("/");
   }
 });

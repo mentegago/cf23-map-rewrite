@@ -24,7 +24,7 @@ import type {
 import { SearchTracking, type SearchContext } from "../domain/searchTracking";
 import { telemetryId } from "../domain/eventId";
 import { resetStandaloneURL, updateNavigationURL } from "./navigation";
-export function useApp() {
+export function useApp(mobile: boolean) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [boothList, setBoothList] = useState<
       { kind: "favorites" } | { kind: "custom"; ids: Set<number> } | null
@@ -427,7 +427,10 @@ export function useApp() {
     snapshot,
     profile,
     favorites,
-    !query.trim() && !showDetail && !boothList && !gallery,
+    !!query.trim() ||
+      fandomId !== undefined ||
+      !!boothList ||
+      (mobile && searchExtent < 0.3 && !showDetail && !gallery && !selector),
   );
   const recommendations = useMemo(
     () =>

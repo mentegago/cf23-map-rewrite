@@ -5,11 +5,12 @@ export function useRecommendations(
   snapshot: Snapshot | null,
   profile: Profile,
   favorites: Set<number>,
-  keepStable: boolean,
+  allowRefresh: boolean,
 ) {
   const worker = useRef<Worker | null>(null),
     generation = useRef(0),
-    sentSnapshot = useRef<Snapshot | null>(null);
+    sentSnapshot = useRef<Snapshot | null>(null),
+    refreshPending = useRef(true);
   const [ids, setIds] = useState<number[]>([]);
   useEffect(() => {
     const w = new Worker(
@@ -18,19 +19,25 @@ export function useRecommendations(
     );
     worker.current = w;
     w.onmessage = (e: MessageEvent<{ id: number; ids: number[] }>) => {
-      if (e.data.id === generation.current) setIds(e.data.ids);
+      if (e.data.id === generation.current) {
+        refreshPending.current = false;
+        setIds(e.data.ids);
+      }
     };
     return () => {
       worker.current = null;
       sentSnapshot.current = null;
+      refreshPending.current = true;
       w.terminate();
     };
   }, []);
   useEffect(() => {
     if (!snapshot) return;
+    // Details and galleries belong to the same browsing visit. Search, another
+    // list, or lowering the search sheet unlocks ranking, even on a quick return.
+    if (allowRefresh) refreshPending.current = true;
+    if (!refreshPending.current) return;
     const id = ++generation.current;
-    // Keep the current rows in place while browsing, but always load a new catalog.
-    if (keepStable && ids.length && sentSnapshot.current === snapshot) return;
     const timer = setTimeout(() => {
       worker.current?.postMessage({
         id,
@@ -42,6 +49,6 @@ export function useRecommendations(
       sentSnapshot.current = snapshot;
     }, 120);
     return () => clearTimeout(timer);
-  }, [snapshot, profile, favorites, keepStable]);
+  }, [snapshot, profile, favorites, allowRefresh]);
   return ids;
 }

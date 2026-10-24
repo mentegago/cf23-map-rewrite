@@ -1,3 +1,4 @@
+import { APP_VERSION } from "../src/appVersion";
 import { afterEach, expect, it, vi } from "vitest";
 import Ajv2020 from "ajv/dist/2020";
 import { IDBFactory } from "fake-indexeddb";
@@ -300,7 +301,7 @@ it("delivers all 19 event types against the shared versioned schema and canonica
   expect(new Set(domain.map((e) => e.name)).size).toBe(19);
   for (const event of domain) {
     expect(validate(event), JSON.stringify(validate.errors)).toBe(true);
-    expect(event.data.app_version).toBe(100);
+    expect(event.data.app_version).toBe(APP_VERSION);
     if (event.data.creator_id === 10)
       expect(event.data.creator_name).toBe("Circle");
     if (event.data.fandom_id === 1)
@@ -353,7 +354,7 @@ it("resolves unique prefixes across the entire registry, deduplicates aliases, a
   const common = {
     schema_version: 2,
     event_edition: "comic-frontier-23",
-    app_version: 100,
+    app_version: APP_VERSION,
     client_event_id: eventId(),
     occurred_at_ms: 123,
     app_run_id: eventId(),

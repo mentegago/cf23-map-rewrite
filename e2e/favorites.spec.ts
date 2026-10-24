@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("https://**/*", (r) => r.abort());
 });
 
-test("saving a recommendation keeps the current row in place until leaving the list", async ({
+test("recommendations stay fixed through details and galleries, then refresh in favorites", async ({
   page,
 }, info) => {
   await page.addInitScript(() => {
@@ -55,6 +55,18 @@ test("saving a recommendation keeps the current row in place until leaving the l
     "aria-pressed",
     "true",
   );
+  await first.locator(".creator-select").click();
+  await page.waitForTimeout(800);
+  await page
+    .getByRole("button", { name: "Close creator details", exact: true })
+    .click();
+  await expect(first.locator("strong")).toHaveText(name);
+  await page.locator(".directory .row-gallery").first().click();
+  await page.waitForTimeout(800);
+  await page
+    .getByRole("button", { name: "Close gallery", exact: true })
+    .click();
+  await expect(first.locator("strong")).toHaveText(name);
   await page.getByRole("button", { name: "Favorites", exact: true }).click();
   await page.waitForTimeout(800);
   await page
