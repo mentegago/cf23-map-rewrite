@@ -110,10 +110,7 @@ test("circle artwork interpolates and gallery pages follow a drag before settlin
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page
     .getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Close creator details"
-          : "Back to directory",
+      name: "Close creator details",
     })
     .click();
   if (info.project.name === "mobile") {

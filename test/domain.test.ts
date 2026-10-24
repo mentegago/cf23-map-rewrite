@@ -67,6 +67,41 @@ describe("Flutter link compatibility", () => {
   });
 });
 describe("real catalog search", () => {
+  it("uses the same alphabetical order for equally relevant text results and fandom selection", () => {
+    const names = [
+      "~La Creatura~",
+      "Zebra",
+      "alpha",
+      ".png",
+      "Éclair",
+      "7ikanz",
+    ];
+    const fandom = {
+      id: 1,
+      name: "HoYoverse",
+      kind: "company",
+      parentId: null,
+      alternateNames: [],
+    };
+    const fixture = new Catalog(
+      {
+        ...snapshot.catalog,
+        exhibitors: names.map((name, index) => ({
+          ...snapshot.catalog.exhibitors[0],
+          id: index + 1,
+          name,
+          fandomIds: [fandom.id],
+        })),
+      },
+      { schemaVersion: "1.0", fandoms: [fandom] },
+    );
+    const selected = fixture.search("", fandom.id).map((c) => c.name);
+    expect(fixture.search("hoyoverse").map((c) => c.name)).toEqual(selected);
+    expect(fixture.creators.map((c) => c.name)).toEqual(selected);
+    expect(selected.indexOf("~La Creatura~")).toBeGreaterThan(
+      selected.indexOf("Zebra"),
+    );
+  });
   it("indexes all source creators and normalizes zero-padded booths", () => {
     expect(catalog.creators.length).toBe(snapshot.catalog.exhibitors.length);
     const c = catalog.creators.find((c) =>
@@ -92,6 +127,18 @@ describe("real catalog search", () => {
     expect(catalog.search(parent.name, parent.id).length).toBeGreaterThan(
       catalog.search(f.name, f.id).length,
     );
+    for (const pills of [
+      catalog.suggestions("hoyoverse"),
+      catalog.suggestions("", parent.id),
+    ]) {
+      expect(pills[0].id).toBe(parent.id);
+      expect(pills.map((p) => p.name)).toContain("Genshin Impact");
+      expect(pills.map((p) => p.id)).toContain(f.id);
+      expect(new Set(pills.map((p) => p.id)).size).toBe(pills.length);
+    }
+    expect(
+      catalog.suggestions("hoyoverse", f.id).map((p) => p.id),
+    ).not.toContain(parent.id);
   });
   it("handles punctuation-only queries without returning the entire catalog", () => {
     expect(catalog.search("---")).toEqual([]);
@@ -157,7 +204,6 @@ describe("snapshots and recommendations", () => {
       new Set([favorite.id]),
       snapshot.proximity,
       20,
-      42,
     );
     expect(result).toHaveLength(20);
     expect(result.some((c) => c.id === favorite.id)).toBe(false);

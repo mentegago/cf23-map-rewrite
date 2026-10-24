@@ -41,11 +41,11 @@ test("gallery requests pages serially without navigation and continues after a f
     /is-ready/,
   );
   await expect(
-    page.getByRole("button", { name: "Go to page 1" }),
+    page.getByRole("button", { name: "Go to page 1", exact: true }),
   ).toHaveAttribute("aria-current", "page");
-  await page.getByRole("button", { name: "Go to page 3" }).click();
+  await page.getByRole("button", { name: "Go to page 3", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Go to page 3" }),
+    page.getByRole("button", { name: "Go to page 3", exact: true }),
   ).toHaveAttribute("aria-current", "page");
 });
 
@@ -125,7 +125,7 @@ test("two-finger pinch zooms only the image, then native panning and paging reco
     ]);
   await touch("touchEnd", []);
   await expect(
-    page.getByRole("button", { name: "Go to page 2" }),
+    page.getByRole("button", { name: "Go to page 2", exact: true }),
   ).toHaveAttribute("aria-current", "page");
   await expect(
     page.getByRole("button", { name: "Zoom out", exact: true }),

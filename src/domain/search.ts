@@ -179,15 +179,27 @@ export class Catalog {
     }
     return result.sort(
       (a, b) =>
-        compare(a.score, b.score) || a.fandom.name.localeCompare(b.fandom.name),
+        compare(a.score, b.score) || compareNames(a.fandom.name, b.fandom.name),
     );
   }
-  suggestions(query: string) {
-    return query.trim()
-      ? this.fandomMatches(query)
-          .slice(0, 12)
-          .map((m) => m.fandom)
-      : this.popular.slice(0, 12);
+  suggestions(query: string, fandomId?: number) {
+    if (fandomId === undefined && !query.trim())
+      return this.popular.slice(0, 12);
+    const matches =
+      fandomId === undefined
+        ? this.fandomMatches(query)
+            .slice(0, 12)
+            .map((m) => m.fandom)
+        : [this.fandoms.get(fandomId)].filter((f): f is Fandom => !!f);
+    const parents = new Set(matches.map((f) => f.id));
+    // Registry ancestry is shared with creator filtering. Include descendants
+    // even when their own names do not contain the matched parent's name.
+    const children = this.popular.filter(
+      (f) =>
+        !parents.has(f.id) &&
+        [...this.ancestors(f.id).keys()].some((id) => parents.has(id)),
+    );
+    return [...matches, ...children];
   }
   search(query: string, fandomId?: number): Creator[] {
     if (fandomId !== undefined)
@@ -210,7 +222,7 @@ export class Catalog {
           scores.set(c, {
             tier:
               q === normalize(c.name)
-                ? 0
+                ? -1
                 : words(c.name).some((w) => w.startsWith(q))
                   ? 1
                   : 3,
@@ -227,7 +239,7 @@ export class Catalog {
       }
     }
     const result = [...scores]
-      .sort((a, b) => compare(a[1], b[1]) || a[0].name.localeCompare(b[0].name))
+      .sort((a, b) => compare(a[1], b[1]) || compareNames(a[0].name, b[0].name))
       .map(([c]) => c);
     if (this.cache.size >= 60) this.cache.clear();
     this.cache.set(key, result);

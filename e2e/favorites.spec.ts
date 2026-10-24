@@ -158,10 +158,7 @@ test("favorites fandom pills sort by count, combine selections, and preserve the
   await sheet.locator(".creator-select").first().click();
   await page
     .getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Close creator details"
-          : "Back to favorites",
+      name: "Close creator details",
       exact: true,
     })
     .click();
@@ -329,10 +326,7 @@ test("saved creators move out of the directory and hand off cleanly to gallery, 
   ).toBeVisible();
   await page
     .getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Close creator details"
-          : "Back to favorites",
+      name: "Close creator details",
       exact: true,
     })
     .click();

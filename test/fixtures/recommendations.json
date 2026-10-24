@@ -1,0 +1,4871 @@
+{
+  "catalog": {
+    "schemaVersion": "1.0",
+    "event": {
+      "id": "test",
+      "name": "Test",
+      "days": [
+        {
+          "id": "sat",
+          "label": "Saturday"
+        },
+        {
+          "id": "sun",
+          "label": "Sunday"
+        }
+      ]
+    },
+    "exhibitors": [
+      {
+        "id": 1,
+        "name": "Creator 000",
+        "fandomIds": [
+          3,
+          6,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-01a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "name": "Creator 001",
+        "fandomIds": [
+          4
+        ],
+        "spaces": [
+          {
+            "code": "A-01a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 3,
+        "name": "Creator 002",
+        "fandomIds": [
+          5
+        ],
+        "spaces": [
+          {
+            "code": "A-02a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 4,
+        "name": "Creator 003",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-02a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 5,
+        "name": "Creator 004",
+        "fandomIds": [
+          7
+        ],
+        "spaces": [
+          {
+            "code": "A-03a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 6,
+        "name": "Creator 005",
+        "fandomIds": [
+          8,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-03a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 7,
+        "name": "Creator 006",
+        "fandomIds": [
+          9,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-04a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 8,
+        "name": "Creator 007",
+        "fandomIds": [
+          3
+        ],
+        "spaces": [
+          {
+            "code": "A-04a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 9,
+        "name": "Creator 008",
+        "fandomIds": [
+          4
+        ],
+        "spaces": [
+          {
+            "code": "A-05a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 10,
+        "name": "Creator 009",
+        "fandomIds": [
+          5,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-05a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 11,
+        "name": "Creator 010",
+        "fandomIds": [
+          6,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-06a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 12,
+        "name": "Creator 011",
+        "fandomIds": [
+          7
+        ],
+        "spaces": [
+          {
+            "code": "A-06a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 13,
+        "name": "Creator 012",
+        "fandomIds": [
+          8,
+          6
+        ],
+        "spaces": [],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 14,
+        "name": "Creator 013",
+        "fandomIds": [
+          9
+        ],
+        "spaces": [
+          {
+            "code": "A-07a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 15,
+        "name": "Creator 014",
+        "fandomIds": [
+          3
+        ],
+        "spaces": [
+          {
+            "code": "A-08a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 16,
+        "name": "Creator 015",
+        "fandomIds": [
+          4,
+          6,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-08a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 17,
+        "name": "Creator 016",
+        "fandomIds": [
+          5
+        ],
+        "spaces": [
+          {
+            "code": "A-09a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 18,
+        "name": "Creator 017",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-09a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 19,
+        "name": "Creator 018",
+        "fandomIds": [
+          7,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-10a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 20,
+        "name": "Creator 019",
+        "fandomIds": [
+          8
+        ],
+        "spaces": [
+          {
+            "code": "A-10a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 21,
+        "name": "Creator 020",
+        "fandomIds": [
+          9,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-11a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 22,
+        "name": "Creator 021",
+        "fandomIds": [
+          3,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-11a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 23,
+        "name": "Creator 022",
+        "fandomIds": [
+          4
+        ],
+        "spaces": [
+          {
+            "code": "A-12a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 24,
+        "name": "Creator 023",
+        "fandomIds": [
+          5
+        ],
+        "spaces": [
+          {
+            "code": "A-12a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 25,
+        "name": "Creator 024",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-13a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 26,
+        "name": "Creator 025",
+        "fandomIds": [
+          7,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-13a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 27,
+        "name": "Creator 026",
+        "fandomIds": [
+          8
+        ],
+        "spaces": [
+          {
+            "code": "A-14a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 28,
+        "name": "Creator 027",
+        "fandomIds": [
+          9,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-14a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 29,
+        "name": "Creator 028",
+        "fandomIds": [
+          3
+        ],
+        "spaces": [
+          {
+            "code": "A-15a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 30,
+        "name": "Creator 029",
+        "fandomIds": [
+          4
+        ],
+        "spaces": [
+          {
+            "code": "A-15a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 31,
+        "name": "Creator 030",
+        "fandomIds": [
+          5,
+          6,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-16a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 32,
+        "name": "Creator 031",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-16a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 33,
+        "name": "Creator 032",
+        "fandomIds": [
+          7
+        ],
+        "spaces": [
+          {
+            "code": "A-17a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 34,
+        "name": "Creator 033",
+        "fandomIds": [
+          8,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-17a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 35,
+        "name": "Creator 034",
+        "fandomIds": [
+          9
+        ],
+        "spaces": [
+          {
+            "code": "A-18a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 36,
+        "name": "Creator 035",
+        "fandomIds": [
+          3,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-18a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 37,
+        "name": "Creator 036",
+        "fandomIds": [
+          4,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-19a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 38,
+        "name": "Creator 037",
+        "fandomIds": [
+          5
+        ],
+        "spaces": [
+          {
+            "code": "A-19a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 39,
+        "name": "Creator 038",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-20a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 40,
+        "name": "Creator 039",
+        "fandomIds": [
+          7,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-20a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 41,
+        "name": "Creator 040",
+        "fandomIds": [
+          8,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-21a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 42,
+        "name": "Creator 041",
+        "fandomIds": [
+          9
+        ],
+        "spaces": [
+          {
+            "code": "A-21a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 43,
+        "name": "Creator 042",
+        "fandomIds": [
+          3,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-22a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 44,
+        "name": "Creator 043",
+        "fandomIds": [
+          4
+        ],
+        "spaces": [
+          {
+            "code": "A-22a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 45,
+        "name": "Creator 044",
+        "fandomIds": [
+          5
+        ],
+        "spaces": [
+          {
+            "code": "A-23a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 46,
+        "name": "Creator 045",
+        "fandomIds": [
+          6,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-23a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 47,
+        "name": "Creator 046",
+        "fandomIds": [
+          7
+        ],
+        "spaces": [
+          {
+            "code": "A-24a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 48,
+        "name": "Creator 047",
+        "fandomIds": [
+          8
+        ],
+        "spaces": [
+          {
+            "code": "A-24a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 49,
+        "name": "Creator 048",
+        "fandomIds": [
+          9,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-25a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 50,
+        "name": "Creator 049",
+        "fandomIds": [
+          3
+        ],
+        "spaces": [
+          {
+            "code": "A-25a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 51,
+        "name": "Creator 050",
+        "fandomIds": [
+          4,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-26a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 52,
+        "name": "Creator 051",
+        "fandomIds": [
+          5,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-26a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 53,
+        "name": "Creator 052",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-27a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 54,
+        "name": "Creator 053",
+        "fandomIds": [
+          7
+        ],
+        "spaces": [
+          {
+            "code": "A-27a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 55,
+        "name": "Creator 054",
+        "fandomIds": [
+          8,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-28a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 56,
+        "name": "Creator 055",
+        "fandomIds": [
+          9,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-28a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 57,
+        "name": "Creator 056",
+        "fandomIds": [
+          3
+        ],
+        "spaces": [
+          {
+            "code": "A-29a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 58,
+        "name": "Creator 057",
+        "fandomIds": [
+          4,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-29a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 59,
+        "name": "Creator 058",
+        "fandomIds": [
+          5
+        ],
+        "spaces": [
+          {
+            "code": "A-30a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 60,
+        "name": "Creator 059",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-30a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 61,
+        "name": "Creator 060",
+        "fandomIds": [
+          7,
+          6,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-31a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 62,
+        "name": "Creator 061",
+        "fandomIds": [
+          8
+        ],
+        "spaces": [
+          {
+            "code": "A-31a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 63,
+        "name": "Creator 062",
+        "fandomIds": [
+          9
+        ],
+        "spaces": [
+          {
+            "code": "A-32a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 64,
+        "name": "Creator 063",
+        "fandomIds": [
+          3,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-32a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 65,
+        "name": "Creator 064",
+        "fandomIds": [
+          4
+        ],
+        "spaces": [
+          {
+            "code": "A-33a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 66,
+        "name": "Creator 065",
+        "fandomIds": [
+          5,
+          2
+        ],
+        "spaces": [
+          {
+            "code": "A-33a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 67,
+        "name": "Creator 066",
+        "fandomIds": [
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-34a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 68,
+        "name": "Creator 067",
+        "fandomIds": [
+          7
+        ],
+        "spaces": [
+          {
+            "code": "A-34a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      },
+      {
+        "id": 69,
+        "name": "Creator 068",
+        "fandomIds": [
+          8
+        ],
+        "spaces": [
+          {
+            "code": "A-35a"
+          }
+        ],
+        "attendanceDates": [
+          "sat"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": [
+            "sample.jpg"
+          ]
+        }
+      },
+      {
+        "id": 70,
+        "name": "Creator 069",
+        "fandomIds": [
+          9,
+          6
+        ],
+        "spaces": [
+          {
+            "code": "A-35a"
+          }
+        ],
+        "attendanceDates": [
+          "sun"
+        ],
+        "offerings": [],
+        "links": [],
+        "assets": {
+          "gallery": []
+        }
+      }
+    ]
+  },
+  "registry": {
+    "schemaVersion": "1.0",
+    "fandoms": [
+      {
+        "id": 1,
+        "name": "Publisher",
+        "kind": "publisher_umbrella",
+        "parentId": null,
+        "alternateNames": []
+      },
+      {
+        "id": 2,
+        "name": "Franchise",
+        "kind": "franchise",
+        "parentId": 1,
+        "alternateNames": []
+      },
+      {
+        "id": 3,
+        "name": "Game A",
+        "kind": "property",
+        "parentId": 2,
+        "alternateNames": []
+      },
+      {
+        "id": 4,
+        "name": "Game B",
+        "kind": "property",
+        "parentId": 2,
+        "alternateNames": []
+      },
+      {
+        "id": 5,
+        "name": "Game C",
+        "kind": "property",
+        "parentId": 1,
+        "alternateNames": []
+      },
+      {
+        "id": 6,
+        "name": "Original",
+        "kind": "generic_tag",
+        "parentId": null,
+        "alternateNames": []
+      },
+      {
+        "id": 7,
+        "name": "Other",
+        "kind": "property",
+        "parentId": null,
+        "alternateNames": []
+      },
+      {
+        "id": 8,
+        "name": "Missing parent child",
+        "kind": "property",
+        "parentId": 99,
+        "alternateNames": []
+      },
+      {
+        "id": 9,
+        "name": "Missing parent sibling",
+        "kind": "property",
+        "parentId": 99,
+        "alternateNames": []
+      }
+    ]
+  },
+  "proximity": {
+    "schema_version": 1,
+    "booths": [
+      "A-1a",
+      "A-2a",
+      "A-3a",
+      "A-4a",
+      "A-5a",
+      "A-6a",
+      "A-7a",
+      "A-8a",
+      "A-9a",
+      "A-10a",
+      "A-11a",
+      "A-12a",
+      "A-13a",
+      "A-14a",
+      "A-15a",
+      "A-16a",
+      "A-17a",
+      "A-18a",
+      "A-19a",
+      "A-20a",
+      "A-21a",
+      "A-22a",
+      "A-23a",
+      "A-24a",
+      "A-25a",
+      "A-26a",
+      "A-27a",
+      "A-28a",
+      "A-29a",
+      "A-30a",
+      "A-31a",
+      "A-32a",
+      "A-33a",
+      "A-34a"
+    ],
+    "neighbors": [
+      [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          10
+        ]
+      ],
+      [
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          10
+        ]
+      ],
+      [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          10
+        ]
+      ],
+      [
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          8,
+          10
+        ]
+      ],
+      [
+        [
+          0,
+          8
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          9,
+          10
+        ]
+      ],
+      [
+        [
+          0,
+          10
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          10,
+          10
+        ]
+      ],
+      [
+        [
+          1,
+          10
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          9,
+          6
+        ],
+        [
+          10,
+          8
+        ],
+        [
+          11,
+          10
+        ]
+      ],
+      [
+        [
+          2,
+          10
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          10,
+          6
+        ],
+        [
+          11,
+          8
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      [
+        [
+          3,
+          10
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          9,
+          2
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          11,
+          6
+        ],
+        [
+          12,
+          8
+        ],
+        [
+          13,
+          10
+        ]
+      ],
+      [
+        [
+          4,
+          10
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          10,
+          2
+        ],
+        [
+          11,
+          4
+        ],
+        [
+          12,
+          6
+        ],
+        [
+          13,
+          8
+        ],
+        [
+          14,
+          10
+        ]
+      ],
+      [
+        [
+          5,
+          10
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          9,
+          2
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          12,
+          4
+        ],
+        [
+          13,
+          6
+        ],
+        [
+          14,
+          8
+        ],
+        [
+          15,
+          10
+        ]
+      ],
+      [
+        [
+          6,
+          10
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          10,
+          2
+        ],
+        [
+          12,
+          2
+        ],
+        [
+          13,
+          4
+        ],
+        [
+          14,
+          6
+        ],
+        [
+          15,
+          8
+        ],
+        [
+          16,
+          10
+        ]
+      ],
+      [
+        [
+          7,
+          10
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          9,
+          6
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          13,
+          2
+        ],
+        [
+          14,
+          4
+        ],
+        [
+          15,
+          6
+        ],
+        [
+          16,
+          8
+        ],
+        [
+          17,
+          10
+        ]
+      ],
+      [
+        [
+          8,
+          10
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          10,
+          6
+        ],
+        [
+          11,
+          4
+        ],
+        [
+          12,
+          2
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          16,
+          6
+        ],
+        [
+          17,
+          8
+        ],
+        [
+          18,
+          10
+        ]
+      ],
+      [
+        [
+          9,
+          10
+        ],
+        [
+          10,
+          8
+        ],
+        [
+          11,
+          6
+        ],
+        [
+          12,
+          4
+        ],
+        [
+          13,
+          2
+        ],
+        [
+          15,
+          2
+        ],
+        [
+          16,
+          4
+        ],
+        [
+          17,
+          6
+        ],
+        [
+          18,
+          8
+        ],
+        [
+          19,
+          10
+        ]
+      ],
+      [
+        [
+          10,
+          10
+        ],
+        [
+          11,
+          8
+        ],
+        [
+          12,
+          6
+        ],
+        [
+          13,
+          4
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          16,
+          2
+        ],
+        [
+          17,
+          4
+        ],
+        [
+          18,
+          6
+        ],
+        [
+          19,
+          8
+        ],
+        [
+          20,
+          10
+        ]
+      ],
+      [
+        [
+          11,
+          10
+        ],
+        [
+          12,
+          8
+        ],
+        [
+          13,
+          6
+        ],
+        [
+          14,
+          4
+        ],
+        [
+          15,
+          2
+        ],
+        [
+          17,
+          2
+        ],
+        [
+          18,
+          4
+        ],
+        [
+          19,
+          6
+        ],
+        [
+          20,
+          8
+        ],
+        [
+          21,
+          10
+        ]
+      ],
+      [
+        [
+          12,
+          10
+        ],
+        [
+          13,
+          8
+        ],
+        [
+          14,
+          6
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          16,
+          2
+        ],
+        [
+          18,
+          2
+        ],
+        [
+          19,
+          4
+        ],
+        [
+          20,
+          6
+        ],
+        [
+          21,
+          8
+        ],
+        [
+          22,
+          10
+        ]
+      ],
+      [
+        [
+          13,
+          10
+        ],
+        [
+          14,
+          8
+        ],
+        [
+          15,
+          6
+        ],
+        [
+          16,
+          4
+        ],
+        [
+          17,
+          2
+        ],
+        [
+          19,
+          2
+        ],
+        [
+          20,
+          4
+        ],
+        [
+          21,
+          6
+        ],
+        [
+          22,
+          8
+        ],
+        [
+          23,
+          10
+        ]
+      ],
+      [
+        [
+          14,
+          10
+        ],
+        [
+          15,
+          8
+        ],
+        [
+          16,
+          6
+        ],
+        [
+          17,
+          4
+        ],
+        [
+          18,
+          2
+        ],
+        [
+          20,
+          2
+        ],
+        [
+          21,
+          4
+        ],
+        [
+          22,
+          6
+        ],
+        [
+          23,
+          8
+        ],
+        [
+          24,
+          10
+        ]
+      ],
+      [
+        [
+          15,
+          10
+        ],
+        [
+          16,
+          8
+        ],
+        [
+          17,
+          6
+        ],
+        [
+          18,
+          4
+        ],
+        [
+          19,
+          2
+        ],
+        [
+          21,
+          2
+        ],
+        [
+          22,
+          4
+        ],
+        [
+          23,
+          6
+        ],
+        [
+          24,
+          8
+        ],
+        [
+          25,
+          10
+        ]
+      ],
+      [
+        [
+          16,
+          10
+        ],
+        [
+          17,
+          8
+        ],
+        [
+          18,
+          6
+        ],
+        [
+          19,
+          4
+        ],
+        [
+          20,
+          2
+        ],
+        [
+          22,
+          2
+        ],
+        [
+          23,
+          4
+        ],
+        [
+          24,
+          6
+        ],
+        [
+          25,
+          8
+        ],
+        [
+          26,
+          10
+        ]
+      ],
+      [
+        [
+          17,
+          10
+        ],
+        [
+          18,
+          8
+        ],
+        [
+          19,
+          6
+        ],
+        [
+          20,
+          4
+        ],
+        [
+          21,
+          2
+        ],
+        [
+          23,
+          2
+        ],
+        [
+          24,
+          4
+        ],
+        [
+          25,
+          6
+        ],
+        [
+          26,
+          8
+        ],
+        [
+          27,
+          10
+        ]
+      ],
+      [
+        [
+          18,
+          10
+        ],
+        [
+          19,
+          8
+        ],
+        [
+          20,
+          6
+        ],
+        [
+          21,
+          4
+        ],
+        [
+          22,
+          2
+        ],
+        [
+          24,
+          2
+        ],
+        [
+          25,
+          4
+        ],
+        [
+          26,
+          6
+        ],
+        [
+          27,
+          8
+        ],
+        [
+          28,
+          10
+        ]
+      ],
+      [
+        [
+          19,
+          10
+        ],
+        [
+          20,
+          8
+        ],
+        [
+          21,
+          6
+        ],
+        [
+          22,
+          4
+        ],
+        [
+          23,
+          2
+        ],
+        [
+          25,
+          2
+        ],
+        [
+          26,
+          4
+        ],
+        [
+          27,
+          6
+        ],
+        [
+          28,
+          8
+        ],
+        [
+          29,
+          10
+        ]
+      ],
+      [
+        [
+          20,
+          10
+        ],
+        [
+          21,
+          8
+        ],
+        [
+          22,
+          6
+        ],
+        [
+          23,
+          4
+        ],
+        [
+          24,
+          2
+        ],
+        [
+          26,
+          2
+        ],
+        [
+          27,
+          4
+        ],
+        [
+          28,
+          6
+        ],
+        [
+          29,
+          8
+        ],
+        [
+          30,
+          10
+        ]
+      ],
+      [
+        [
+          21,
+          10
+        ],
+        [
+          22,
+          8
+        ],
+        [
+          23,
+          6
+        ],
+        [
+          24,
+          4
+        ],
+        [
+          25,
+          2
+        ],
+        [
+          27,
+          2
+        ],
+        [
+          28,
+          4
+        ],
+        [
+          29,
+          6
+        ],
+        [
+          30,
+          8
+        ],
+        [
+          31,
+          10
+        ]
+      ],
+      [
+        [
+          22,
+          10
+        ],
+        [
+          23,
+          8
+        ],
+        [
+          24,
+          6
+        ],
+        [
+          25,
+          4
+        ],
+        [
+          26,
+          2
+        ],
+        [
+          28,
+          2
+        ],
+        [
+          29,
+          4
+        ],
+        [
+          30,
+          6
+        ],
+        [
+          31,
+          8
+        ],
+        [
+          32,
+          10
+        ]
+      ],
+      [
+        [
+          23,
+          10
+        ],
+        [
+          24,
+          8
+        ],
+        [
+          25,
+          6
+        ],
+        [
+          26,
+          4
+        ],
+        [
+          27,
+          2
+        ],
+        [
+          29,
+          2
+        ],
+        [
+          30,
+          4
+        ],
+        [
+          31,
+          6
+        ],
+        [
+          32,
+          8
+        ],
+        [
+          33,
+          10
+        ]
+      ],
+      [
+        [
+          24,
+          10
+        ],
+        [
+          25,
+          8
+        ],
+        [
+          26,
+          6
+        ],
+        [
+          27,
+          4
+        ],
+        [
+          28,
+          2
+        ],
+        [
+          30,
+          2
+        ],
+        [
+          31,
+          4
+        ],
+        [
+          32,
+          6
+        ],
+        [
+          33,
+          8
+        ]
+      ],
+      [
+        [
+          25,
+          10
+        ],
+        [
+          26,
+          8
+        ],
+        [
+          27,
+          6
+        ],
+        [
+          28,
+          4
+        ],
+        [
+          29,
+          2
+        ],
+        [
+          31,
+          2
+        ],
+        [
+          32,
+          4
+        ],
+        [
+          33,
+          6
+        ]
+      ],
+      [
+        [
+          26,
+          10
+        ],
+        [
+          27,
+          8
+        ],
+        [
+          28,
+          6
+        ],
+        [
+          29,
+          4
+        ],
+        [
+          30,
+          2
+        ],
+        [
+          32,
+          2
+        ],
+        [
+          33,
+          4
+        ]
+      ],
+      [
+        [
+          27,
+          10
+        ],
+        [
+          28,
+          8
+        ],
+        [
+          29,
+          6
+        ],
+        [
+          30,
+          4
+        ],
+        [
+          31,
+          2
+        ],
+        [
+          33,
+          2
+        ]
+      ],
+      [
+        [
+          28,
+          10
+        ],
+        [
+          29,
+          8
+        ],
+        [
+          30,
+          6
+        ],
+        [
+          31,
+          4
+        ],
+        [
+          32,
+          2
+        ]
+      ]
+    ]
+  },
+  "cases": [
+    {
+      "seed": 42,
+      "limit": 100,
+      "now": 1800000000000,
+      "profile": {
+        "schema_version": 2,
+        "explicit_fandom_signals": {
+          "3": {
+            "strength": 8,
+            "last_updated": 1799913600000
+          },
+          "8": {
+            "strength": 3,
+            "last_updated": 0
+          }
+        },
+        "creator_interactions": {
+          "1": {
+            "open_strength": 0.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 1,
+            "shares": 1,
+            "favorite": true,
+            "consideration": 0.225,
+            "last_updated": 0
+          },
+          "2": {
+            "open_strength": 1.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 2,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.25,
+            "last_updated": 1799992800000
+          },
+          "3": {
+            "open_strength": 1.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 0,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.275,
+            "last_updated": 1799989200000
+          },
+          "4": {
+            "open_strength": 2.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 1,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.30000000000000004,
+            "last_updated": 1799985600000
+          },
+          "5": {
+            "open_strength": 2.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 2,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.325,
+            "last_updated": 1799982000000
+          },
+          "6": {
+            "open_strength": 0.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 0,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.35,
+            "last_updated": 1799978400000
+          },
+          "7": {
+            "open_strength": 0.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 1,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.375,
+            "last_updated": 1799974800000
+          },
+          "8": {
+            "open_strength": 1.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 2,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.4,
+            "last_updated": 1799971200000
+          },
+          "9": {
+            "open_strength": 1.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 0,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.42500000000000004,
+            "last_updated": 1799967600000
+          },
+          "10": {
+            "open_strength": 2.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 1,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.45,
+            "last_updated": 1799964000000
+          },
+          "11": {
+            "open_strength": 2.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 2,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.47500000000000003,
+            "last_updated": 1799960400000
+          },
+          "12": {
+            "open_strength": 0.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 0,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.5,
+            "last_updated": 1799956800000
+          },
+          "13": {
+            "open_strength": 0.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 1,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.525,
+            "last_updated": 1799953200000
+          },
+          "14": {
+            "open_strength": 1.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 2,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.55,
+            "last_updated": 1799949600000
+          },
+          "15": {
+            "open_strength": 1.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 0,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.575,
+            "last_updated": 1799946000000
+          },
+          "16": {
+            "open_strength": 2.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 1,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.6000000000000001,
+            "last_updated": 1799942400000
+          },
+          "17": {
+            "open_strength": 2.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 2,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.625,
+            "last_updated": 1799938800000
+          },
+          "18": {
+            "open_strength": 0.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 0,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.65,
+            "last_updated": 1799935200000
+          },
+          "19": {
+            "open_strength": 0.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 1,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.675,
+            "last_updated": 1799931600000
+          },
+          "20": {
+            "open_strength": 1.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 2,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.7,
+            "last_updated": 1799928000000
+          },
+          "21": {
+            "open_strength": 1.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 0,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.7250000000000001,
+            "last_updated": 1799924400000
+          },
+          "22": {
+            "open_strength": 2.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 1,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.75,
+            "last_updated": 1799920800000
+          },
+          "23": {
+            "open_strength": 2.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 2,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.7749999999999999,
+            "last_updated": 1799917200000
+          },
+          "24": {
+            "open_strength": 0.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 0,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.8,
+            "last_updated": 1799913600000
+          },
+          "25": {
+            "open_strength": 0.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 1,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.825,
+            "last_updated": 1799910000000
+          },
+          "26": {
+            "open_strength": 1.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 2,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.8500000000000001,
+            "last_updated": 1799906400000
+          },
+          "27": {
+            "open_strength": 1.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 3,
+            "external_link_clicks": 0,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.875,
+            "last_updated": 1799902800000
+          },
+          "28": {
+            "open_strength": 2.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 0,
+            "external_link_clicks": 1,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.8999999999999999,
+            "last_updated": 1799899200000
+          },
+          "29": {
+            "open_strength": 2.5,
+            "deliberate_open_count": 1,
+            "sample_work_views": 1,
+            "external_link_clicks": 2,
+            "shares": 1,
+            "favorite": false,
+            "consideration": 0.925,
+            "last_updated": 1799895600000
+          },
+          "30": {
+            "open_strength": 0.0,
+            "deliberate_open_count": 1,
+            "sample_work_views": 2,
+            "external_link_clicks": 0,
+            "shares": 0,
+            "favorite": false,
+            "consideration": 0.95,
+            "last_updated": 1799892000000
+          }
+        }
+      },
+      "favorites": [
+        1,
+        13,
+        69
+      ],
+      "previousIds": [
+        4,
+        9,
+        12,
+        15,
+        25,
+        39,
+        52
+      ],
+      "homeFandoms": [
+        "Original",
+        "Missing parent child",
+        "Game A",
+        "Franchise",
+        "Game B",
+        "Missing parent sibling",
+        "Game C",
+        "Other"
+      ],
+      "expected": [
+        {
+          "id": 41,
+          "score": 0.6464905863752721,
+          "matching": [
+            "Missing parent child",
+            "Franchise"
+          ]
+        },
+        {
+          "id": 6,
+          "score": 0.6303852484849127,
+          "matching": [
+            "Missing parent child",
+            "Franchise"
+          ]
+        },
+        {
+          "id": 27,
+          "score": 0.5419474802030819,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 16,
+          "score": 0.4608608199730734,
+          "matching": [
+            "Franchise",
+            "Game B"
+          ]
+        },
+        {
+          "id": 31,
+          "score": 0.4335406277818283,
+          "matching": [
+            "Franchise",
+            "Game C"
+          ]
+        },
+        {
+          "id": 20,
+          "score": 0.5279290661077967,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 51,
+          "score": 0.42810816434859117,
+          "matching": [
+            "Franchise",
+            "Game B"
+          ]
+        },
+        {
+          "id": 29,
+          "score": 0.5410447877940715,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 21,
+          "score": 0.47755464680872484,
+          "matching": [
+            "Franchise",
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 34,
+          "score": 0.5167690124870082,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 48,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 26,
+          "score": 0.4328608166170038,
+          "matching": [
+            "Franchise",
+            "Other"
+          ]
+        },
+        {
+          "id": 11,
+          "score": 0.36182991421404237,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 22,
+          "score": 0.4721000300799274,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 46,
+          "score": 0.3218299142140424,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 36,
+          "score": 0.5946766114880057,
+          "matching": [
+            "Game A",
+            "Franchise"
+          ]
+        },
+        {
+          "id": 50,
+          "score": 0.4300447877940715,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 65,
+          "score": 0.30069562533637195,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 43,
+          "score": 0.4300447877940715,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 57,
+          "score": 0.46504478779407155,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 56,
+          "score": 0.39271139669215493,
+          "matching": [
+            "Franchise",
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 9,
+          "score": 0.3318476566592281,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 30,
+          "score": 0.33969562533637193,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 62,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 66,
+          "score": 0.38987042028251867,
+          "matching": [
+            "Franchise",
+            "Game C"
+          ]
+        },
+        {
+          "id": 15,
+          "score": 0.4705424285137846,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 64,
+          "score": 0.4300447877940715,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 61,
+          "score": 0.4133447618020055,
+          "matching": [
+            "Franchise",
+            "Other"
+          ]
+        },
+        {
+          "id": 8,
+          "score": 0.4543060141825769,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 55,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 23,
+          "score": 0.3296956253363719,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 7,
+          "score": 0.2149930304145624,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 33,
+          "score": 0.22238344910806787,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 44,
+          "score": 0.2656956253363719,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 58,
+          "score": 0.2656956253363719,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 63,
+          "score": 0.17720370619528122,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 37,
+          "score": 0.3213239707103056,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 35,
+          "score": 0.21310356420359833,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 17,
+          "score": 0.2571012651711906,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 5,
+          "score": 0.1951817810795483,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 38,
+          "score": 0.19806010270022015,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 24,
+          "score": 0.23210126517119054,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 28,
+          "score": 0.22860455787799394,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 49,
+          "score": 0.21220370619528123,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 2,
+          "score": 0.27715581721077953,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 45,
+          "score": 0.20510126517119054,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 3,
+          "score": 0.18481644281804824,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 12,
+          "score": 0.17928711896990773,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 10,
+          "score": 0.1995316204649059,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 52,
+          "score": 0.17010126517119054,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 59,
+          "score": 0.17010126517119054,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 14,
+          "score": 0.21302854221656584,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 40,
+          "score": 0.14128711896990773,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 19,
+          "score": 0.18801516595419202,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 47,
+          "score": 0.14128711896990773,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 68,
+          "score": 0.14128711896990773,
+          "matching": [
+            "Other"
+          ]
+        },
+        {
+          "id": 70,
+          "score": 0.17720370619528122,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 42,
+          "score": 0.17720370619528122,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 54,
+          "score": 0.14128711896990773,
+          "matching": [
+            "Other"
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "limit": 100,
+      "signalId": 0,
+      "now": 1800000000000,
+      "profile": {
+        "schema_version": 2,
+        "creator_interactions": {},
+        "explicit_fandom_signals": {}
+      },
+      "favorites": [],
+      "previousIds": [],
+      "homeFandoms": [],
+      "expected": []
+    },
+    {
+      "seed": 42,
+      "limit": 100,
+      "signalId": 1,
+      "now": 1800000000000,
+      "profile": {
+        "schema_version": 2,
+        "creator_interactions": {},
+        "explicit_fandom_signals": {
+          "1": {
+            "strength": 5,
+            "last_updated": 1800000000000
+          }
+        }
+      },
+      "favorites": [],
+      "previousIds": [],
+      "homeFandoms": [],
+      "expected": [
+        {
+          "id": 1,
+          "score": 0.2273310344827586,
+          "matching": [
+            "Franchise",
+            "Game A"
+          ]
+        },
+        {
+          "id": 31,
+          "score": 0.20275862068965517,
+          "matching": [
+            "Franchise",
+            "Game C"
+          ]
+        },
+        {
+          "id": 36,
+          "score": 0.1923310344827586,
+          "matching": [
+            "Franchise",
+            "Game A"
+          ]
+        },
+        {
+          "id": 57,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 6,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 51,
+          "score": 0.1923310344827586,
+          "matching": [
+            "Franchise",
+            "Game B"
+          ]
+        },
+        {
+          "id": 46,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 16,
+          "score": 0.1923310344827586,
+          "matching": [
+            "Franchise",
+            "Game B"
+          ]
+        },
+        {
+          "id": 61,
+          "score": 0.17982758620689657,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 17,
+          "score": 0.17982758620689657,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 21,
+          "score": 0.17982758620689657,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 11,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 2,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 9,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 23,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 66,
+          "score": 0.20275862068965517,
+          "matching": [
+            "Franchise",
+            "Game C"
+          ]
+        },
+        {
+          "id": 24,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 43,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 26,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 65,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 56,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 8,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 59,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 45,
+          "score": 0.17982758620689657,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 52,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 37,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 10,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 3,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 29,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 41,
+          "score": 0.17982758620689657,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 38,
+          "score": 0.14482758620689656,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 50,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 44,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 22,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 30,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 64,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 15,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 58,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Game B"
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "limit": 100,
+      "signalId": 3,
+      "now": 1800000000000,
+      "profile": {
+        "schema_version": 2,
+        "creator_interactions": {},
+        "explicit_fandom_signals": {
+          "3": {
+            "strength": 5,
+            "last_updated": 1800000000000
+          }
+        }
+      },
+      "favorites": [],
+      "previousIds": [],
+      "homeFandoms": [
+        "Game A"
+      ],
+      "expected": [
+        {
+          "id": 1,
+          "score": 0.6297586206896552,
+          "matching": [
+            "Game A",
+            "Franchise"
+          ]
+        },
+        {
+          "id": 36,
+          "score": 0.5947586206896551,
+          "matching": [
+            "Game A",
+            "Franchise"
+          ]
+        },
+        {
+          "id": 57,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 50,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 64,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 8,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 41,
+          "score": 0.31499999999999995,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 29,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 43,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 15,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 22,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Game A"
+          ]
+        },
+        {
+          "id": 6,
+          "score": 0.27999999999999997,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 37,
+          "score": 0.26459999999999995,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 31,
+          "score": 0.31895282758620686,
+          "matching": [
+            "Franchise",
+            "Game C"
+          ]
+        },
+        {
+          "id": 2,
+          "score": 0.22959999999999997,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 16,
+          "score": 0.37184,
+          "matching": [
+            "Franchise",
+            "Game B"
+          ]
+        },
+        {
+          "id": 11,
+          "score": 0.27999999999999997,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 23,
+          "score": 0.22959999999999997,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 61,
+          "score": 0.31499999999999995,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 21,
+          "score": 0.31499999999999995,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 56,
+          "score": 0.27999999999999997,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 65,
+          "score": 0.26459999999999995,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 9,
+          "score": 0.26459999999999995,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 51,
+          "score": 0.37184,
+          "matching": [
+            "Franchise",
+            "Game B"
+          ]
+        },
+        {
+          "id": 46,
+          "score": 0.27999999999999997,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 66,
+          "score": 0.31895282758620686,
+          "matching": [
+            "Franchise",
+            "Game C"
+          ]
+        },
+        {
+          "id": 30,
+          "score": 0.22959999999999997,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 44,
+          "score": 0.22959999999999997,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 26,
+          "score": 0.27999999999999997,
+          "matching": [
+            "Franchise"
+          ]
+        },
+        {
+          "id": 58,
+          "score": 0.22959999999999997,
+          "matching": [
+            "Game B"
+          ]
+        },
+        {
+          "id": 17,
+          "score": 0.13238206896551724,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 24,
+          "score": 0.09738206896551722,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 10,
+          "score": 0.09738206896551722,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 45,
+          "score": 0.13238206896551724,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 38,
+          "score": 0.09738206896551722,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 59,
+          "score": 0.09738206896551722,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 3,
+          "score": 0.09738206896551722,
+          "matching": [
+            "Game C"
+          ]
+        },
+        {
+          "id": 52,
+          "score": 0.09738206896551722,
+          "matching": [
+            "Game C"
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "limit": 100,
+      "signalId": 6,
+      "now": 1800000000000,
+      "profile": {
+        "schema_version": 2,
+        "creator_interactions": {},
+        "explicit_fandom_signals": {
+          "6": {
+            "strength": 5,
+            "last_updated": 1800000000000
+          }
+        }
+      },
+      "favorites": [],
+      "previousIds": [],
+      "homeFandoms": [
+        "Original"
+      ],
+      "expected": [
+        {
+          "id": 1,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 13,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 53,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 34,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 40,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 4,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 55,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 49,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 19,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 61,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 10,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 39,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 60,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 18,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 67,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 37,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 32,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 64,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 31,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 22,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 46,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 52,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 58,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 7,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 43,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 11,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 16,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 28,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 25,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Original"
+          ]
+        },
+        {
+          "id": 70,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Original"
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "limit": 100,
+      "signalId": 8,
+      "now": 1800000000000,
+      "profile": {
+        "schema_version": 2,
+        "creator_interactions": {},
+        "explicit_fandom_signals": {
+          "8": {
+            "strength": 5,
+            "last_updated": 1800000000000
+          }
+        }
+      },
+      "favorites": [],
+      "previousIds": [],
+      "homeFandoms": [
+        "Missing parent child"
+      ],
+      "expected": [
+        {
+          "id": 13,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 41,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 69,
+          "score": 0.5177586206896552,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 48,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 55,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 20,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 62,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 6,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 27,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 34,
+          "score": 0.48275862068965514,
+          "matching": [
+            "Missing parent child"
+          ]
+        },
+        {
+          "id": 21,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 35,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 63,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 7,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 70,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 49,
+          "score": 0.15375862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 42,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 56,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 28,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        },
+        {
+          "id": 14,
+          "score": 0.11875862068965515,
+          "matching": [
+            "Missing parent sibling"
+          ]
+        }
+      ]
+    }
+  ],
+  "real": {
+    "profile": {
+      "schema_version": 2,
+      "creator_interactions": {},
+      "explicit_fandom_signals": {
+        "2": {
+          "strength": 5,
+          "last_updated": 1800000000000
+        }
+      }
+    },
+    "favorites": [
+      1000004,
+      1000005,
+      1000006,
+      1000007
+    ],
+    "now": 1800000000000,
+    "seed": 42,
+    "expected": [
+      {
+        "id": 1000436,
+        "score": 0.6823468101548557,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Goddess of Victory: NIKKE"
+        ]
+      },
+      {
+        "id": 1001050,
+        "score": 0.6823468101548557,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Bocchi the Rock!"
+        ]
+      },
+      {
+        "id": 1000755,
+        "score": 0.6506717404955777,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Studio Ghibli"
+        ]
+      },
+      {
+        "id": 1000167,
+        "score": 0.6156717404955777,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Studio Ghibli"
+        ]
+      },
+      {
+        "id": 1001371,
+        "score": 0.6074453964490165,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail"
+        ]
+      },
+      {
+        "id": 1001792,
+        "score": 0.640161475373511,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Arknights: Endfield"
+        ]
+      },
+      {
+        "id": 1001949,
+        "score": 0.5629741592252986,
+        "matching": [
+          "Genshin Impact",
+          "Wuthering Waves",
+          "Zenless Zone Zero"
+        ]
+      },
+      {
+        "id": 1001811,
+        "score": 0.6431214810284364,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Blue Archive"
+        ]
+      },
+      {
+        "id": 1001796,
+        "score": 0.6311971205869475,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Zenless Zone Zero"
+        ]
+      },
+      {
+        "id": 1001904,
+        "score": 0.6424453964490165,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail"
+        ]
+      },
+      {
+        "id": 1001417,
+        "score": 0.640161475373511,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Arknights: Endfield"
+        ]
+      },
+      {
+        "id": 1001769,
+        "score": 0.6214108912460602,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Witch Hat Atelier"
+        ]
+      },
+      {
+        "id": 1001074,
+        "score": 0.5456896102837425,
+        "matching": [
+          "Genshin Impact",
+          "Witch Hat Atelier"
+        ]
+      },
+      {
+        "id": 1000224,
+        "score": 0.6311971205869475,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Zenless Zone Zero"
+        ]
+      },
+      {
+        "id": 1000827,
+        "score": 0.5204364663786435,
+        "matching": [
+          "Genshin Impact",
+          "Hunter x Hunter"
+        ]
+      },
+      {
+        "id": 1001345,
+        "score": 0.6569177642590499,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Frieren: Beyond Journey's End"
+        ]
+      },
+      {
+        "id": 1000767,
+        "score": 0.6214108912460602,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Jujutsu Kaisen"
+        ]
+      },
+      {
+        "id": 1000392,
+        "score": 0.5177586206896552,
+        "matching": [
+          "Genshin Impact"
+        ]
+      },
+      {
+        "id": 1001563,
+        "score": 0.6214108912460602,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Love and Deepspace"
+        ]
+      },
+      {
+        "id": 1001868,
+        "score": 0.6311971205869475,
+        "matching": [
+          "Genshin Impact",
+          "Honkai: Star Rail",
+          "Zenless Zone Zero"
+        ]
+      }
+    ]
+  }
+}

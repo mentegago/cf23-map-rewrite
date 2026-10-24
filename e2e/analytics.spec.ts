@@ -137,10 +137,7 @@ test("real UI emits Flutter-compatible events with search correlation and no pri
   await expect.poll(() => named("gallery_action").at(-1)?.action).toBe("close");
   await page
     .getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Close creator details"
-          : "Back to directory",
+      name: "Close creator details",
       exact: true,
     })
     .click();
@@ -160,10 +157,7 @@ test("real UI emits Flutter-compatible events with search correlation and no pri
   });
   await page
     .getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Close creator details"
-          : "Back to directory",
+      name: "Close creator details",
       exact: true,
     })
     .click();

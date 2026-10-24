@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { Search, X, ArrowLeft, Heart } from "lucide-react";
+import { Search, X, Heart } from "lucide-react";
 import { FavoritesSheet } from "./components/FavoritesSheet";
 import { useApp } from "./state/useApp";
 import { MapView } from "./components/MapView";
-import { Sheet } from "./components/Sheet";
+import { ResponsivePanel } from "./components/ResponsivePanel";
 import { Directory } from "./components/Directory";
 import { CreatorDetail } from "./components/CreatorDetail";
 import { BoothSelector } from "./components/BoothSelector";
 import { Gallery } from "./components/Gallery";
 import { Updates } from "./components/Updates";
-import { Presence } from "./components/Presence";
 import { FandomSuggestions } from "./components/FandomSuggestions";
 import { analytics } from "./data/analytics";
 export default function App() {
@@ -118,22 +117,7 @@ export default function App() {
             (document.activeElement as HTMLElement)?.blur();
         }}
       >
-        {app.selected && !mobile ? (
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={
-              app.favoritesMode && app.showDetail
-                ? "Back to favorites"
-                : "Back to directory"
-            }
-            onClick={() => (app.showDetail ? app.close() : app.resumeDetail())}
-          >
-            <ArrowLeft size={21} />
-          </button>
-        ) : (
-          <Search className="search-icon" size={22} />
-        )}
+        <Search className="search-icon" size={22} />
         <input
           aria-label="Search name, booth, or fandom"
           placeholder="Search name, booth, or fandom..."
@@ -154,30 +138,28 @@ export default function App() {
           </button>
         )}
       </form>
-      {(!detail || mobile) && (
-        <FandomSuggestions
-          fandoms={app.suggestions}
-          onSelect={app.searchFandom}
-          leading={
-            !app.query.trim() &&
-            app.fandomId === undefined &&
-            app.favoriteCreators.length > 0 ? (
-              <button
-                type="button"
-                className="tag pink-tint favorites-tag"
-                aria-label="Favorites"
-                onClick={() => {
-                  setFavoritesExtent(0.56);
-                  app.openFavorites();
-                }}
-              >
-                <Heart size={14} fill="currentColor" /> Favorites{" "}
-                <span>{app.favoriteCreators.length}</span>
-              </button>
-            ) : undefined
-          }
-        />
-      )}
+      <FandomSuggestions
+        fandoms={app.suggestions}
+        onSelect={app.searchFandom}
+        leading={
+          !app.query.trim() &&
+          app.fandomId === undefined &&
+          app.favoriteCreators.length > 0 ? (
+            <button
+              type="button"
+              className="tag pink-tint favorites-tag"
+              aria-label="Favorites"
+              onClick={() => {
+                setFavoritesExtent(0.56);
+                app.openFavorites();
+              }}
+            >
+              <Heart size={14} fill="currentColor" /> Favorites{" "}
+              <span>{app.favoriteCreators.length}</span>
+            </button>
+          ) : undefined
+        }
+      />
     </header>
   );
   return (
@@ -185,61 +167,36 @@ export default function App() {
       <div className={`app-shell ${detail ? "showing-detail" : ""}`}>
         <MapView app={app} />
         <div className="directory-region">
-          {mobile ? (
-            <>
-              <Sheet
-                kind="search"
-                extent={app.searchExtent}
-                onExtent={app.setSearchExtent}
-                hidden={!!detail || favoritesOpen}
-              >
-                {searchHeader}
-                <Directory app={app} />
-              </Sheet>
-              <Presence visible={!!detail} className="detail-presence">
-                {detail && (
-                  <Sheet
-                    kind="detail"
-                    extent={app.detailExtent}
-                    onExtent={app.setDetailExtent}
-                  >
-                    <CreatorDetail key={app.selected!.id} app={app} />
-                  </Sheet>
-                )}
-              </Presence>
-              <Presence visible={favoritesOpen} className="detail-presence">
-                {favoritesOpen && (
-                  <Sheet
-                    kind="favorites"
-                    extent={favoritesExtent}
-                    onExtent={setFavoritesExtent}
-                  >
-                    <FavoritesSheet app={app} onClose={closeFavorites} />
-                  </Sheet>
-                )}
-              </Presence>
-            </>
-          ) : (
-            <>
-              {!favoritesOpen && searchHeader}
-              <div
-                className="desktop-directory"
-                hidden={!!detail || favoritesOpen}
-              >
-                <Directory app={app} />
-              </div>
-              {favoritesOpen && (
-                <section className="desktop-detail" aria-label="Favorites">
-                  <FavoritesSheet app={app} onClose={closeFavorites} />
-                </section>
-              )}
-              {detail && (
-                <div className="desktop-detail">
-                  <CreatorDetail key={app.selected!.id} app={app} />
-                </div>
-              )}
-            </>
-          )}
+          <ResponsivePanel
+            mobile={mobile}
+            kind="search"
+            visible={!detail && !favoritesOpen}
+            extent={app.searchExtent}
+            onExtent={app.setSearchExtent}
+          >
+            {searchHeader}
+            <Directory app={app} />
+          </ResponsivePanel>
+          <ResponsivePanel
+            mobile={mobile}
+            kind="detail"
+            visible={!!detail}
+            extent={app.detailExtent}
+            onExtent={app.setDetailExtent}
+          >
+            {detail && <CreatorDetail key={app.selected!.id} app={app} />}
+          </ResponsivePanel>
+          <ResponsivePanel
+            mobile={mobile}
+            kind="favorites"
+            visible={favoritesOpen}
+            extent={favoritesExtent}
+            onExtent={setFavoritesExtent}
+          >
+            {favoritesOpen && (
+              <FavoritesSheet app={app} onClose={closeFavorites} />
+            )}
+          </ResponsivePanel>
         </div>
         <Updates />
       </div>

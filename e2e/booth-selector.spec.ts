@@ -61,7 +61,7 @@ test("live search restricts a shared booth to the matching creator", async ({
   test.skip(info.project.name !== "desktop");
   const { open } = await prepare(page, false);
   await page
-    .getByRole("button", { name: "Back to directory", exact: true })
+    .getByRole("button", { name: "Close creator details", exact: true })
     .click();
   await page.getByRole("textbox").fill(creators[0].name);
   await page.waitForTimeout(250);
@@ -71,7 +71,7 @@ test("live search restricts a shared booth to the matching creator", async ({
     page.getByRole("heading", { name: creators[0].name, exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Back to directory", exact: true })
+    .getByRole("button", { name: "Close creator details", exact: true })
     .click();
   await page.getByRole("textbox").fill("zzzzzz-no-match");
   await page.waitForTimeout(250);

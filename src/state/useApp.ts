@@ -1,20 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Catalog } from "../domain/search";
+import { Catalog, normalize } from "../domain/search";
 import type { Creator, Snapshot } from "../domain/types";
 import { emptySearch, type SearchSelection } from "../domain/searchSelection";
 import { loadSnapshot, refreshSnapshot } from "../data/snapshots";
-import {
-  loadFavorites,
-  readLocal,
-  saveFavorites,
-  writeLocal,
-} from "../data/storage";
+import { loadFavorites, saveFavorites } from "../data/storage";
 import {
   loadProfile,
   recordFandom,
   recordInteraction,
   saveProfile,
-  interests,
+  rankedInterestedFandoms,
+  type RecommendationSource,
 } from "../domain/recommendations";
 import { parseLink, encodeList, shareURL } from "../domain/links";
 import { searchCollapsed } from "../components/Sheet";
@@ -48,12 +44,6 @@ export function useApp() {
     [searchExtent, setSearchExtent] = useState(searchCollapsed(innerHeight)),
     [detailExtent, setDetailExtent] = useState(0.56),
     [online, setOnline] = useState(navigator.onLine);
-  const seed = useRef(
-    readLocal<number>(
-      "flutter.recommendation_seed",
-      Math.floor(Math.random() * 2147483647),
-    ),
-  );
   const catalog = useMemo(
     () => (snapshot ? new Catalog(snapshot.catalog, snapshot.registry) : null),
     [snapshot?.catalog, snapshot?.registry],
@@ -123,7 +113,6 @@ export function useApp() {
   }, [toast]);
   useEffect(() => {
     saveProfile(profile);
-    writeLocal("flutter.recommendation_seed", seed.current);
   }, [profile]);
   useEffect(() => {
     const check = async () => {
@@ -179,6 +168,7 @@ export function useApp() {
     id: number,
     action: "open" | "gallery" | "link" | "catalog" | "share" | "favorite",
     favorite?: boolean,
+    source: RecommendationSource = "list",
   ) => {
     setProfile((p) =>
       recordInteraction(
@@ -186,6 +176,7 @@ export function useApp() {
         id,
         action === "catalog" ? "link" : action,
         favorite,
+        source,
       ),
     );
   };
@@ -212,7 +203,22 @@ export function useApp() {
     setShowDetail(true);
     setDetailExtent(0.56);
     setSelector(null);
-    interaction(c.id, "open");
+    interaction(
+      c.id,
+      "open",
+      undefined,
+      !push || source === "deeplink"
+        ? "deeplink"
+        : source === "map" || source === "random" || source === "recommendation"
+          ? source
+          : favoritesMode
+            ? "favorites"
+            : custom
+              ? "custom_list"
+              : query.trim()
+                ? "search_result"
+                : "list",
+    );
     (document.activeElement as HTMLElement)?.blur();
     if (push) {
       const u = new URL(location.href);
@@ -407,7 +413,6 @@ export function useApp() {
     snapshot,
     profile,
     favorites,
-    seed.current,
     !query.trim() && !showDetail && !favoritesMode && !gallery && !custom,
   );
   const recommendations = useMemo(
@@ -421,17 +426,19 @@ export function useApp() {
   );
   const suggestions = useMemo(() => {
     if (!catalog) return [];
-    if (query.trim()) return catalog.suggestions(query);
-    const ranked = [...interests(catalog, profile, favorites)]
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => catalog.fandoms.get(id)!)
-      .filter(Boolean);
-    return [
-      ...new Map(
-        [...ranked, ...catalog.popular].map((f) => [f.id, f]),
-      ).values(),
-    ].slice(0, 20);
-  }, [catalog, query, profile, favorites]);
+    if (query.trim() || fandomId !== undefined)
+      return catalog.suggestions(query, fandomId);
+    const ranked = rankedInterestedFandoms(catalog, profile, favorites);
+    const seen = new Set<string>();
+    return [...ranked, ...catalog.popular]
+      .filter((f) => {
+        const key = normalize(f.name);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 20);
+  }, [catalog, query, fandomId, profile, favorites]);
   const search = (text: string) => {
     setFavoritesMode(false);
     analytics.emit("creator_closed", { reason: "search_opened" });
@@ -695,15 +702,6 @@ export function useApp() {
       history.replaceState(null, "", url);
       setSearchSelection(emptySearch);
       close();
-    },
-    resumeDetail: () => {
-      analytics.emit("search_closed", { reason: "back" });
-      if (selectedId !== null)
-        analytics.emit("creator_opened", {
-          creator_id: selectedId,
-          source: "list",
-        });
-      setShowDetail(true);
     },
     searchFandom,
     toggleFavorite,

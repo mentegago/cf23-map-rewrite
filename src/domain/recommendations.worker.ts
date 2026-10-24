@@ -9,10 +9,10 @@ self.onmessage = (
     snapshot?: Snapshot;
     profile: Profile;
     favorites: number[];
-    seed: number;
+    previousIds: number[];
   }>,
 ) => {
-  const { id, snapshot, profile, favorites, seed } = event.data;
+  const { id, snapshot, profile, favorites, previousIds } = event.data;
   try {
     if (snapshot) {
       catalog = new Catalog(snapshot.catalog, snapshot.registry);
@@ -26,7 +26,7 @@ self.onmessage = (
             new Set(favorites),
             proximity,
             20,
-            seed,
+            new Set(previousIds),
           ).map((c) => c.id)
         : [];
     self.postMessage({ id, ids });

@@ -481,7 +481,7 @@ h2 {
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  padding-right: 29px;
+  padding-right: 19px;
 }
 .row-copy strong {
   font-size: 15px;
@@ -510,14 +510,33 @@ h2 {
   font-weight: var(--weight-display);
 }
 .creator-row.has-gallery .row-copy {
-  padding-right: 73px;
+  padding-right: 53px;
 }
 .row-actions {
   display: flex;
   position: absolute;
   right: 6px;
-  /* Align the 21px icon with the name, retaining its 44px hit target. */
+  /* Align icons with the name while retaining a 44px-tall touch target. */
   top: calc(12px - (44px - 21px) / 2);
+}
+.row-actions .icon-button {
+  width: 34px;
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+.row-actions .icon-button::before {
+  content: "";
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  z-index: -1;
+  background: transparent;
+  transition: background-color 160ms;
+}
+.row-actions .icon-button:hover::before {
+  background: color-mix(in srgb, var(--cyan) 14%, transparent);
 }
 .share-actions {
   display: flex;
@@ -638,7 +657,7 @@ h2 {
   height: 42px;
 }
 .detail-actions .detail-close {
-  display: none;
+  display: inline-flex;
   width: 44px;
   height: 44px;
   background: color-mix(in srgb, var(--raised) 92%, transparent);
@@ -647,6 +666,14 @@ h2 {
 .detail-actions .icon-button:hover,
 .favorites-actions .icon-button:hover {
   background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.detail-actions .detail-close:hover,
+.favorites-actions .favorites-close:hover {
+  background: color-mix(
+    in srgb,
+    var(--ink) 12%,
+    color-mix(in srgb, var(--raised) 92%, transparent)
+  );
 }
 .is-favorite {
   color: var(--pink);
@@ -1164,9 +1191,6 @@ dialog::backdrop {
   .detail-actions {
     right: 24px;
   }
-  .detail-actions .detail-close {
-    display: inline-flex;
-  }
   .detail-content {
     padding-bottom: 30px;
   }
@@ -1581,8 +1605,49 @@ a.tag:active,
 .is-favorite svg {
   animation: favorite-pop 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.desktop-detail {
-  animation: detail-reveal 260ms ease-out both;
+@media (min-width: 769px) {
+  .directory-region {
+    overflow: hidden;
+  }
+  .sidebar-page {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    --page-shift: 20px;
+  }
+  .sidebar-search {
+    --page-shift: -12px;
+  }
+  .sidebar-page.entering {
+    z-index: 2;
+    animation: sidebar-enter 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .sidebar-page.exiting {
+    z-index: 1;
+    pointer-events: none;
+    animation: sidebar-exit 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+@keyframes sidebar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--page-shift));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes sidebar-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--page-shift));
+  }
 }
 @keyframes favorite-pop {
   0% {
@@ -1593,16 +1658,6 @@ a.tag:active,
   }
   100% {
     transform: scale(1) rotate(0);
-  }
-}
-@keyframes detail-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 @media (hover: hover) and (pointer: fine) {

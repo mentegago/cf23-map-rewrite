@@ -57,10 +57,17 @@ test("desktop fandoms use native scrolling and reset with new results", async ({
   await page.getByRole("textbox").focus();
   await expect.poll(thumbColor).toBe("rgba(0, 0, 0, 0)");
   await strip.focus();
+  await strip.evaluate((el) => {
+    el.dataset.scrolling = "true";
+    el.addEventListener("scrollend", () => delete el.dataset.scrolling, {
+      once: true,
+    });
+  });
   await page.keyboard.press("ArrowRight");
   await expect
     .poll(() => strip.evaluate((el) => el.scrollLeft))
     .toBeGreaterThan(0);
+  await expect(strip).not.toHaveAttribute("data-scrolling");
   await page.getByRole("textbox").fill("Genshin");
   await expect.poll(() => strip.evaluate((el) => el.scrollLeft)).toBe(0);
   await strip

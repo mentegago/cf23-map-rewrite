@@ -13,6 +13,28 @@ const fandom = [...catalog.fandoms.values()].find(
 const creators = catalog.search("", fandom.id);
 const detailCreator = creators.find((c) => c.fandomIds.includes(fandom.id))!;
 
+test("parent fandom search and selection expose child fandom pills", async ({
+  page,
+}) => {
+  await page.route("https://**/*", (route) => route.abort());
+  await page.goto("/");
+  await page.getByRole("textbox").fill("hoyoverse");
+  const pills = page.getByRole("group", { name: "Creator filters" });
+  const child = pills.getByRole("button", {
+    name: "Genshin Impact",
+    exact: true,
+  });
+  await expect(child).toBeAttached();
+  await pills.getByRole("button", { name: "HoYoverse", exact: true }).click();
+  await expect(child).toBeAttached();
+  await expect(
+    pills.getByRole("button", { name: "Honkai: Star Rail", exact: true }),
+  ).toBeAttached();
+  await child.click();
+  await expect(page).toHaveURL(new RegExp(`\\?fandom=${fandom.id}$`));
+  await expect(page.getByRole("textbox")).toHaveValue(fandom.name);
+});
+
 test("detail fandom tags, reload, and history retain the exact ID filter", async ({
   page,
 }) => {
@@ -60,10 +82,7 @@ test("fandom mode has one history entry and survives opening and closing a creat
   await page.locator(".creator-select").first().click();
   await expect(page).toHaveURL(/creator_id=/);
   await page.reload();
-  const close =
-    info.project.name === "mobile"
-      ? "Close creator details"
-      : "Back to directory";
+  const close = "Close creator details";
   await page.getByRole("button", { name: close, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`\\?fandom=${fandom.id}$`));
   await expect(input).toHaveValue(fandom.name);
@@ -71,10 +90,8 @@ test("fandom mode has one history entry and survives opening and closing a creat
     page.getByText(`${creators.length} results`, { exact: true }),
   ).toBeVisible();
   await page.locator(".creator-select").first().click();
-  if (info.project.name === "mobile") {
-    // The detail sheet covers the search field on mobile.
-    await page.getByRole("button", { name: close, exact: true }).click();
-  }
+  await expect(input).toHaveCount(0);
+  await page.getByRole("button", { name: close, exact: true }).click();
   await input.fill("plain text");
   await expect(page).not.toHaveURL(/fandom=|creator_id=/);
   await expect(input).toHaveValue("plain text");

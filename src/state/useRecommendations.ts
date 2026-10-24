@@ -5,7 +5,6 @@ export function useRecommendations(
   snapshot: Snapshot | null,
   profile: Profile,
   favorites: Set<number>,
-  seed: number,
   keepStable: boolean,
 ) {
   const worker = useRef<Worker | null>(null),
@@ -38,11 +37,11 @@ export function useRecommendations(
         snapshot: sentSnapshot.current === snapshot ? undefined : snapshot,
         profile,
         favorites: [...favorites],
-        seed,
+        previousIds: ids,
       });
       sentSnapshot.current = snapshot;
     }, 120);
     return () => clearTimeout(timer);
-  }, [snapshot, profile, favorites, seed, keepStable]);
+  }, [snapshot, profile, favorites, keepStable]);
   return ids;
 }

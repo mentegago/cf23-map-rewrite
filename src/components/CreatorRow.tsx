@@ -85,7 +85,10 @@ export function CreatorRow({
               .map((f) => f.name)
               .join(" • ")}
             {fandoms.length > 4 && (
-              <span className="more"> • +{fandoms.length - 4} more</span>
+              <>
+                {" • "}
+                <span className="more">+{fandoms.length - 4} more</span>
+              </>
             )}
           </span>
         </span>

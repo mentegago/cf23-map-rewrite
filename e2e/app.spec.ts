@@ -29,6 +29,10 @@ test("creator link, legacy favorites, gallery and search survive offline reload"
   await expect(
     page.getByRole("heading", { name: creator.name, exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Close creator details", exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Remove from favorites", exact: true }),
   ).toBeVisible();
@@ -56,10 +60,7 @@ test("creator link, legacy favorites, gallery and search survive offline reload"
   await page.getByRole("button", { name: "Close gallery" }).click();
   await page
     .getByRole("button", {
-      name:
-        info.project.name === "mobile"
-          ? "Close creator details"
-          : "Back to directory",
+      name: "Close creator details",
     })
     .click();
   const search = page.getByRole("textbox", {
