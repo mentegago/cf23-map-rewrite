@@ -1,4 +1,5 @@
 import type { Feature, MapDocument } from "../domain/types";
+import { boothKey } from "../domain/search";
 export const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
 export interface Transform {
@@ -79,14 +80,18 @@ export class SpatialIndex {
         }
     }
   }
-  hit(x: number, y: number) {
+  hit(x: number, y: number, activeBooths?: ReadonlySet<string>) {
     const bucket =
       this.buckets.get(`${Math.floor(x / 96)},${Math.floor(y / 96)}`) || [];
+    let inactive: Feature | undefined;
     for (let i = bucket.length - 1; i >= 0; i--) {
       const f = bucket[i],
         g = f.geometry;
-      if (x >= g.x && x <= g.x + g.width && y >= g.y && y <= g.y + g.height)
-        return f;
+      if (x >= g.x && x <= g.x + g.width && y >= g.y && y <= g.y + g.height) {
+        if (!activeBooths || activeBooths.has(boothKey(f.id || ""))) return f;
+        inactive ??= f;
+      }
     }
+    return inactive;
   }
 }

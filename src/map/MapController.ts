@@ -244,6 +244,7 @@ export class MapController {
         this.state.hover = this.index.hit(
           (p.x - t.x) / t.scale,
           (p.y - t.y) / t.scale,
+          this.state.activeBooths,
         );
         this.canvas.style.cursor = this.state.hover ? "pointer" : "grab";
         this.canvas.title = this.state.hover?.id || "";
@@ -293,7 +294,11 @@ export class MapController {
     this.canvas.style.cursor = "grab";
     if (!this.moved) {
       const t = this.state.transform,
-        hit = this.index.hit((p.x - t.x) / t.scale, (p.y - t.y) / t.scale);
+        hit = this.index.hit(
+          (p.x - t.x) / t.scale,
+          (p.y - t.y) / t.scale,
+          this.state.activeBooths,
+        );
       if (hit?.id) this.onBooth(hit.id);
       else if (e.timeStamp - this.lastTap < 300)
         this.animate(zoomAt(t, p.x, p.y, 1.7), 250);

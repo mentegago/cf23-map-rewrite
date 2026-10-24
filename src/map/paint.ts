@@ -223,11 +223,17 @@ export function paint(
       g.y * t.scale + t.y <= height + 30
     );
   };
-  for (const booth of [false, true])
+  // Keep active booth fills and borders above inactive neighbors, regardless
+  // of their order in the map data. Selection/hover outlines remain overlays.
+  for (const layer of [0, 1, 2])
     for (const f of s.map.features)
       if (
         f.status !== "suggestion" &&
-        (f.kind === "booth") === booth &&
+        (f.kind !== "booth"
+          ? 0
+          : s.activeBooths.has(boothKey(f.id || ""))
+            ? 2
+            : 1) === layer &&
         visible(f)
       )
         feature(ctx, f, s);
