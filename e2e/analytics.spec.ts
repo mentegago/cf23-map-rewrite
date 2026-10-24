@@ -109,7 +109,7 @@ test("real UI emits Flutter-compatible events with search correlation and no pri
     expect.objectContaining({ title: "CF23 Booth Map", url: "/" }),
   ]);
   await expect.poll(() => named("creator_opened")[0]?.source).toBe("deeplink");
-  expect(named("deeplink_processed")[0]).toMatchObject({
+  await expect.poll(() => named("deeplink_processed")[0]).toMatchObject({
     type: "creator_id",
     source: "initial",
     count: 1,
