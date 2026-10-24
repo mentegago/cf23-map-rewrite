@@ -9,7 +9,7 @@ test("empty fandom suggestions leave no gap and changing the search resets resul
     name: "Search name, booth, or fandom",
   });
   const list = page.getByTestId("directory");
-  const suggestions = page.getByRole("group", { name: "Suggested fandoms" });
+  const suggestions = page.getByRole("group", { name: "Creator filters" });
   await expect(suggestions).toBeVisible();
   const header = page.locator(".search-header");
   const fullHeight = await header.evaluate(

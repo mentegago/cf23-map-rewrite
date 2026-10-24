@@ -1,4 +1,4 @@
-import { Images } from "lucide-react";
+import { Heart, Images } from "lucide-react";
 import type { Creator } from "../domain/types";
 import { safeURL } from "../domain/links";
 import { useState } from "react";
@@ -55,16 +55,22 @@ export function CreatorRow({
   creator,
   onSelect,
   onGallery,
+  favorite,
+  onFavorite,
 }: {
   creator: Creator;
   onSelect: (c: Creator) => void;
   onGallery: (c: Creator) => void;
+  favorite: boolean;
+  onFavorite: (id: number) => void;
 }) {
   const fandoms = [...creator.fandoms].sort(
     (a, b) => Number(b.name === "Original") - Number(a.name === "Original"),
   );
   return (
-    <article className="creator-row">
+    <article
+      className={`creator-row ${creator.assets.gallery.length ? "has-gallery" : ""}`}
+    >
       <button className="creator-select" onClick={() => onSelect(creator)}>
         <BoothAvatar creator={creator} />
         <span className="row-copy">
@@ -84,15 +90,25 @@ export function CreatorRow({
           </span>
         </span>
       </button>
-      {creator.assets.gallery.length > 0 && (
+      <div className="row-actions">
+        {creator.assets.gallery.length > 0 && (
+          <button
+            className="icon-button row-gallery"
+            aria-label={`View ${creator.name} catalog`}
+            onClick={() => onGallery(creator)}
+          >
+            <Images size={21} />
+          </button>
+        )}
         <button
-          className="icon-button row-gallery"
-          aria-label={`View ${creator.name} catalog`}
-          onClick={() => onGallery(creator)}
+          className={`icon-button ${favorite ? "is-favorite" : ""}`}
+          aria-label={`${favorite ? "Remove" : "Add"} ${creator.name} ${favorite ? "from" : "to"} favorites`}
+          aria-pressed={favorite}
+          onClick={() => onFavorite(creator.id)}
         >
-          <Images size={21} />
+          <Heart size={21} fill={favorite ? "currentColor" : "none"} />
         </button>
-      )}
+      </div>
     </article>
   );
 }

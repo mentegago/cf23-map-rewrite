@@ -9,7 +9,7 @@ test("desktop fandoms use native scrolling and reset with new results", async ({
   test.skip(info.project.name !== "desktop");
   await page.route("https://**/*", (route) => route.abort());
   await page.goto("/");
-  const strip = page.getByRole("group", { name: "Suggested fandoms" });
+  const strip = page.getByRole("group", { name: "Creator filters" });
   await expect(strip).toBeVisible();
   await expect(strip).toHaveCSS("scrollbar-width", "auto");
   await expect(

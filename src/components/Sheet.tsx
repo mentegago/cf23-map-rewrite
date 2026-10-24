@@ -23,7 +23,7 @@ export function Sheet({
   children,
   hidden = false,
 }: {
-  kind: "search" | "detail";
+  kind: "search" | "detail" | "favorites";
   extent: number;
   onExtent: (n: number) => void;
   children: ReactNode;
@@ -42,7 +42,8 @@ export function Sheet({
           : "expanded";
     if (reported.current === state) return;
     reported.current = state;
-    analytics.emit("sheet_state_changed", { state, sheet: kind, source });
+    if (kind !== "favorites")
+      analytics.emit("sheet_state_changed", { state, sheet: kind, source });
     if (kind === "search" && state === "collapsed")
       analytics.emit("search_closed", { reason: "dismissed" });
   };
@@ -81,7 +82,7 @@ export function Sheet({
       }
     });
     const min = () =>
-      kind === "detail"
+      kind !== "search"
         ? 0.28
         : searchCollapsed(
             height(),
@@ -95,7 +96,7 @@ export function Sheet({
       const visibleExtent = el.getBoundingClientRect().height / height();
       dragging = true;
       el.classList.add("dragging");
-      if (kind === "detail") el.classList.add("scroll-locked");
+      if (kind !== "search") el.classList.add("scroll-locked");
       el.style.setProperty(
         "--extent",
         String(clamp(visibleExtent, min(), 0.94)),
@@ -200,7 +201,7 @@ export function Sheet({
       const target = snapExtent(
         current(),
         speed,
-        kind === "detail" ? [0.28, 0.56, 0.94] : [min(), 0.94],
+        kind !== "search" ? [0.28, 0.56, 0.94] : [min(), 0.94],
       );
       el.style.setProperty("--extent", String(target));
       el.classList.toggle("scroll-locked", target < 0.9);
@@ -228,7 +229,7 @@ export function Sheet({
         (kind === "detail"
           ? el.querySelector<HTMLElement>(".detail-scroll")
           : null);
-      canExpandContent = kind === "detail" && current() < 0.935;
+      canExpandContent = kind !== "search" && current() < 0.935;
       canCollapseContent = !!scroller && scroller.scrollTop <= 1;
       if (
         !matchMedia("(max-width:768px)").matches ||
@@ -323,7 +324,13 @@ export function Sheet({
     <section
       ref={ref}
       className={`sheet ${kind}-sheet ${extent < 0.9 ? "scroll-locked" : ""} ${extent < 0.3 ? "collapsed" : ""} ${hidden ? "sheet-hidden" : ""}`}
-      aria-label={kind === "search" ? "Creator directory" : "Creator details"}
+      aria-label={
+        kind === "search"
+          ? "Creator directory"
+          : kind === "favorites"
+            ? "Favorites"
+            : "Creator details"
+      }
       inert={hidden}
       aria-hidden={hidden}
     >
@@ -335,7 +342,7 @@ export function Sheet({
           onExtent(
             extent < 0.9
               ? 0.94
-              : kind === "detail"
+              : kind !== "search"
                 ? 0.56
                 : searchCollapsed(innerHeight),
           )

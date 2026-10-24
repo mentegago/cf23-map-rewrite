@@ -6,6 +6,7 @@ export function useRecommendations(
   profile: Profile,
   favorites: Set<number>,
   seed: number,
+  keepStable: boolean,
 ) {
   const worker = useRef<Worker | null>(null),
     generation = useRef(0),
@@ -29,6 +30,8 @@ export function useRecommendations(
   useEffect(() => {
     if (!snapshot) return;
     const id = ++generation.current;
+    // Keep the current rows in place while browsing, but always load a new catalog.
+    if (keepStable && ids.length && sentSnapshot.current === snapshot) return;
     const timer = setTimeout(() => {
       worker.current?.postMessage({
         id,
@@ -40,6 +43,6 @@ export function useRecommendations(
       sentSnapshot.current = snapshot;
     }, 120);
     return () => clearTimeout(timer);
-  }, [snapshot, profile, favorites, seed]);
+  }, [snapshot, profile, favorites, seed, keepStable]);
   return ids;
 }

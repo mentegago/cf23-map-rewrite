@@ -1,14 +1,13 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowLeft, Map as MapIcon, Share2, Plus, Copy } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
 type Row =
   | { type: "creator"; creator: Creator; recommendation?: boolean }
-  | { type: "heading"; title: string; action?: "favorites" }
+  | { type: "heading"; title: string }
   | { type: "curated" }
-  | { type: "share" }
   | { type: "empty" };
 export function Directory({ app }: { app: AppModel }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -29,11 +28,6 @@ export function Directory({ app }: { app: AppModel }) {
       if (!app.results.length) r.push({ type: "empty" });
       add(app.results);
     } else {
-      if (app.favoriteCreators.length) {
-        r.push({ type: "heading", title: "Favorites", action: "favorites" });
-        add(app.favoriteCreators);
-        r.push({ type: "share" });
-      }
       if (app.custom) r.push({ type: "curated" });
       else if (app.recommendations.length) {
         r.push({ type: "heading", title: "Creators you may like" });
@@ -46,14 +40,7 @@ export function Directory({ app }: { app: AppModel }) {
       add(app.creators);
     }
     return r;
-  }, [
-    app.query,
-    app.results,
-    app.favoriteCreators,
-    app.custom,
-    app.recommendations,
-    app.creators,
-  ]);
+  }, [app.query, app.results, app.custom, app.recommendations, app.creators]);
   const virtual = useVirtualizer({
     enabled: !app.showDetail,
     initialOffset: () => savedScroll.current,
@@ -118,6 +105,8 @@ export function Directory({ app }: { app: AppModel }) {
               {row.type === "creator" ? (
                 <CreatorRow
                   creator={row.creator}
+                  favorite={app.favorites.has(row.creator.id)}
+                  onFavorite={app.toggleFavorite}
                   onSelect={(c) =>
                     app.select(
                       c,
@@ -130,28 +119,6 @@ export function Directory({ app }: { app: AppModel }) {
               ) : row.type === "heading" ? (
                 <div className="section-heading">
                   <span>{row.title}</span>
-                  {row.action && (
-                    <button
-                      className="text-button"
-                      onClick={() => app.showOnMap(app.favoriteCreators)}
-                    >
-                      <MapIcon size={15} />
-                      Show on Map
-                    </button>
-                  )}
-                  {row.action === "favorites" && (
-                    <button
-                      className="text-button"
-                      onClick={app.shareFavorites}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        void app.copyBooths();
-                      }}
-                    >
-                      <Share2 size={15} />
-                      Share
-                    </button>
-                  )}
                 </div>
               ) : row.type === "curated" ? (
                 <div className="curated panel">
@@ -167,17 +134,6 @@ export function Directory({ app }: { app: AppModel }) {
                   <button className="text-button" onClick={app.addAll}>
                     <Plus size={17} />
                     Add All to Favorites
-                  </button>
-                </div>
-              ) : row.type === "share" ? (
-                <div className="share-actions">
-                  <button className="text-button" onClick={app.shareFavorites}>
-                    <Share2 size={16} />
-                    Share Favorites
-                  </button>
-                  <button className="text-button" onClick={app.copyBooths}>
-                    <Copy size={16} />
-                    Copy booth codes
                   </button>
                 </div>
               ) : (

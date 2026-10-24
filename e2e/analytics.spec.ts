@@ -55,6 +55,7 @@ test("bulk bookmarks share an operation ID and clipboard failure reports the act
   expect(named("bookmark_changed")).toHaveLength(2);
   for (const bookmark of named("bookmark_changed"))
     expect(bookmark.operation_id).toBe(bulk.operation_id);
+  await page.getByRole("button", { name: "Favorites", exact: true }).click();
   await page
     .getByRole("button", { name: "Share Favorites", exact: true })
     .click();

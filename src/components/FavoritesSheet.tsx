@@ -1,0 +1,212 @@
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Heart, X, Share2 } from "lucide-react";
+import type { AppModel } from "../state/useApp";
+import { CreatorRow } from "./CreatorRow";
+
+function FavoriteRowExit({
+  exiting,
+  onExit,
+  children,
+}: {
+  exiting: boolean;
+  onExit: () => void;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const finish = useRef(onExit);
+  finish.current = onExit;
+  useLayoutEffect(() => {
+    if (!exiting || !ref.current) return;
+    const element = ref.current;
+    const animation = element.animate(
+      [
+        {
+          height: `${element.getBoundingClientRect().height}px`,
+          opacity: 1,
+          transform: "translateX(0)",
+        },
+        { height: "0px", opacity: 0, transform: "translateX(12px)" },
+      ],
+      {
+        duration: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? 0
+          : 240,
+        easing: "cubic-bezier(.22, 1, .36, 1)",
+        fill: "forwards",
+      },
+    );
+    animation.onfinish = () => finish.current();
+    return () => animation.cancel();
+  }, [exiting]);
+  return (
+    <div ref={ref} className="favorite-row-presence" inert={exiting}>
+      {children}
+    </div>
+  );
+}
+
+/** Shared content for the mobile sheet and desktop sidebar. */
+export function FavoritesSheet({
+  app,
+  onClose,
+}: {
+  app: AppModel;
+  onClose: () => void;
+}) {
+  const scroll = useRef<HTMLDivElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const creators = app.filteredFavoriteCreators;
+  const [rows, setRows] = useState(creators);
+  useLayoutEffect(() => {
+    setRows((previous) => {
+      const next = [...creators];
+      // Keep unsaved rows only for their exit animation, not for filter changes.
+      previous.forEach((creator, index) => {
+        if (
+          !app.favorites.has(creator.id) &&
+          !next.some((c) => c.id === creator.id)
+        )
+          next.splice(Math.min(index, next.length), 0, creator);
+      });
+      return next;
+    });
+    // Virtual rows may leave the viewport mid-animation; still retire them.
+    const timer = setTimeout(() => setRows(creators), 260);
+    return () => clearTimeout(timer);
+  }, [creators, app.favorites]);
+  const virtual = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scroll.current,
+    estimateSize: () => 110,
+    getItemKey: (i) => rows[i].id,
+    overscan: 6,
+  });
+  useLayoutEffect(() => {
+    closeButton.current?.focus({ preventScroll: true });
+    virtual.measure();
+  }, []);
+  useLayoutEffect(() => {
+    scroll.current?.scrollTo({ top: 0, behavior: "instant" });
+    virtual.measure();
+  }, [app.favoriteFandomIds]);
+  return (
+    <>
+      <header className="favorites-header" data-drag>
+        <span className="favorites-heart" aria-hidden="true">
+          <Heart size={24} fill="currentColor" />
+        </span>
+        <div>
+          <h2 id="favorites-title">Favorites</h2>
+          <p>
+            {app.favoriteFandomIds.length ? `${creators.length} of ` : ""}
+            {app.favoriteCreators.length} saved creator
+            {app.favoriteCreators.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <div className="favorites-actions">
+          <div className="detail-action-group">
+            <button
+              className="icon-button"
+              aria-label="Share Favorites"
+              onClick={app.shareFavorites}
+              disabled={!app.favoriteCreators.length}
+            >
+              <Share2 size={21} />
+            </button>
+          </div>
+          <button
+            ref={closeButton}
+            className="icon-button favorites-close"
+            aria-label="Close favorites"
+            onClick={onClose}
+          >
+            <X size={22} />
+          </button>
+        </div>
+      </header>
+      {!!app.favoriteFandoms.length && (
+        <div
+          className="suggestions favorites-filters"
+          role="group"
+          aria-label="Filter favorites by fandom"
+          tabIndex={0}
+        >
+          <button
+            className="tag cyan-tint"
+            aria-pressed={!app.favoriteFandomIds.length}
+            onClick={app.clearFavoriteFandoms}
+          >
+            All
+          </button>
+          {app.favoriteFandoms.map((f) => (
+            <button
+              key={f.id}
+              className="tag cyan-tint"
+              aria-pressed={app.favoriteFandomIds.includes(f.id)}
+              onClick={() => app.toggleFavoriteFandom(f.id)}
+            >
+              {f.name}
+              <span className="favorites-filter-count">{f.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div
+        ref={scroll}
+        className="sheet-scroll favorites-list"
+        aria-label="Saved creators"
+      >
+        {rows.length ? (
+          <div style={{ height: virtual.getTotalSize(), position: "relative" }}>
+            {virtual.getVirtualItems().map((v) => (
+              <div
+                key={v.key}
+                ref={virtual.measureElement}
+                data-index={v.index}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${v.start}px)`,
+                }}
+              >
+                <FavoriteRowExit
+                  exiting={!app.favorites.has(rows[v.index].id)}
+                  onExit={() =>
+                    setRows((current) =>
+                      current.filter((c) => c.id !== rows[v.index].id),
+                    )
+                  }
+                >
+                  <CreatorRow
+                    creator={rows[v.index]}
+                    favorite={app.favorites.has(rows[v.index].id)}
+                    onFavorite={app.toggleFavorite}
+                    onSelect={(c) => app.select(c, true, "list")}
+                    onGallery={app.openGallery}
+                  />
+                </FavoriteRowExit>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="favorites-empty">
+            <Heart size={40} aria-hidden="true" />
+            <h3>No favorites yet</h3>
+            <p>Tap the heart on a creator to save them here.</p>
+            <button className="action cyan" onClick={onClose}>
+              Browse creators
+            </button>
+          </div>
+        )}
+      </div>
+      {app.toast && (
+        <p className="favorites-feedback" role="status">
+          {app.toast}
+        </p>
+      )}
+    </>
+  );
+}

@@ -54,9 +54,16 @@ export function MapView({ app }: { app: AppModel }) {
       app.snapshot!.map,
       mapCreators,
       app.selected,
-      !!app.custom,
+      !!app.custom || app.favoritesMode,
     );
-  }, [app.snapshot?.map, mapCreators, visibleIds, app.selected, app.custom]);
+  }, [
+    app.snapshot?.map,
+    mapCreators,
+    visibleIds,
+    app.selected,
+    app.custom,
+    app.favoritesMode,
+  ]);
   useEffect(() => {
     if (app.selected) controller.current!.focus(app.selected);
   }, [app.selected?.id]);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Search, X, ArrowLeft } from "lucide-react";
+import { Search, X, ArrowLeft, Heart } from "lucide-react";
+import { FavoritesSheet } from "./components/FavoritesSheet";
 import { useApp } from "./state/useApp";
 import { MapView } from "./components/MapView";
 import { Sheet } from "./components/Sheet";
@@ -13,6 +14,16 @@ import { FandomSuggestions } from "./components/FandomSuggestions";
 import { analytics } from "./data/analytics";
 export default function App() {
   const app = useApp();
+  const favoritesOpen = app.favoritesMode && !app.showDetail;
+  const [favoritesExtent, setFavoritesExtent] = useState(0.56);
+  const closeFavorites = () => {
+    app.closeFavorites();
+    requestAnimationFrame(() =>
+      document
+        .querySelector<HTMLButtonElement>(".favorites-tag")
+        ?.focus({ preventScroll: true }),
+    );
+  };
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   useEffect(() => {
     const activity = () => analytics.activity();
@@ -63,14 +74,20 @@ export default function App() {
   }, []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !app.gallery && !app.selector) {
-        if (app.showDetail) app.close();
+      if (
+        e.key === "Escape" &&
+        !app.gallery &&
+        !app.selector &&
+        !document.querySelector("dialog[open]")
+      ) {
+        if (favoritesOpen) closeFavorites();
+        else if (app.showDetail) app.close();
         else app.setSearchExtent(0.2);
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [app.showDetail, app.gallery, app.selector]);
+  }, [app.showDetail, app.gallery, app.selector, favoritesOpen]);
   if (app.error)
     return (
       <div className="loading">
@@ -105,7 +122,11 @@ export default function App() {
           <button
             type="button"
             className="icon-button"
-            aria-label="Back to directory"
+            aria-label={
+              app.favoritesMode && app.showDetail
+                ? "Back to favorites"
+                : "Back to directory"
+            }
             onClick={() => (app.showDetail ? app.close() : app.resumeDetail())}
           >
             <ArrowLeft size={21} />
@@ -137,6 +158,24 @@ export default function App() {
         <FandomSuggestions
           fandoms={app.suggestions}
           onSelect={app.searchFandom}
+          leading={
+            !app.query.trim() &&
+            app.fandomId === undefined &&
+            app.favoriteCreators.length > 0 ? (
+              <button
+                type="button"
+                className="tag pink-tint favorites-tag"
+                aria-label="Favorites"
+                onClick={() => {
+                  setFavoritesExtent(0.56);
+                  app.openFavorites();
+                }}
+              >
+                <Heart size={14} fill="currentColor" /> Favorites{" "}
+                <span>{app.favoriteCreators.length}</span>
+              </button>
+            ) : undefined
+          }
         />
       )}
     </header>
@@ -152,7 +191,7 @@ export default function App() {
                 kind="search"
                 extent={app.searchExtent}
                 onExtent={app.setSearchExtent}
-                hidden={!!detail}
+                hidden={!!detail || favoritesOpen}
               >
                 {searchHeader}
                 <Directory app={app} />
@@ -168,13 +207,32 @@ export default function App() {
                   </Sheet>
                 )}
               </Presence>
+              <Presence visible={favoritesOpen} className="detail-presence">
+                {favoritesOpen && (
+                  <Sheet
+                    kind="favorites"
+                    extent={favoritesExtent}
+                    onExtent={setFavoritesExtent}
+                  >
+                    <FavoritesSheet app={app} onClose={closeFavorites} />
+                  </Sheet>
+                )}
+              </Presence>
             </>
           ) : (
             <>
-              {searchHeader}
-              <div className="desktop-directory" hidden={!!detail}>
+              {!favoritesOpen && searchHeader}
+              <div
+                className="desktop-directory"
+                hidden={!!detail || favoritesOpen}
+              >
                 <Directory app={app} />
               </div>
+              {favoritesOpen && (
+                <section className="desktop-detail" aria-label="Favorites">
+                  <FavoritesSheet app={app} onClose={closeFavorites} />
+                </section>
+              )}
               {detail && (
                 <div className="desktop-detail">
                   <CreatorDetail key={app.selected!.id} app={app} />

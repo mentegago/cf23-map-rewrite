@@ -29,6 +29,8 @@ import { SearchTracking, type SearchContext } from "../domain/searchTracking";
 import { telemetryId } from "../domain/eventId";
 export function useApp() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
+    [favoritesMode, setFavoritesMode] = useState(false),
+    [favoriteFandomIds, setFavoriteFandomIds] = useState<number[]>([]),
     [error, setError] = useState(""),
     [searchSelection, setSearchSelection] =
       useState<SearchSelection>(emptySearch),
@@ -357,6 +359,37 @@ export function useApp() {
     () => catalog?.creators.filter((c) => favorites.has(c.id)) || [],
     [catalog, favorites],
   );
+  const favoriteFandoms = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const creator of favoriteCreators)
+      for (const id of new Set(creator.fandomIds))
+        if (catalog?.fandoms.has(id)) counts.set(id, (counts.get(id) || 0) + 1);
+    return [...counts]
+      .map(([id, count]) => ({ ...catalog!.fandoms.get(id)!, count }))
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.name.localeCompare(b.name) || a.id - b.id,
+      );
+  }, [favoriteCreators, catalog]);
+  useEffect(() => {
+    const available = new Set(favoriteFandoms.map((f) => f.id));
+    setFavoriteFandomIds((ids) =>
+      ids.every((id) => available.has(id))
+        ? ids
+        : ids.filter((id) => available.has(id)),
+    );
+  }, [favoriteFandoms]);
+  const filteredFavoriteCreators = useMemo(() => {
+    const available = new Set(favoriteFandoms.map((f) => f.id));
+    const selected = new Set(
+      favoriteFandomIds.filter((id) => available.has(id)),
+    );
+    return selected.size
+      ? favoriteCreators.filter((c) =>
+          c.fandomIds.some((id) => selected.has(id)),
+        )
+      : favoriteCreators;
+  }, [favoriteCreators, favoriteFandoms, favoriteFandomIds]);
   useEffect(() => {
     if (!gallery) return;
     analytics.emit("gallery_action", {
@@ -375,6 +408,7 @@ export function useApp() {
     profile,
     favorites,
     seed.current,
+    !query.trim() && !showDetail && !favoritesMode && !gallery && !custom,
   );
   const recommendations = useMemo(
     () =>
@@ -382,8 +416,8 @@ export function useApp() {
         ? []
         : recommendationIds
             .map((id) => catalog?.byId.get(id))
-            .filter((c): c is Creator => !!c && !favorites.has(c.id)),
-    [recommendationIds, catalog, custom, favorites],
+            .filter((c): c is Creator => !!c),
+    [recommendationIds, catalog, custom],
   );
   const suggestions = useMemo(() => {
     if (!catalog) return [];
@@ -399,6 +433,7 @@ export function useApp() {
     ].slice(0, 20);
   }, [catalog, query, profile, favorites]);
   const search = (text: string) => {
+    setFavoritesMode(false);
     analytics.emit("creator_closed", { reason: "search_opened" });
     tracking.current!.changed(text);
     const url = new URL(location.href);
@@ -424,8 +459,9 @@ export function useApp() {
     } = {},
   ) => {
     setSearchSelection({ kind: "fandom", id });
+    setFavoritesMode(false);
     setCustom(null);
-    if (custom) {
+    if (custom || favoritesMode) {
       scope.current = { current: "full_catalog", origin: "full_catalog" };
       if (searchContext.current)
         searchContext.current = {
@@ -538,6 +574,7 @@ export function useApp() {
     setSearchExtent(searchCollapsed(innerHeight));
   };
   const fullList = () => {
+    setFavoritesMode(false);
     tracking.current!.reset();
     scope.current = { current: "full_catalog", origin: "full_catalog" };
     analytics.emit("list_scope_changed", {
@@ -585,6 +622,24 @@ export function useApp() {
     setGallery(c);
   };
   return {
+    favoritesMode,
+    openFavorites: () => {
+      setFavoriteFandomIds([]);
+      fullList();
+      close();
+      setFavoritesMode(true);
+      scope.current = { current: "shared_list", origin: "shared_list" };
+      analytics.emit("list_scope_changed", {
+        scope: "shared_list",
+        origin_scope: "shared_list",
+        count: favoriteCreators.length,
+      });
+    },
+    closeFavorites: () => {
+      setFavoritesMode(false);
+      close();
+      fullList();
+    },
     snapshot,
     error,
     retry,
@@ -613,10 +668,19 @@ export function useApp() {
     creators,
     results,
     favoriteCreators,
+    favoriteFandoms,
+    favoriteFandomIds,
+    filteredFavoriteCreators,
+    toggleFavoriteFandom: (id: number) =>
+      setFavoriteFandomIds((ids) =>
+        ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id],
+      ),
+    clearFavoriteFandoms: () => setFavoriteFandomIds([]),
     recommendations,
     suggestions,
     search,
     openSearch: () => {
+      if (favoritesMode) fullList();
       analytics.emit("search_opened", {});
       analytics.emit("creator_closed", { reason: "search_opened" });
       setShowDetail(false);

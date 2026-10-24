@@ -51,7 +51,7 @@ test("fandom mode has one history entry and survives opening and closing a creat
   const input = page.getByRole("textbox");
   await input.fill(fandom.name);
   const tag = page
-    .getByRole("group", { name: "Suggested fandoms" })
+    .getByRole("group", { name: "Creator filters" })
     .getByRole("button", { name: fandom.name, exact: true });
   await tag.click();
   const historyLength = await page.evaluate(() => history.length);
