@@ -43,18 +43,21 @@ test("search list fades during snapping and follows sheet drag progress", async 
       type: "touchMove",
       touchPoints: [{ id: 1, x, y: y - i * 35 }],
     });
-  const progress = await sheet.evaluate((el) => {
+  const { progress, opacity: dragOpacity } = await sheet.evaluate((el) => {
     const collapsed = Number(
       getComputedStyle(el).getPropertyValue("--collapsed-extent"),
     );
     const extent =
       el.getBoundingClientRect().height /
       document.getElementById("app")!.clientHeight;
-    return (extent - collapsed) / (0.94 - collapsed);
+    return {
+      progress: (extent - collapsed) / (0.94 - collapsed),
+      opacity: Number(getComputedStyle(el.querySelector(".directory")!).opacity),
+    };
   });
   expect(progress).toBeGreaterThan(0.1);
   expect(progress).toBeLessThan(0.9);
-  expect(await opacity()).toBeCloseTo(progress, 2);
+  expect(dragOpacity).toBeCloseTo(progress, 2);
   await client.send("Input.dispatchTouchEvent", {
     type: "touchEnd",
     touchPoints: [],
