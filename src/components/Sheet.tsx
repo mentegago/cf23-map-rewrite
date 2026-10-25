@@ -23,6 +23,8 @@ export function Sheet({
   onExtent,
   children,
   hidden = false,
+  minimumExtent,
+  twoDetents = false,
 }: {
   kind: "search" | "detail" | "list";
   label?: string;
@@ -30,6 +32,8 @@ export function Sheet({
   onExtent: (n: number) => void;
   children: ReactNode;
   hidden?: boolean;
+  minimumExtent?: number;
+  twoDetents?: boolean;
 }) {
   const ref = useRef<HTMLElement>(null),
     callback = useRef(onExtent);
@@ -84,14 +88,15 @@ export function Sheet({
       }
     });
     const min = () =>
-      kind !== "search"
+      minimumExtent ??
+      (kind !== "search"
         ? 0.28
         : searchCollapsed(
             height(),
             parseFloat(
               getComputedStyle(el).getPropertyValue("--safe-bottom"),
             ) || 0,
-          );
+          ));
     const current = () =>
       Number(el.style.getPropertyValue("--extent")) || min();
     const beginDrag = () => {
@@ -203,7 +208,7 @@ export function Sheet({
       const target = snapExtent(
         current(),
         speed,
-        kind !== "search" ? [0.28, 0.56, 0.94] : [min(), 0.94],
+        kind !== "search" && !twoDetents ? [min(), 0.56, 0.94] : [min(), 0.94],
       );
       el.style.setProperty("--extent", String(target));
       el.classList.toggle("scroll-locked", target < 0.9);
@@ -321,7 +326,7 @@ export function Sheet({
       el.removeEventListener("touchend", contentEnd);
       el.removeEventListener("touchcancel", contentEnd);
     };
-  }, [kind]);
+  }, [kind, minimumExtent, twoDetents]);
   return (
     <section
       ref={ref}
@@ -345,7 +350,7 @@ export function Sheet({
             extent < 0.9
               ? 0.94
               : kind !== "search"
-                ? 0.56
+                ? (minimumExtent ?? 0.56)
                 : searchCollapsed(innerHeight),
           )
         }

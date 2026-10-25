@@ -24,6 +24,7 @@ import type {
 import { SearchTracking, type SearchContext } from "../domain/searchTracking";
 import { telemetryId } from "../domain/eventId";
 import { resetStandaloneURL, updateNavigationURL } from "./navigation";
+import { useVisitRoute } from "./useVisitRoute";
 export function useApp(mobile: boolean) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [boothList, setBoothList] = useState<
@@ -411,6 +412,7 @@ export function useApp(mobile: boolean) {
       ? listCreators.filter((c) => c.fandomIds.some((id) => selected.has(id)))
       : listCreators;
   }, [listCreators, listFandoms, listFandomIds]);
+  const visitRoute = useVisitRoute(snapshot, filteredListCreators, boothList);
   useEffect(() => {
     if (!gallery) return;
     analytics.emit("gallery_action", {
@@ -562,15 +564,33 @@ export function useApp(mobile: boolean) {
     );
     return success;
   };
+  const shareLink = async (
+    url: string,
+    title: string,
+    copiedMessage: string,
+  ) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return true;
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return false;
+      }
+    }
+    return copy(url, copiedMessage);
+  };
   const shareCreator = (c: Creator) => {
     interaction(c.id, "share");
-    void copy(shareURL("creator_id", c.id), "Creator link copied!").then(
-      (success) =>
-        analytics.emit("creator_action", {
-          creator_id: c.id,
-          action: "share",
-          success,
-        }),
+    void shareLink(
+      shareURL("creator_id", c.id),
+      c.name,
+      "Creator link copied!",
+    ).then((success) =>
+      analytics.emit("creator_action", {
+        creator_id: c.id,
+        action: "share",
+        success,
+      }),
     );
   };
   const fullList = () => {
@@ -630,6 +650,7 @@ export function useApp(mobile: boolean) {
     close();
   };
   return {
+    visitRoute,
     favoritesMode,
     boothList,
     openFavorites: () => {
@@ -712,8 +733,9 @@ export function useApp(mobile: boolean) {
     interaction,
     setShowDetail,
     shareFavorites: () => {
-      void copy(
+      void shareLink(
         shareURL("list", encodeList(favorites)),
+        "CF23 Map · Favorites",
         "Shareable Favorites URL copied!",
       ).then((success) =>
         analytics.emit("favorites_action", {
@@ -721,6 +743,13 @@ export function useApp(mobile: boolean) {
           success,
           count: favorites.size,
         }),
+      );
+    },
+    shareBoothList: () => {
+      void shareLink(
+        shareURL("list", encodeList(listCreators.map((creator) => creator.id))),
+        "CF23 Map · Booth list",
+        "Booth list link copied!",
       );
     },
   };

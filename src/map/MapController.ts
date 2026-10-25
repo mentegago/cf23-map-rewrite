@@ -10,6 +10,8 @@ import {
 } from "./geometry";
 import { paint, type PaintState } from "./paint";
 import { analytics } from "../data/analytics";
+import type { VisitRoute } from "./visitRoute";
+import { routeFrame } from "./routeFraming";
 /** Owns high-frequency gestures/rendering independently of React state. */
 export class MapController {
   private pendingFocus: Creator | null = null;
@@ -131,6 +133,34 @@ export class MapController {
     );
     this.state.selected = new Set(selected?.booths.map(boothKey) || []);
     this.state.curated = curated;
+    this.draw();
+  }
+  setRoute(route?: VisitRoute, leftInset = 0, legIndex = -1, reframe = false) {
+    const show =
+      route &&
+      route.stops.length &&
+      (reframe ||
+        route !== this.state.route ||
+        legIndex !== this.state.routeLeg);
+    this.state.route = route;
+    this.state.routeLeg = legIndex;
+    if (show) {
+      const frame = routeFrame(
+        this.state.map,
+        route,
+        legIndex,
+        this.width,
+        this.height,
+        matchMedia("(max-width:768px)").matches,
+        leftInset,
+        parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--safe-bottom",
+          ),
+        ) || 0,
+      );
+      if (frame) this.animate(frame);
+    }
     this.draw();
   }
   focus(creator: Creator) {

@@ -27,6 +27,7 @@ test("bulk bookmarks share an operation ID and clipboard failure reports the act
     await r.fulfill({ contentType: "application/json", body: "{}" });
   });
   await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { value: undefined });
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText: () => Promise.reject(Error("Denied")) },
     });
@@ -42,7 +43,7 @@ test("bulk bookmarks share an operation ID and clipboard failure reports the act
     page.getByRole("region", { name: "Booth list", exact: true }),
   ).toBeVisible();
   if (await expand.isVisible()) await expand.click();
-  await page.getByRole("button", { name: "Add all to favorites" }).click();
+  await page.getByRole("button", { name: "Favorite all" }).click();
   const named = (name: string) =>
     events.filter((e) => e.name === name).map((e) => e.data);
   await expect.poll(() => named("favorites_action").length).toBe(1);

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, X, Heart } from "lucide-react";
 import { BoothListSheet } from "./components/BoothListSheet";
+import { VisitPathSheet } from "./components/VisitPathSheet";
+import { VisitDayDialog } from "./components/VisitDayDialog";
 import { useApp } from "./state/useApp";
 import { MapView } from "./components/MapView";
 import { ResponsivePanel } from "./components/ResponsivePanel";
@@ -27,6 +29,19 @@ export default function App() {
     !app.selector &&
     app.suggestions.length > 0;
   const [listExtent, setListExtent] = useState(0.56);
+  const routeMinimum = Math.min(
+    0.45,
+    (176 +
+      (parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--safe-bottom",
+        ),
+      ) || 0)) /
+      (visualViewport?.height || innerHeight),
+  );
+  const [routeExtent, setRouteExtent] = useState(routeMinimum);
+  const [choosingVisitDay, setChoosingVisitDay] = useState(false);
+  const routeOpen = listOpen && app.visitRoute.enabled;
   const closeBoothList = () => {
     app.closeBoothList();
     requestAnimationFrame(() =>
@@ -240,11 +255,41 @@ export default function App() {
             mobile={mobile}
             kind="list"
             label={app.favoritesMode ? "Favorites" : "Booth list"}
-            visible={listOpen}
+            visible={listOpen && !routeOpen}
             extent={listExtent}
             onExtent={setListExtent}
           >
-            {listOpen && <BoothListSheet app={app} onClose={closeBoothList} />}
+            {listOpen && !routeOpen && (
+              <BoothListSheet
+                app={app}
+                onClose={closeBoothList}
+                onNavigate={() => {
+                  setRouteExtent(routeMinimum);
+                  if (!app.visitRoute.needsDaySelection)
+                    app.visitRoute.setEnabled(true);
+                  else setChoosingVisitDay(true);
+                }}
+              />
+            )}
+          </ResponsivePanel>
+          <ResponsivePanel
+            mobile={mobile}
+            kind="list"
+            label="Visit path"
+            visible={routeOpen}
+            extent={routeExtent}
+            minimumExtent={routeMinimum}
+            twoDetents
+            onExtent={setRouteExtent}
+          >
+            {routeOpen && (
+              <VisitPathSheet
+                app={app}
+                collapsed={mobile && routeExtent <= routeMinimum + 0.01}
+                onClose={() => app.visitRoute.setEnabled(false)}
+                onShowPath={() => setRouteExtent(routeMinimum)}
+              />
+            )}
           </ResponsivePanel>
         </div>
         <Updates />
@@ -268,6 +313,17 @@ export default function App() {
       >
         {app.toast}
       </div>
+      {choosingVisitDay && (
+        <VisitDayDialog
+          days={app.snapshot.catalog.event.days}
+          onClose={() => setChoosingVisitDay(false)}
+          onChoose={(day) => {
+            app.visitRoute.setDay(day);
+            setChoosingVisitDay(false);
+            app.visitRoute.setEnabled(true);
+          }}
+        />
+      )}
       {app.gallery && (
         <Gallery creator={app.gallery} onClose={() => app.setGallery(null)} />
       )}

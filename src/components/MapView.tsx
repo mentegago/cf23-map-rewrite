@@ -58,6 +58,15 @@ export function MapView({ app }: { app: AppModel }) {
   useEffect(() => {
     if (app.selected) controller.current!.focus(app.selected);
   }, [app.selected?.id]);
+  useEffect(() => {
+    controller.current!.setRoute(
+      app.visitRoute.route,
+      0,
+      app.visitRoute.legIndex,
+      !app.showDetail,
+    );
+  }, [app.visitRoute.route, app.visitRoute.legIndex, app.showDetail]);
+  const route = app.visitRoute.route;
   return (
     <div className="map-region">
       <canvas
@@ -89,20 +98,22 @@ export function MapView({ app }: { app: AppModel }) {
           <Expand size={19} />
         </button>
       </div>
-      <div className="map-actions">
-        <button
-          className="action yellow"
-          onClick={() => {
-            const c =
-              mapCreators[Math.floor(Math.random() * mapCreators.length)];
-            if (c) app.select(c, true, "random");
-          }}
-          disabled={!mapCreators.length}
-        >
-          <Sparkles size={18} />
-          Surprise me!
-        </button>
-      </div>
+      {!route && (
+        <div className="map-actions">
+          <button
+            className="action yellow"
+            onClick={() => {
+              const c =
+                mapCreators[Math.floor(Math.random() * mapCreators.length)];
+              if (c) app.select(c, true, "random");
+            }}
+            disabled={!mapCreators.length}
+          >
+            <Sparkles size={18} />
+            Surprise me!
+          </button>
+        </div>
+      )}
       {!app.online && (
         <span className="offline-badge" role="status">
           Offline · saved map

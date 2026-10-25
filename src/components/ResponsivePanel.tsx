@@ -11,6 +11,8 @@ export function ResponsivePanel({
   extent,
   onExtent,
   children,
+  minimumExtent,
+  twoDetents,
 }: {
   mobile: boolean;
   kind: "search" | "detail" | "list";
@@ -19,6 +21,8 @@ export function ResponsivePanel({
   extent: number;
   onExtent: (extent: number) => void;
   children: ReactNode;
+  minimumExtent?: number;
+  twoDetents?: boolean;
 }) {
   const search = kind === "search";
   if (!mobile) {
@@ -50,6 +54,8 @@ export function ResponsivePanel({
       extent={extent}
       onExtent={onExtent}
       hidden={!visible}
+      minimumExtent={minimumExtent}
+      twoDetents={twoDetents}
     >
       {children}
     </Sheet>

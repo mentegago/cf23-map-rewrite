@@ -1,6 +1,8 @@
 import type { Feature, MapDocument } from "../domain/types";
 import { boothKey } from "../domain/search";
 import { clamp, type Transform } from "./geometry";
+import type { VisitRoute } from "./visitRoute";
+import { paintVisitRoute } from "./paintVisitRoute";
 const light = [
   "#ffd9e8",
   "#c9f7fc",
@@ -32,6 +34,8 @@ const borders = [
   "#3775cc",
 ];
 export interface PaintState {
+  route?: VisitRoute;
+  routeLeg?: number;
   map: MapDocument;
   transform: Transform;
   dark: boolean;
@@ -41,7 +45,7 @@ export interface PaintState {
   curated: boolean;
   reference: number;
 }
-function colors(f: Feature, s: PaintState) {
+function colors(f: Feature, s: PaintState, destination: boolean) {
   const ink = s.dark ? "#fff6e8" : "#191522",
     muted = s.dark ? "#292331" : "#f0e8de";
   let fill = f.color || "#64748b",
@@ -72,6 +76,11 @@ function colors(f: Feature, s: PaintState) {
         ? "#4a4a4a"
         : "#bdbdbd";
     text = active && (s.dark || s.curated) ? "#fff" : ink;
+    if (destination) {
+      fill = "#ffdc60";
+      border = "#c39200";
+      text = "#191522";
+    }
   } else if (f.kind === "area") fill += "0a";
   else if (f.kind === "hall") fill += "2e";
   else if (f.kind === "highlight") {
@@ -80,9 +89,14 @@ function colors(f: Feature, s: PaintState) {
   } else if (f.kind === "text") text = f.themeAware ? ink : fill;
   return { fill, border, text };
 }
-function feature(ctx: CanvasRenderingContext2D, f: Feature, s: PaintState) {
+function feature(
+  ctx: CanvasRenderingContext2D,
+  f: Feature,
+  s: PaintState,
+  destination = false,
+) {
   const g = f.geometry;
-  const c = colors(f, s);
+  const c = colors(f, s, destination);
   ctx.save();
   if (f.kind === "arrow" || (f.kind === "wall" && f.lineStart)) {
     const start = f.lineStart || { x: 0, y: 0.5 },
@@ -225,25 +239,32 @@ export function paint(
   };
   // Keep active booth fills and borders above inactive neighbors, regardless
   // of their order in the map data. Selection/hover outlines remain overlays.
-  for (const layer of [0, 1, 2])
+  const destinationBooths = new Set(
+    s.route?.stops[s.routeLeg ?? -1]?.booths.map(boothKey) || [],
+  );
+  for (const layer of [0, 1, 2, 3])
     for (const f of s.map.features)
       if (
         f.status !== "suggestion" &&
         (f.kind !== "booth"
           ? 0
-          : s.activeBooths.has(boothKey(f.id || ""))
-            ? 2
-            : 1) === layer &&
+          : destinationBooths.has(boothKey(f.id || ""))
+            ? 3
+            : s.activeBooths.has(boothKey(f.id || ""))
+              ? 2
+              : 1) === layer &&
         visible(f)
       )
-        feature(ctx, f, s);
+        feature(ctx, f, s, destinationBooths.has(boothKey(f.id || "")));
+  if (s.route) paintVisitRoute(ctx, s.route, s.routeLeg ?? -1, t.scale, s.dark);
   for (const f of s.map.features) {
     if (f.status === "suggestion") continue;
     const selected = f.kind === "booth" && s.selected.has(boothKey(f.id || ""));
     if (!selected && s.hover !== f) continue;
     const g = f.geometry;
     ctx.fillStyle = selected ? "#ff3d8d66" : "#00c8e044";
-    ctx.fillRect(g.x, g.y, g.width, g.height);
+    if (!destinationBooths.has(boothKey(f.id || "")))
+      ctx.fillRect(g.x, g.y, g.width, g.height);
     ctx.strokeStyle = selected ? (s.dark ? "#ffdc60" : "#ff3d8d") : "#00c8e0";
     ctx.lineWidth = 3 / t.scale;
     ctx.strokeRect(

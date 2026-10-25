@@ -1,0 +1,329 @@
+import { test, expect, type Locator } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { encodeList } from "../src/domain/links";
+const catalog = JSON.parse(
+  readFileSync("public/data/catalog-initial.json", "utf8"),
+);
+const everyDayCreators = catalog.exhibitors
+  .filter((c: any) =>
+    catalog.event.days.every((day: any) => c.attendanceDates.includes(day.id)),
+  )
+  .slice(0, 12);
+const creators = [
+  ...everyDayCreators,
+  catalog.exhibitors.find((c: any) => c.attendanceDates.length === 1),
+];
+const url = `/?list=${encodeList(creators.map((c: any) => Number(c.id)))}`;
+async function expand(sheet: Locator) {
+  const button = sheet.getByRole("button", {
+    name: "Expand panel",
+    exact: true,
+  });
+  if (await button.isVisible()) await button.click();
+}
+
+test("all-day lists navigate immediately and show Any day without day toggles", async ({
+  page,
+}) => {
+  await page.route("https://cf23-config.nnt.gg/**", (r) => r.abort());
+  await page.goto(
+    `/?list=${encodeList(everyDayCreators.map((c: any) => Number(c.id)))}`,
+  );
+  const list = page.getByRole("region", { name: "Booth list", exact: true });
+  const sheet = page.getByRole("region", { name: "Visit path", exact: true });
+  for (let i = 0; i < 2; i++) {
+    await list.getByRole("button", { name: "Navigate", exact: true }).click();
+    await expect(sheet).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(sheet.locator(".visit-path-title")).toContainText("Any day");
+    await expect(sheet.getByRole("group", { name: "Visit day" })).toHaveCount(
+      0,
+    );
+    await expect(sheet.getByRole("navigation")).toContainText("Stop 1 of");
+    await sheet
+      .getByRole("button", { name: "Back to list", exact: true })
+      .click();
+  }
+});
+
+test("Navigate opens a separate compact page with working stop controls and expandable itinerary", async ({
+  page,
+  context,
+}, info) => {
+  await page.route("https://cf23-config.nnt.gg/**", (r) => r.abort());
+  await page.goto(url);
+  const list = page.getByRole("region", { name: "Booth list", exact: true });
+  await expect(list).toBeVisible();
+  const bulk = list.locator(".booth-list-bulk");
+  await expect(
+    bulk.getByRole("button", { name: "Favorite all" }),
+  ).toBeVisible();
+  await bulk.getByRole("button", { name: "Navigate", exact: true }).click();
+  const dayDialog = page.getByRole("dialog", {
+    name: "When are you visiting?",
+  });
+  await expect(dayDialog).toBeVisible();
+  await expect(dayDialog).toContainText(
+    "Some creators in this list only attend on certain days.",
+  );
+  await dayDialog.getByRole("button", { name: "Sunday", exact: true }).click();
+  const sheet = page.getByRole("region", { name: "Visit path", exact: true });
+  await expect(sheet).toBeVisible();
+  await expect(list).not.toBeVisible();
+  const nav = sheet.getByRole("navigation", { name: "Visit path navigation" });
+  await expect(nav).toContainText("Stop 1 of");
+  await expect(sheet.locator(".visit-destination-name")).not.toBeEmpty();
+  await nav.getByRole("button", { name: "Next route stop" }).click();
+  await expect(nav).toContainText("Stop 2 of");
+  await sheet.getByRole("button", { name: "Saturday", exact: true }).click();
+  const warning = page.getByRole("dialog", { name: "Switch to Saturday?" });
+  await expect(warning).toContainText("stop 1");
+  await warning.getByRole("button", { name: "Keep current day" }).click();
+  await expect(nav).toContainText("Stop 2 of");
+  await expect(
+    sheet.getByRole("button", { name: "Sunday", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await sheet.getByRole("button", { name: "Saturday", exact: true }).click();
+  await warning
+    .getByRole("button", { name: "Switch to Saturday", exact: true })
+    .click();
+  await expect(nav).toContainText("Stop 1 of");
+  await sheet.getByRole("button", { name: "Sunday", exact: true }).click();
+  await expect(nav).toContainText("Stop 1 of");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const mapTransform = () =>
+    page.locator(".map-canvas").evaluate((el) => {
+      const matrix = (el as HTMLCanvasElement).getContext("2d")!.getTransform();
+      return { scale: matrix.a, x: matrix.e, y: matrix.f };
+    });
+  // Wait for route framing before comparing the return animation's destination.
+  await page.waitForTimeout(500);
+  const routeTransform = await mapTransform();
+  await nav
+    .getByRole("button", { name: /^Open details for / })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Creator details", exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(async () =>
+      Math.abs((await mapTransform()).scale - routeTransform.scale),
+    )
+    .toBeGreaterThan(0.01);
+  await page
+    .getByRole("button", { name: "Close creator details", exact: true })
+    .click();
+  await expect(sheet).toBeVisible();
+  await expect
+    .poll(async () => {
+      const current = await mapTransform();
+      return Math.max(
+        Math.abs(current.scale - routeTransform.scale),
+        Math.abs(current.x - routeTransform.x),
+        Math.abs(current.y - routeTransform.y),
+      );
+    })
+    .toBeLessThan(0.5);
+  if (info.project.name === "mobile") {
+    await expect
+      .poll(async () => (await sheet.boundingBox())!.height)
+      .toBeCloseTo(176, 0);
+    await expect(sheet.getByRole("list", { name: "Visit order" })).toHaveCount(
+      0,
+    );
+    await page.screenshot({ path: info.outputPath("route-collapsed.png") });
+    const grip = (await sheet.locator(".grip").boundingBox())!;
+    const client = await context.newCDPSession(page);
+    const x = grip.x + grip.width / 2,
+      y = grip.y + grip.height / 2;
+    await client.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ id: 1, x, y }],
+    });
+    for (let i = 1; i <= 12; i++)
+      await client.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ id: 1, x, y: y - (580 * i) / 12 }],
+      });
+    await client.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(
+      sheet.getByRole("button", { name: "Collapse panel", exact: true }),
+    ).toBeVisible();
+  }
+  const order = sheet.getByRole("list", { name: "Visit order" });
+  await expect(order).toBeVisible();
+  await page.screenshot({ path: info.outputPath("route-expanded.png") });
+  await sheet.getByRole("button", { name: "Overview", exact: true }).click();
+  await expect(nav).toContainText("Whole visit path");
+  if (info.project.name === "mobile") {
+    await expect
+      .poll(async () => (await sheet.boundingBox())!.height)
+      .toBeCloseTo(176, 0);
+    await expect(sheet.locator(".visit-path-header")).toHaveCSS(
+      "border-bottom-color",
+      "rgba(0, 0, 0, 0)",
+    );
+  }
+  await expand(sheet);
+  await sheet
+    .getByRole("button", { name: "Follow route", exact: true })
+    .click();
+  await expand(sheet);
+  await order
+    .getByRole("button", { name: "Show path", exact: true })
+    .nth(1)
+    .click();
+  await expect(nav).toContainText("Stop 2 of");
+  if (info.project.name === "mobile")
+    await expect
+      .poll(async () => (await sheet.boundingBox())!.height)
+      .toBeCloseTo(176, 0);
+  await expand(sheet);
+  await order.locator(".visit-stop-creator").first().click();
+  await page
+    .getByRole("button", { name: "Close creator details", exact: true })
+    .click();
+  await expect(sheet).toBeVisible();
+  await sheet
+    .getByRole("button", { name: "Back to list", exact: true })
+    .click();
+  await expect(list).toBeVisible();
+});
+
+test("day choices survive closing the route page but reset when the booth list closes", async ({
+  page,
+  isMobile,
+}) => {
+  await page.route("https://cf23-config.nnt.gg/**", (r) => r.abort());
+  await page.goto(url);
+  const list = page.getByRole("region", { name: "Booth list", exact: true });
+  await list.getByRole("button", { name: "Navigate", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "When are you visiting?" })
+    .getByRole("button", { name: "Saturday", exact: true })
+    .click();
+  const sheet = page.getByRole("region", { name: "Visit path", exact: true });
+  await expect(sheet).toBeVisible();
+  await expand(sheet);
+  const ready = () => expect(sheet.getByRole("status")).toContainText("stops");
+  await ready();
+  const order = sheet.getByRole("list", { name: "Visit order" });
+  const first = order.locator("li").nth(1);
+  const booth = await first.locator("strong").innerText();
+  const creatorName = (
+    await first.locator(".visit-stop-creator").allTextContents()
+  ).join(" · ");
+  const row = order.locator("li").filter({
+    has: page.locator("strong", { hasText: new RegExp(`^${booth}$`) }),
+  });
+  const count = await order.locator("li").count();
+  await first.getByRole("button", { name: "Skip", exact: true }).click();
+  await ready();
+  await expect(row).toHaveClass("visit-stop-skipped");
+  await expect(order.locator("li")).toHaveCount(count);
+  await sheet.getByRole("button", { name: "Next route stop" }).click();
+  await expect(sheet.getByRole("navigation")).toContainText("Stop 2 of");
+  await row
+    .getByRole("button", { name: "Start from here", exact: true })
+    .click();
+  const startDialog = page.getByRole("dialog", {
+    name: `Start from ${creatorName}?`,
+    exact: true,
+  });
+  await expect(startDialog).toBeVisible();
+  await startDialog.getByRole("button", { name: "Keep current route" }).click();
+  await expect(sheet.getByRole("navigation")).toContainText("Stop 2 of");
+  await expect(sheet.locator(".visit-path-content")).toHaveAttribute(
+    "aria-hidden",
+    "false",
+  );
+  await row
+    .getByRole("button", { name: "Start from here", exact: true })
+    .click();
+  await startDialog
+    .getByRole("button", { name: "Start from here", exact: true })
+    .click();
+  await expect(sheet.getByRole("navigation")).toContainText("Stop 1 of");
+  if (isMobile)
+    await expect(sheet.locator(".visit-path-content")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+  await expand(sheet);
+  await ready();
+  await sheet.getByRole("button", { name: "Sunday", exact: true }).click();
+  await ready();
+  await expect(order.locator(".visit-stop-skipped")).toHaveCount(0);
+  await expect(order.locator(".visit-route-entrance")).toContainText(
+    "Starting here",
+  );
+  await sheet.getByRole("button", { name: "Saturday", exact: true }).click();
+  await ready();
+  await expect(row).toContainText("Starting here");
+  await sheet
+    .getByRole("button", { name: "Back to list", exact: true })
+    .click();
+  await list.getByRole("button", { name: "Navigate", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "When are you visiting?" })
+    .getByRole("button", { name: "Saturday", exact: true })
+    .click();
+  await expect(sheet).toBeVisible();
+  await expand(sheet);
+  await ready();
+  await expect(row).toHaveClass("visit-stop-skipped");
+  await expect(row).toContainText("Starting here");
+  await sheet.getByRole("button", { name: "Next route stop" }).click();
+  await expect(sheet.getByRole("navigation")).toContainText("Stop 2 of");
+  await order
+    .locator(".visit-route-entrance")
+    .getByRole("button", { name: "Start from here" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Start from Entrance?", exact: true })
+    .getByRole("button", { name: "Start from here", exact: true })
+    .click();
+  await expect(sheet.getByRole("navigation")).toContainText("Stop 1 of");
+  if (isMobile)
+    await expect(sheet.locator(".visit-path-content")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+  await expand(sheet);
+  await ready();
+  await row.getByRole("button", { name: "Unskip", exact: true }).click();
+  await ready();
+  await expect(order.locator(".visit-stop-skipped")).toHaveCount(0);
+  await row.getByRole("button", { name: "Skip", exact: true }).click();
+  await ready();
+  await sheet
+    .getByRole("button", { name: "Back to list", exact: true })
+    .click();
+  await list.getByRole("button", { name: "Favorite all", exact: true }).click();
+  await list
+    .getByRole("button", { name: "Close booth list", exact: true })
+    .click();
+  await page.locator(".favorites-tag").click();
+  const favorites = page.getByRole("region", {
+    name: "Favorites",
+    exact: true,
+  });
+  await favorites
+    .getByRole("button", { name: "Navigate", exact: true })
+    .click();
+  await page
+    .getByRole("dialog", { name: "When are you visiting?" })
+    .getByRole("button", { name: "Saturday", exact: true })
+    .click();
+  await expect(sheet).toBeVisible();
+  await expand(sheet);
+  await ready();
+  await expect(order.locator(".visit-stop-skipped")).toHaveCount(0);
+  await expect(order.locator(".visit-route-entrance")).toContainText(
+    "Starting here",
+  );
+});

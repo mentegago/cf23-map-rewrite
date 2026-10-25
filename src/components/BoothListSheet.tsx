@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Heart, X, Share2, List, Plus } from "lucide-react";
+import { Heart, X, Share2, List } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { CreatorRow } from "./CreatorRow";
 
@@ -50,14 +50,27 @@ function FavoriteRowExit({
 export function BoothListSheet({
   app,
   onClose,
+  onNavigate,
 }: {
   app: AppModel;
   onClose: () => void;
+  onNavigate: () => void;
 }) {
   const isFavorites = app.boothList?.kind === "favorites";
   const title = isFavorites ? "Favorites" : "Booth list";
   const allSaved = app.listCreators.every((c) => app.favorites.has(c.id));
   const scroll = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const [controlsHeight, setControlsHeight] = useState(0);
+  useLayoutEffect(() => {
+    const controls = controlsRef.current!;
+    const measure = () =>
+      setControlsHeight(controls.getBoundingClientRect().height);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(controls);
+    return () => observer.disconnect();
+  }, []);
   const closeButton = useRef<HTMLButtonElement>(null);
   const creators = app.filteredListCreators;
   const [rows, setRows] = useState(creators);
@@ -85,6 +98,7 @@ export function BoothListSheet({
     estimateSize: () => 110,
     getItemKey: (i) => rows[i].id,
     overscan: 6,
+    scrollMargin: controlsHeight,
   });
   useLayoutEffect(() => {
     closeButton.current?.focus({ preventScroll: true });
@@ -114,18 +128,16 @@ export function BoothListSheet({
           </p>
         </div>
         <div className="favorites-actions">
-          {isFavorites && (
-            <div className="detail-action-group">
-              <button
-                className="icon-button"
-                aria-label="Share Favorites"
-                onClick={app.shareFavorites}
-                disabled={!app.listCreators.length}
-              >
-                <Share2 size={21} />
-              </button>
-            </div>
-          )}
+          <div className="detail-action-group">
+            <button
+              className="icon-button"
+              aria-label={isFavorites ? "Share Favorites" : "Share booth list"}
+              onClick={isFavorites ? app.shareFavorites : app.shareBoothList}
+              disabled={!app.listCreators.length}
+            >
+              <Share2 size={21} />
+            </button>
+          </div>
           <button
             ref={closeButton}
             className="icon-button favorites-close"
@@ -136,58 +148,68 @@ export function BoothListSheet({
           </button>
         </div>
       </header>
-      {!isFavorites && (
-        <div className="booth-list-bulk">
-          <button
-            className="action pink"
-            onClick={app.addAll}
-            disabled={allSaved}
-          >
-            {allSaved ? (
-              <Heart size={17} fill="currentColor" />
-            ) : (
-              <Plus size={17} />
-            )}
-            {allSaved ? "All added to favorites" : "Add all to favorites"}
-          </button>
-        </div>
-      )}
-      {!!app.listFandoms.length && (
-        <div
-          className="suggestions favorites-filters"
-          role="group"
-          aria-label={
-            isFavorites
-              ? "Filter favorites by fandom"
-              : "Filter booth list by fandom"
-          }
-          tabIndex={0}
-        >
-          <button
-            className="tag cyan-tint"
-            aria-pressed={!app.listFandomIds.length}
-            onClick={app.clearListFandoms}
-          >
-            All
-          </button>
-          {app.listFandoms.map((f) => (
-            <button
-              key={f.id}
-              className="tag cyan-tint"
-              aria-pressed={app.listFandomIds.includes(f.id)}
-              onClick={() => app.toggleListFandom(f.id)}
-            >
-              {f.name}
-              <span className="favorites-filter-count">{f.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
       <div
         ref={scroll}
         className="sheet-scroll favorites-list"
         aria-label={isFavorites ? "Saved creators" : "Listed creators"}
       >
+        <div ref={controlsRef}>
+          {!!creators.length && (
+            <div className="booth-list-bulk">
+              {!isFavorites && (
+                <button
+                  className="action pink"
+                  aria-label={
+                    allSaved ? "All saved to favorites" : "Favorite all"
+                  }
+                  onClick={app.addAll}
+                  disabled={allSaved}
+                >
+                  {allSaved ? (
+                    <Heart size={17} fill="currentColor" />
+                  ) : (
+                    <Heart size={17} />
+                  )}
+                  {allSaved ? "All saved" : "Favorite all"}
+                </button>
+              )}
+              <button className="action cyan" onClick={onNavigate}>
+                Navigate
+              </button>
+            </div>
+          )}
+          {!!app.listFandoms.length && (
+            <div
+              className="suggestions favorites-filters"
+              role="group"
+              aria-label={
+                isFavorites
+                  ? "Filter favorites by fandom"
+                  : "Filter booth list by fandom"
+              }
+              tabIndex={0}
+            >
+              <button
+                className="tag cyan-tint"
+                aria-pressed={!app.listFandomIds.length}
+                onClick={app.clearListFandoms}
+              >
+                All
+              </button>
+              {app.listFandoms.map((f) => (
+                <button
+                  key={f.id}
+                  className="tag cyan-tint"
+                  aria-pressed={app.listFandomIds.includes(f.id)}
+                  onClick={() => app.toggleListFandom(f.id)}
+                >
+                  {f.name}
+                  <span className="favorites-filter-count">{f.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {rows.length ? (
           <div style={{ height: virtual.getTotalSize(), position: "relative" }}>
             {virtual.getVirtualItems().map((v) => (
@@ -200,7 +222,7 @@ export function BoothListSheet({
                   top: 0,
                   left: 0,
                   width: "100%",
-                  transform: `translateY(${v.start}px)`,
+                  transform: `translateY(${v.start - controlsHeight}px)`,
                 }}
               >
                 <FavoriteRowExit

@@ -641,9 +641,13 @@ h2 {
 }
 .booth-list-bulk {
   padding: 0 16px 16px;
+  display: flex;
+  gap: 10px;
 }
 .booth-list-bulk .action {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
 }
 .empty {
   text-align: center;
@@ -2013,7 +2017,8 @@ a.tag:active,
   border-radius: 999px;
   gap: 6px;
 }
-.favorites-filters .tag[aria-pressed="true"] {
+.favorites-filters .tag[aria-pressed="true"],
+.visit-route-days .tag[aria-pressed="true"] {
   background: var(--cyan);
   color: #111018;
   border-color: var(--cyan);
@@ -2050,4 +2055,355 @@ a.tag:active,
     padding-top: 8px;
     touch-action: none;
   }
+}
+
+.visit-route-controls {
+  padding: 10px 16px;
+  flex-shrink: 0;
+}
+.visit-route-controls p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+.visit-route-days {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.visit-route-stops {
+  list-style: none;
+  padding: 8px 16px;
+  margin: 0;
+}
+.visit-route-stops li {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  align-items: flex-start;
+}
+.visit-route-stops li > span {
+  border-radius: 50%;
+  background: #ffdc60;
+  color: #191522;
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+.visit-route-stops strong {
+  font-size: 12px;
+}
+.visit-route-stops button {
+  display: block;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 5px 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.visit-route-stops button:hover {
+  text-decoration: underline;
+}
+.visit-route-missing {
+  padding: 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.visit-route-stops .visit-stop-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.visit-route-stops .visit-stop-actions button {
+  border: 1px solid var(--muted);
+  border-radius: 12px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+.visit-route-stops .visit-stop-actions button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cyan) 15%, transparent);
+  text-decoration: none;
+}
+.visit-route-stops .visit-stop-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.visit-route-stops .visit-stop-skipped {
+  color: var(--muted);
+}
+.visit-route-stops .visit-stop-skipped > span {
+  background: color-mix(in srgb, var(--muted) 20%, transparent);
+  color: var(--muted);
+}
+.visit-route-start-label {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.route-navigation-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.route-navigation-main > div {
+  min-width: 0;
+  text-align: center;
+}
+.route-navigation-main strong,
+.route-navigation-main small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.route-navigation-main strong {
+  font-size: 14px;
+}
+.route-navigation-main small {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+.route-navigation-main .icon-button {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+.route-navigation-main button:disabled {
+  opacity: 0.3;
+}
+.visit-stop-actions button[aria-pressed="true"] {
+  background: var(--cyan);
+  color: #191522;
+  border-color: var(--cyan);
+}
+.visit-path-header {
+  flex-shrink: 0;
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--outline);
+}
+.visit-path-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.visit-path-title .icon-button {
+  width: 32px;
+  height: 32px;
+}
+.visit-path-header .route-navigation-main {
+  min-height: 48px;
+}
+.visit-path-header .route-navigation-main strong {
+  font-size: 17px;
+}
+.visit-path-header .route-navigation-main .icon-button {
+  width: 44px;
+  height: 44px;
+}
+.visit-path-content {
+  transition: opacity 180ms ease;
+}
+.visit-path-collapsed {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (max-width: 768px) {
+  .visit-path-header {
+    touch-action: none;
+  }
+}
+.visit-path-header.is-collapsed {
+  border-bottom-color: transparent;
+}
+.visit-path-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.visit-path-toolbar .visit-route-days {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--paper);
+  border: 1px solid var(--outline);
+}
+.visit-day {
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.visit-day[aria-pressed="true"] {
+  color: #191522;
+  background: var(--cyan);
+}
+.visit-day:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--cyan) 10%, transparent);
+}
+.visit-overview {
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.visit-overview:hover {
+  background: color-mix(in srgb, var(--cyan) 12%, transparent);
+}
+.visit-path-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-left: -6px;
+  border: 1px solid var(--outline);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.visit-path-back:hover {
+  background: color-mix(in srgb, var(--cyan) 10%, transparent);
+  color: var(--ink);
+}
+.visit-path-header .visit-path-title {
+  margin-bottom: 8px;
+}
+.visit-destination-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  margin-top: 3px;
+  font-weight: 600;
+}
+.visit-day-dialog {
+  width: min(360px, calc(100vw - 32px));
+  padding: 24px;
+  color: var(--ink);
+  background: var(--raised);
+  border: 1.5px solid var(--ink);
+  border-radius: 24px 8px 24px 8px;
+  box-shadow: 5px 5px var(--cyan);
+  animation: popup-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.visit-day-dialog::backdrop {
+  background: #100d1a99;
+}
+.visit-day-dialog > svg {
+  color: var(--pink);
+}
+.visit-day-dialog h2 {
+  font-size: 20px;
+  margin: 12px 0 8px;
+}
+.visit-day-dialog p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.visit-day-options {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0 16px;
+}
+.visit-day-options button {
+  flex: 1;
+}
+.visit-day-cancel {
+  display: block;
+  margin: auto;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .visit-day-dialog {
+    animation: none;
+  }
+}
+.visit-path-title {
+  gap: 8px;
+}
+.visit-path-title .visit-route-days {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--paper);
+  border: 1px solid var(--outline);
+}
+.visit-path-title .visit-day {
+  padding: 8px;
+  font-size: 11px;
+}
+.visit-destination-link {
+  display: inline;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--outline);
+  text-underline-offset: 3px;
+}
+.visit-destination-link svg {
+  vertical-align: middle;
+  margin-left: 3px;
+  color: var(--muted);
+}
+.visit-destination-link:hover {
+  color: var(--pink);
+  text-decoration-color: currentColor;
+}
+.visit-path-header .route-navigation-main .multi-booth-destination {
+  white-space: normal;
+  font-size: 14px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+}
+.visit-any-day {
+  color: var(--muted);
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--paper);
 }

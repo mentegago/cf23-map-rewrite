@@ -140,7 +140,7 @@ test("shared list opens its own sheet, keeps rows after saving, and returns to g
   if (await expand.isVisible()) await expand.click();
   await expect(sheet.locator(".creator-select")).toHaveCount(2);
   await sheet
-    .getByRole("button", { name: "Add all to favorites", exact: true })
+    .getByRole("button", { name: "Favorite all", exact: true })
     .click();
   await expect
     .poll(() =>
@@ -152,7 +152,7 @@ test("shared list opens its own sheet, keeps rows after saving, and returns to g
     )
     .toBe(2);
   await expect(
-    sheet.getByRole("button", { name: "All added to favorites" }),
+    sheet.getByRole("button", { name: "All saved to favorites" }),
   ).toBeDisabled();
   await sheet
     .getByRole("button", { name: /Remove .* from favorites/ })

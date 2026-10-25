@@ -9,6 +9,62 @@ const registry = JSON.parse(
   readFileSync("public/data/fandoms-initial.json", "utf8"),
 );
 
+test("list actions and fandoms scroll away while the header stays fixed", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("https://cf23-config.nnt.gg/**", (r) => r.abort());
+  const ids = catalog.exhibitors.slice(0, 60).map((c: any) => Number(c.id));
+  await page.addInitScript(
+    (ids) =>
+      localStorage.setItem(
+        "flutter.favorite_creator_ids",
+        JSON.stringify(ids.map(String)),
+      ),
+    ids,
+  );
+  for (const favorites of [false, true]) {
+    await page.goto(favorites ? "/" : `/?list=${encodeList(ids)}`);
+    if (favorites) await page.locator(".favorites-tag").click();
+    const sheet = page.getByRole("region", {
+      name: favorites ? "Favorites" : "Booth list",
+      exact: true,
+    });
+    await expect(sheet).toBeVisible();
+    const expand = sheet.getByRole("button", {
+      name: "Expand panel",
+      exact: true,
+    });
+    if (await expand.isVisible()) await expand.click();
+    const scroll = sheet.locator(".favorites-list");
+    const header = sheet.locator(".favorites-header");
+    const controls = scroll.locator(".booth-list-bulk");
+    await expect(controls).toBeVisible();
+    await expect(scroll.locator(".favorites-filters")).toBeVisible();
+    const headerY = (await header.boundingBox())!.y;
+    const controlY = (await controls.boundingBox())!.y;
+    await scroll.evaluate((el) =>
+      el.scrollTo({ top: 600, behavior: "instant" }),
+    );
+    await expect
+      .poll(async () => (await controls.boundingBox())!.y)
+      .toBeLessThan(controlY - 500);
+    expect((await header.boundingBox())!.y).toBeCloseTo(headerY, 0);
+    await expect(scroll.locator(".creator-select").first()).toBeAttached();
+    await scroll.evaluate((el) => el.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(
+      sheet.getByRole("button", { name: "Navigate", exact: true }),
+    ).toBeVisible();
+    await expect
+      .poll(
+        async () => (await scroll.locator("[data-index='0']").boundingBox())!.y,
+      )
+      .toBeGreaterThan(
+        (await scroll.locator(".favorites-filters").boundingBox())!.y,
+      );
+  }
+});
+
 test("pasted encoded list filters independently, saves the entire list, and survives detail reload", async ({
   page,
 }, info) => {
@@ -42,7 +98,7 @@ test("pasted encoded list filters independently, saves the entire list, and surv
   await pill.click();
   await expect(sheet.locator(".creator-select")).toHaveCount(matches.length);
   await sheet
-    .getByRole("button", { name: "Add all to favorites", exact: true })
+    .getByRole("button", { name: "Favorite all", exact: true })
     .click();
   await expect
     .poll(() =>
