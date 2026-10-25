@@ -72,7 +72,7 @@ test("vertical tag drags resize the sheet without scrolling horizontally or sele
   await page.route("https://**/*", (r) => r.abort());
   await page.goto("/");
   const sheet = page.getByRole("region", { name: "Creator directory" });
-  const strip = page.locator(".suggestions");
+  const strip = sheet.locator(".header-suggestions .suggestions");
   await expect(strip).toBeVisible();
   const client = await context.newCDPSession(page);
   const touch = (
