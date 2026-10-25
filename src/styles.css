@@ -265,59 +265,6 @@ h2 {
 .desktop-kicker {
   margin-bottom: 10px;
 }
-.header-suggestions {
-  max-height: 80px;
-  transition:
-    opacity 160ms ease,
-    transform 220ms ease,
-    max-height 220ms ease;
-}
-.header-suggestions.suggestions-away {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(6px);
-  visibility: hidden;
-}
-.keyboard-suggestions {
-  overflow: hidden;
-  position: fixed;
-  z-index: 7;
-  top: calc(var(--app-top, 0px) + var(--app-height, 100dvh) - 8px);
-  left: 8px;
-  right: 8px;
-  padding-inline: 8px;
-  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--paper) 94%, transparent);
-  box-shadow: 0 4px 20px #0003;
-  backdrop-filter: blur(12px);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(calc(-100% + 10px));
-  transition:
-    opacity 160ms ease,
-    transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    visibility 220ms;
-}
-.keyboard-suggestions.visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-100%);
-}
-.keyboard-suggestions .suggestions {
-  margin-inline: -8px;
-  padding: 10px;
-  scroll-padding-inline: 10px;
-}
-.keyboard-suggestions-open .directory {
-  padding-bottom: 68px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .header-suggestions,
-  .keyboard-suggestions {
-    transition: none;
-  }
-}
 .search-row {
   display: flex;
   align-items: center;

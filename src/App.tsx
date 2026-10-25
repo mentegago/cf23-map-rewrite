@@ -13,25 +13,15 @@ import { Gallery } from "./components/Gallery";
 import { Updates } from "./components/Updates";
 import { FandomSuggestions } from "./components/FandomSuggestions";
 import { analytics } from "./data/analytics";
-import { useSearchKeyboard } from "./state/useSearchKeyboard";
 export default function App() {
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   const app = useApp(mobile);
   const searchInput = useRef<HTMLInputElement>(null);
-  const fandomScroll = useRef({ key: "", left: 0 });
   const listOpen = !!app.boothList && !app.showDetail;
-  const keyboardOpen = useSearchKeyboard(searchInput, mobile);
   const showFavorites =
     !app.query.trim() &&
     app.fandomId === undefined &&
     app.favoriteCreators.length > 0;
-  const floatingSuggestions =
-    keyboardOpen &&
-    !app.showDetail &&
-    !listOpen &&
-    !app.gallery &&
-    !app.selector &&
-    (app.suggestions.length > 0 || showFavorites);
   const [listExtent, setListExtent] = useState(0.56);
   const routeMinimum = Math.min(
     0.45,
@@ -211,14 +201,8 @@ export default function App() {
           </div>
         )}
       </div>
-      <div
-        className={`header-suggestions ${floatingSuggestions ? "suggestions-away" : ""}`}
-        inert={floatingSuggestions}
-        aria-hidden={floatingSuggestions}
-      >
+      <div className="header-suggestions">
         <FandomSuggestions
-          scrollPosition={fandomScroll}
-          active={!floatingSuggestions}
           fandoms={app.suggestions}
           onSelect={app.searchFandom}
           leading={favoritesPill}
@@ -228,9 +212,7 @@ export default function App() {
   );
   return (
     <>
-      <div
-        className={`app-shell ${detail ? "showing-detail" : ""} ${floatingSuggestions ? "keyboard-suggestions-open" : ""}`}
-      >
+      <div className={`app-shell ${detail ? "showing-detail" : ""}`}>
         <MapView app={app} />
         <div className="directory-region">
           <ResponsivePanel
@@ -302,19 +284,6 @@ export default function App() {
           </ResponsivePanel>
         </div>
         <Updates />
-      </div>
-      <div
-        className={`keyboard-suggestions ${floatingSuggestions ? "visible" : ""}`}
-        inert={!floatingSuggestions}
-        aria-hidden={!floatingSuggestions}
-      >
-        <FandomSuggestions
-          scrollPosition={fandomScroll}
-          active={floatingSuggestions}
-          fandoms={app.suggestions}
-          onSelect={app.searchFandom}
-          leading={favoritesPill}
-        />
       </div>
       <div
         className={`toast ${app.toast ? "visible" : ""}`}
