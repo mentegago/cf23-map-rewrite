@@ -398,7 +398,7 @@ test("day choices survive closing the route page but reset when the booth list c
   await list
     .getByRole("button", { name: "Close booth list", exact: true })
     .click();
-  await page.locator(".favorites-tag").click();
+  await page.getByRole("button", { name: "Favorites", exact: true }).click();
   const favorites = page.getByRole("region", {
     name: "Favorites",
     exact: true,

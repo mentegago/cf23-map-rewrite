@@ -57,7 +57,8 @@ for (const mode of ["native", "cancel", "fallback"] as const) {
             ? `/?creator_id=${ids[0]}`
             : "/",
       );
-      if (kind === "favorites") await page.locator(".favorites-tag").click();
+      if (kind === "favorites")
+        await page.getByRole("button", { name: "Favorites", exact: true }).click();
       await page
         .getByRole("button", {
           name:

@@ -27,7 +27,8 @@ test("list actions and fandoms scroll away while the header stays fixed", async 
   );
   for (const favorites of [false, true]) {
     await page.goto(favorites ? "/" : `/?list=${encodeList(ids)}`);
-    if (favorites) await page.locator(".favorites-tag").click();
+    if (favorites)
+      await page.getByRole("button", { name: "Favorites", exact: true }).click();
     const sheet = page.getByRole("region", {
       name: favorites ? "Favorites" : "Booth list",
       exact: true,
