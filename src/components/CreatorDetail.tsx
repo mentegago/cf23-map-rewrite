@@ -83,6 +83,7 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                     action: "circle_cut",
                     success: true,
                     expanded: !expanded,
+                    origin: app.creatorOrigin,
                   });
                   setExpanded(!expanded);
                   if (!expanded) app.setDetailExtent(0.94);
@@ -104,7 +105,12 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                     onClick={(e) => {
                       e.preventDefault();
                       app.interaction(c.id, "catalog");
-                      launchForAnalytics(catalog, "catalog", c.id);
+                      launchForAnalytics(
+                        catalog,
+                        "catalog",
+                        c.id,
+                        app.creatorOrigin,
+                      );
                     }}
                   >
                     <ExternalLink size={17} />
@@ -147,7 +153,12 @@ export function CreatorDetail({ app }: { app: AppModel }) {
                         onClick={(e) => {
                           e.preventDefault();
                           app.interaction(c.id, "link");
-                          launchForAnalytics(link.url, "external_link", c.id);
+                          launchForAnalytics(
+                            link.url,
+                            "external_link",
+                            c.id,
+                            app.creatorOrigin,
+                          );
                         }}
                       >
                         <Link size={14} />

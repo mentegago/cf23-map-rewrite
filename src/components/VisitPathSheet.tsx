@@ -47,7 +47,12 @@ export function VisitPathSheet({
                   .join(" · ") || pendingStart.stop.booth
               : "Entrance"
           }
-          onClose={() => setPendingStart(null)}
+          onClose={() => {
+            app.visitRoute.track("start_cancel", {
+              target: pendingStart.stop ? "booth" : "entrance",
+            });
+            setPendingStart(null);
+          }}
           onConfirm={() => {
             app.visitRoute.startFrom(pendingStart.stop);
             setPendingStart(null);
@@ -59,9 +64,15 @@ export function VisitPathSheet({
         <VisitDayDialog
           confirmSwitch
           days={[pendingDay]}
-          onClose={() => setPendingDay(null)}
+          onClose={() => {
+            app.visitRoute.track("day_cancel", {
+              source: "confirmation",
+              day_id: pendingDay.id,
+            });
+            setPendingDay(null);
+          }}
           onChoose={(day) => {
-            app.visitRoute.setDay(day);
+            app.visitRoute.setDay(day, "confirmation");
             setPendingDay(null);
           }}
         />
@@ -87,8 +98,13 @@ export function VisitPathSheet({
                   aria-pressed={app.visitRoute.day === day.id}
                   onClick={() => {
                     if (day.id === app.visitRoute.day) return;
-                    if (app.visitRoute.hasProgress) setPendingDay(day);
-                    else app.visitRoute.setDay(day.id);
+                    if (app.visitRoute.hasProgress) {
+                      app.visitRoute.track("day_prompt", {
+                        source: "confirmation",
+                        day_id: day.id,
+                      });
+                      setPendingDay(day);
+                    } else app.visitRoute.setDay(day.id);
                   }}
                 >
                   {day.label}
@@ -105,7 +121,7 @@ export function VisitPathSheet({
               className="icon-button"
               aria-label="Previous route stop"
               disabled={!route || leg <= 0 || app.visitRoute.loading}
-              onClick={() => app.visitRoute.focusLeg(leg - 1)}
+              onClick={() => app.visitRoute.focusLeg(leg - 1, "previous")}
             >
               <ChevronLeft size={22} />
             </button>
@@ -135,7 +151,9 @@ export function VisitPathSheet({
                           key={id}
                           className="visit-destination-link"
                           aria-label={`Open details for ${creator.name}`}
-                          onClick={() => app.select(creator, true, "list")}
+                          onClick={() =>
+                            app.select(creator, true, "visit_path")
+                          }
                         >
                           {creator.name}
                           <ArrowUpRight size={13} aria-hidden="true" />
@@ -159,7 +177,7 @@ export function VisitPathSheet({
                 leg >= route.stops.length - 1 ||
                 app.visitRoute.loading
               }
-              onClick={() => app.visitRoute.focusLeg(leg + 1)}
+              onClick={() => app.visitRoute.focusLeg(leg + 1, "next")}
             >
               <ChevronRight size={22} />
             </button>
@@ -206,7 +224,12 @@ export function VisitPathSheet({
                 <div className="visit-stop-actions">
                   <button
                     disabled={app.visitRoute.loading || !app.visitRoute.start}
-                    onClick={() => setPendingStart({ stop: null })}
+                    onClick={() => {
+                      app.visitRoute.track("start_prompt", {
+                        target: "entrance",
+                      });
+                      setPendingStart({ stop: null });
+                    }}
                   >
                     Start from here
                   </button>
@@ -233,7 +256,7 @@ export function VisitPathSheet({
                         key={id}
                         onClick={() => {
                           const creator = app.catalog?.byId.get(id);
-                          if (creator) app.select(creator, true, "list");
+                          if (creator) app.select(creator, true, "visit_path");
                         }}
                       >
                         {app.catalog?.byId.get(id)?.name}
@@ -269,7 +292,15 @@ export function VisitPathSheet({
                       </button>
                       <button
                         disabled={app.visitRoute.loading || starting}
-                        onClick={() => setPendingStart({ stop })}
+                        onClick={() => {
+                          app.visitRoute.track("start_prompt", {
+                            target: "booth",
+                            ...(stop.creatorIds.length === 1
+                              ? { creator_id: stop.creatorIds[0] }
+                              : {}),
+                          });
+                          setPendingStart({ stop });
+                        }}
                       >
                         Start from here
                       </button>

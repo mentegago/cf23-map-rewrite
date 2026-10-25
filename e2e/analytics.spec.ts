@@ -178,7 +178,7 @@ test("real UI emits Flutter-compatible events with search correlation and no pri
   await search.fill("Genshin I");
   await expect.poll(() => named("search_performed").length).toBe(3);
   expect(named("search_performed").at(-1)).toMatchObject({
-    schema_version: 2,
+    schema_version: 3,
     resolution: "unique_prefix",
     fandom_id: 2,
     fandom_name: "Genshin Impact",

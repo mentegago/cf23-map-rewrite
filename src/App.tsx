@@ -255,6 +255,7 @@ export default function App() {
             mobile={mobile}
             kind="list"
             label={app.favoritesMode ? "Favorites" : "Booth list"}
+            analyticsSheet={app.favoritesMode ? "favorites" : "booth_list"}
             visible={listOpen && !routeOpen}
             extent={listExtent}
             onExtent={setListExtent}
@@ -264,10 +265,16 @@ export default function App() {
                 app={app}
                 onClose={closeBoothList}
                 onNavigate={() => {
+                  app.visitRoute.track("navigate", {
+                    count: app.filteredListCreators.length,
+                  });
                   setRouteExtent(routeMinimum);
                   if (!app.visitRoute.needsDaySelection)
                     app.visitRoute.setEnabled(true);
-                  else setChoosingVisitDay(true);
+                  else {
+                    app.visitRoute.track("day_prompt", { source: "initial" });
+                    setChoosingVisitDay(true);
+                  }
                 }}
               />
             )}
@@ -276,6 +283,7 @@ export default function App() {
             mobile={mobile}
             kind="list"
             label="Visit path"
+            analyticsSheet="visit_path"
             visible={routeOpen}
             extent={routeExtent}
             minimumExtent={routeMinimum}
@@ -316,16 +324,23 @@ export default function App() {
       {choosingVisitDay && (
         <VisitDayDialog
           days={app.snapshot.catalog.event.days}
-          onClose={() => setChoosingVisitDay(false)}
+          onClose={() => {
+            app.visitRoute.track("day_cancel", { source: "initial" });
+            setChoosingVisitDay(false);
+          }}
           onChoose={(day) => {
-            app.visitRoute.setDay(day);
+            app.visitRoute.setDay(day, "initial");
             setChoosingVisitDay(false);
             app.visitRoute.setEnabled(true);
           }}
         />
       )}
       {app.gallery && (
-        <Gallery creator={app.gallery} onClose={() => app.setGallery(null)} />
+        <Gallery
+          creator={app.gallery}
+          origin={app.galleryOrigin}
+          onClose={() => app.setGallery(null)}
+        />
       )}
       {app.selector && (
         <BoothSelector

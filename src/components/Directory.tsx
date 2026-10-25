@@ -22,6 +22,7 @@ export function Directory({
   const savedScroll = useRef(0);
   const previousQuery = useRef(app.query);
   const previousFandom = useRef(app.fandomId);
+  const previousReset = useRef(app.searchScrollReset);
   const rows = useMemo(() => {
     if (app.searchLink) return [{ type: "link" }] as Row[];
     const r: Row[] = [];
@@ -69,22 +70,24 @@ export function Directory({
         : `${i}-${rows[i].type}`,
   });
   useLayoutEffect(() => {
-    const queryChanged =
+    const resetScroll =
       previousQuery.current !== app.query ||
-      previousFandom.current !== app.fandomId;
-    const offset = queryChanged ? 0 : savedScroll.current;
+      previousFandom.current !== app.fandomId ||
+      previousReset.current !== app.searchScrollReset;
+    const offset = resetScroll ? 0 : savedScroll.current;
     savedScroll.current = offset;
     previousQuery.current = app.query;
     previousFandom.current = app.fandomId;
+    previousReset.current = app.searchScrollReset;
     if (!app.showDetail) {
       // Reset before paint, then reapply after virtual rows are measured. Capture
       // the target so a queued scroll event cannot replace it with the old offset.
-      if (queryChanged) ref.current?.scrollTo({ top: 0, behavior: "instant" });
+      if (resetScroll) ref.current?.scrollTo({ top: 0, behavior: "instant" });
       virtual.scrollToOffset(offset);
       const frame = requestAnimationFrame(() => virtual.scrollToOffset(offset));
       return () => cancelAnimationFrame(frame);
     }
-  }, [app.showDetail, app.query, app.fandomId, virtual]);
+  }, [app.showDetail, app.query, app.fandomId, app.searchScrollReset, virtual]);
   return (
     <div
       ref={ref}
@@ -125,7 +128,12 @@ export function Directory({
                 <CreatorRow
                   creator={row.creator}
                   favorite={app.favorites.has(row.creator.id)}
-                  onFavorite={app.toggleFavorite}
+                  onFavorite={(id) =>
+                    app.toggleFavorite(
+                      id,
+                      row.recommendation ? "recommendation" : undefined,
+                    )
+                  }
                   onSelect={(c) =>
                     app.select(
                       c,
@@ -133,7 +141,12 @@ export function Directory({
                       row.recommendation ? "recommendation" : "list",
                     )
                   }
-                  onGallery={app.openGallery}
+                  onGallery={(creator) =>
+                    app.openGallery(
+                      creator,
+                      row.recommendation ? "recommendation" : undefined,
+                    )
+                  }
                 />
               ) : row.type === "heading" ? (
                 <div className="section-heading">

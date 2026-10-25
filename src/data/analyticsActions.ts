@@ -7,6 +7,7 @@ export function launchForAnalytics(
   url: string,
   action: Fields["creator_action"]["action"],
   creatorId?: number,
+  origin?: Fields["creator_action"]["origin"],
 ) {
   let success = false;
   try {
@@ -21,6 +22,7 @@ export function launchForAnalytics(
   analytics.emit("creator_action", {
     action,
     success,
+    ...(origin ? { origin } : {}),
     ...(creatorId === undefined ? {} : { creator_id: creatorId }),
   });
   if (!success)

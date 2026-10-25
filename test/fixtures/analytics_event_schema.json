@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "CF23 schema 1 and 2 domain events (name and data projection of Umami payload)",
+  "title": "CF23 schema 1, 2 and 3 domain events (name and data projection of Umami payload)",
   "oneOf": [
     {
       "type": "object",
@@ -36,7 +36,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -166,7 +167,10 @@
               "then": {
                 "properties": {
                   "schema_version": {
-                    "const": 2
+                    "enum": [
+                      2,
+                      3
+                    ]
                   }
                 }
               }
@@ -207,7 +211,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -268,7 +273,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -330,7 +336,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -400,7 +407,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -437,11 +445,14 @@
             "source": {
               "enum": [
                 "map",
-                "search_result",
                 "list",
+                "search_result",
                 "recommendation",
                 "random",
-                "deeplink"
+                "deeplink",
+                "favorites",
+                "custom_list",
+                "visit_path"
               ]
             },
             "search_id": {
@@ -455,13 +466,64 @@
             "creator_name": {
               "type": "string",
               "maxLength": 500
+            },
+            "route_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
             }
           },
           "dependentRequired": {
             "creator_name": [
               "creator_id"
             ]
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "schema_version": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "source": {
+                    "enum": [
+                      "map",
+                      "search_result",
+                      "list",
+                      "recommendation",
+                      "random",
+                      "deeplink"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "schema_version": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "not": {
+                  "required": [
+                    "route_id"
+                  ]
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -495,7 +557,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -583,7 +646,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -636,13 +700,52 @@
             "creator_name": {
               "type": "string",
               "maxLength": 500
+            },
+            "origin": {
+              "enum": [
+                "map",
+                "list",
+                "search_result",
+                "recommendation",
+                "random",
+                "deeplink",
+                "favorites",
+                "custom_list",
+                "visit_path"
+              ]
             }
           },
           "dependentRequired": {
             "creator_name": [
               "creator_id"
             ]
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "schema_version": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {},
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "origin"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -674,7 +777,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -744,7 +848,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -818,7 +923,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -900,7 +1006,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -940,7 +1047,10 @@
             "sheet": {
               "enum": [
                 "search",
-                "detail"
+                "detail",
+                "favorites",
+                "booth_list",
+                "visit_path"
               ]
             },
             "source": {
@@ -949,7 +1059,31 @@
                 "programmatic"
               ]
             }
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "schema_version": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "sheet": {
+                    "enum": [
+                      "search",
+                      "detail"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -982,7 +1116,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1034,13 +1169,52 @@
             "creator_name": {
               "type": "string",
               "maxLength": 500
+            },
+            "origin": {
+              "enum": [
+                "map",
+                "list",
+                "search_result",
+                "recommendation",
+                "random",
+                "deeplink",
+                "favorites",
+                "custom_list",
+                "visit_path"
+              ]
             }
           },
           "dependentRequired": {
             "creator_name": [
               "creator_id"
             ]
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "schema_version": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {},
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "origin"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -1073,7 +1247,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1125,13 +1300,52 @@
             "creator_name": {
               "type": "string",
               "maxLength": 500
+            },
+            "origin": {
+              "enum": [
+                "map",
+                "list",
+                "search_result",
+                "recommendation",
+                "random",
+                "deeplink",
+                "favorites",
+                "custom_list",
+                "visit_path"
+              ]
             }
           },
           "dependentRequired": {
             "creator_name": [
               "creator_id"
             ]
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "schema_version": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {},
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "origin"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -1164,7 +1378,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1263,7 +1478,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1346,7 +1562,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1416,7 +1633,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1489,7 +1707,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1570,7 +1789,8 @@
             "schema_version": {
               "enum": [
                 1,
-                2
+                2,
+                3
               ]
             },
             "event_edition": {
@@ -1601,6 +1821,562 @@
               "minimum": 1
             }
           }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "data"
+      ],
+      "properties": {
+        "name": {
+          "const": "booth_list_action"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_edition",
+            "app_version",
+            "client_event_id",
+            "occurred_at_ms",
+            "app_run_id",
+            "sequence",
+            "action",
+            "list_kind",
+            "count"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": 3
+            },
+            "event_edition": {
+              "const": "comic-frontier-23"
+            },
+            "app_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "catalog_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "client_event_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "occurred_at_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "app_run_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "fandom_name": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "action": {
+              "enum": [
+                "opened",
+                "closed",
+                "filter_add",
+                "filter_remove",
+                "filter_clear"
+              ]
+            },
+            "list_kind": {
+              "enum": [
+                "favorites",
+                "custom"
+              ]
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fandom_id": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "selected_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "filter_add",
+                      "filter_remove"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "fandom_id",
+                  "selected_count"
+                ]
+              },
+              "else": {
+                "not": {
+                  "required": [
+                    "fandom_id"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "data"
+      ],
+      "properties": {
+        "name": {
+          "const": "share_action"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_edition",
+            "app_version",
+            "client_event_id",
+            "occurred_at_ms",
+            "app_run_id",
+            "sequence",
+            "target",
+            "method",
+            "outcome"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": 3
+            },
+            "event_edition": {
+              "const": "comic-frontier-23"
+            },
+            "app_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "catalog_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "client_event_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "occurred_at_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "app_run_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "creator_name": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "target": {
+              "enum": [
+                "creator",
+                "favorites",
+                "custom_list"
+              ]
+            },
+            "method": {
+              "enum": [
+                "native",
+                "clipboard"
+              ]
+            },
+            "outcome": {
+              "enum": [
+                "shared",
+                "copied",
+                "cancelled",
+                "failed"
+              ]
+            },
+            "creator_id": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "origin": {
+              "enum": [
+                "map",
+                "list",
+                "search_result",
+                "recommendation",
+                "random",
+                "deeplink",
+                "favorites",
+                "custom_list",
+                "visit_path"
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "target": {
+                    "const": "creator"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "creator_id"
+                ]
+              },
+              "else": {
+                "required": [
+                  "count"
+                ],
+                "not": {
+                  "required": [
+                    "creator_id"
+                  ]
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "native"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "outcome": {
+                    "enum": [
+                      "shared",
+                      "cancelled"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "outcome": {
+                    "enum": [
+                      "copied",
+                      "failed"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "data"
+      ],
+      "properties": {
+        "name": {
+          "const": "visit_path_action"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_edition",
+            "app_version",
+            "client_event_id",
+            "occurred_at_ms",
+            "app_run_id",
+            "sequence",
+            "route_id",
+            "list_kind",
+            "day_mode",
+            "day_id",
+            "action"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": 3
+            },
+            "event_edition": {
+              "const": "comic-frontier-23"
+            },
+            "app_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "catalog_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "client_event_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "occurred_at_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "app_run_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "creator_name": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "route_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "list_kind": {
+              "enum": [
+                "favorites",
+                "custom"
+              ]
+            },
+            "day_mode": {
+              "enum": [
+                "any",
+                "selected"
+              ]
+            },
+            "day_id": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "action": {
+              "enum": [
+                "navigate",
+                "day_prompt",
+                "day_cancel",
+                "day_selected",
+                "opened",
+                "closed",
+                "next",
+                "previous",
+                "show_stop",
+                "overview",
+                "follow",
+                "skip",
+                "unskip",
+                "start_prompt",
+                "start_cancel",
+                "start_confirm"
+              ]
+            },
+            "stop_position": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "stop_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "creator_id": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "target": {
+              "enum": [
+                "entrance",
+                "booth"
+              ]
+            },
+            "source": {
+              "enum": [
+                "initial",
+                "toggle",
+                "confirmation"
+              ]
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "data"
+      ],
+      "properties": {
+        "name": {
+          "const": "visit_path_calculated"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_edition",
+            "app_version",
+            "client_event_id",
+            "occurred_at_ms",
+            "app_run_id",
+            "sequence",
+            "route_id",
+            "list_kind",
+            "day_mode",
+            "day_id",
+            "outcome",
+            "duration_ms",
+            "count",
+            "stop_count",
+            "unreachable_count"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": 3
+            },
+            "event_edition": {
+              "const": "comic-frontier-23"
+            },
+            "app_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "catalog_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "client_event_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "occurred_at_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "app_run_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "route_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "list_kind": {
+              "enum": [
+                "favorites",
+                "custom"
+              ]
+            },
+            "day_mode": {
+              "enum": [
+                "any",
+                "selected"
+              ]
+            },
+            "day_id": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "outcome": {
+              "enum": [
+                "ready",
+                "failed"
+              ]
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "stop_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unreachable_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "code": {
+              "enum": [
+                "unsupported_map",
+                "timeout",
+                "worker"
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "outcome": {
+                    "const": "failed"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "code"
+                ]
+              },
+              "else": {
+                "not": {
+                  "required": [
+                    "code"
+                  ]
+                }
+              }
+            }
+          ]
         }
       }
     }

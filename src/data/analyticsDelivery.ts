@@ -109,7 +109,7 @@ export class Analytics {
           url: "/",
           name,
           data: {
-            schema_version: 2,
+            schema_version: 3,
             event_edition: "comic-frontier-23",
             app_version: APP_VERSION,
             ...(this.version === undefined

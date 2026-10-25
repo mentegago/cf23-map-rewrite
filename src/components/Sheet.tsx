@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { clamp } from "../map/geometry";
 import { analytics } from "../data/analytics";
+import type { Fields } from "../data/analyticsEvents";
 export const searchCollapsed = (height: number, safe = 0) =>
   clamp((132 + safe) / height, 0.16, 0.24);
 export function snapExtent(
@@ -25,6 +26,7 @@ export function Sheet({
   hidden = false,
   minimumExtent,
   twoDetents = false,
+  analyticsSheet,
 }: {
   kind: "search" | "detail" | "list";
   label?: string;
@@ -34,6 +36,7 @@ export function Sheet({
   hidden?: boolean;
   minimumExtent?: number;
   twoDetents?: boolean;
+  analyticsSheet?: Fields["sheet_state_changed"]["sheet"];
 }) {
   const ref = useRef<HTMLElement>(null),
     callback = useRef(onExtent);
@@ -41,15 +44,18 @@ export function Sheet({
   const reported = useRef<string | null>(null);
   const report = (value: number, source: "gesture" | "programmatic") => {
     const state =
-      value < 0.3
+      value <= (minimumExtent ?? 0.29) + 0.01
         ? "collapsed"
         : value < 0.9
           ? "partiallyExpanded"
           : "expanded";
     if (reported.current === state) return;
     reported.current = state;
-    if (kind !== "list")
-      analytics.emit("sheet_state_changed", { state, sheet: kind, source });
+    analytics.emit("sheet_state_changed", {
+      state,
+      sheet: analyticsSheet ?? (kind === "list" ? "booth_list" : kind),
+      source,
+    });
     if (kind === "search" && state === "collapsed")
       analytics.emit("search_closed", { reason: "dismissed" });
   };

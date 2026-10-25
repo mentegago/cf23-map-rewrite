@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { encodeList } from "../src/domain/links";
+import { captureAnalytics, validateAnalytics } from "./analyticsCapture";
+test.use({ serviceWorkers: "block" });
 
 const catalog = JSON.parse(
   readFileSync("public/data/catalog-initial.json", "utf8"),
@@ -68,6 +70,7 @@ test("list actions and fandoms scroll away while the header stays fixed", async 
 test("pasted encoded list filters independently, saves the entire list, and survives detail reload", async ({
   page,
 }, info) => {
+  const events = process.env.ANALYTICS_E2E ? await captureAnalytics(page) : [];
   await page.route("https://cf23-config.nnt.gg/**", (route) => route.abort());
   const creators = catalog.exhibitors
     .filter((c: any) => c.fandomIds.length)
@@ -97,6 +100,22 @@ test("pasted encoded list filters independently, saves the entire list, and surv
   });
   await pill.click();
   await expect(sheet.locator(".creator-select")).toHaveCount(matches.length);
+  if (process.env.ANALYTICS_E2E) {
+    await expect
+      .poll(
+        () =>
+          events.find(
+            (e) =>
+              e.name === "booth_list_action" && e.data.action === "filter_add",
+          )?.data,
+      )
+      .toMatchObject({
+        list_kind: "custom",
+        fandom_id: fandomId,
+        selected_count: 1,
+        count: matches.length,
+      });
+  }
   await sheet
     .getByRole("button", { name: "Favorite all", exact: true })
     .click();
@@ -111,6 +130,15 @@ test("pasted encoded list filters independently, saves the entire list, and surv
     .toBe(ids.length);
   await page.screenshot({ path: info.outputPath("booth-list.png") });
   await sheet.locator(".creator-select").first().click();
+  if (process.env.ANALYTICS_E2E) {
+    await expect
+      .poll(
+        () =>
+          events.filter((e) => e.name === "creator_opened").at(-1)?.data.source,
+      )
+      .toBe("custom_list");
+    validateAnalytics(events);
+  }
   await page.goBack();
   await expect(pill).toHaveAttribute("aria-pressed", "true");
   await sheet.locator(".creator-select").first().click();

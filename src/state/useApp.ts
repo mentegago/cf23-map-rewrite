@@ -20,6 +20,7 @@ import type {
   ListScope,
   SelectionSource,
   SearchSource,
+  Fields,
 } from "../data/analyticsEvents";
 import { SearchTracking, type SearchContext } from "../domain/searchTracking";
 import { telemetryId } from "../domain/eventId";
@@ -36,6 +37,8 @@ export function useApp(mobile: boolean) {
       useState<SearchSelection>(emptySearch),
     [selectedId, setSelectedId] = useState<number | null>(null),
     [showDetail, setShowDetail] = useState(false),
+    [creatorOrigin, setCreatorOrigin] = useState<SelectionSource>("list"),
+    [galleryOrigin, setGalleryOrigin] = useState<SelectionSource>("list"),
     [favorites, setFavorites] = useState(loadFavorites),
     [profile, setProfile] = useState(loadProfile),
     [toast, setToast] = useState(""),
@@ -45,6 +48,7 @@ export function useApp(mobile: boolean) {
       creators: Creator[];
     } | null>(null),
     [searchExtent, setSearchExtent] = useState(searchCollapsed(innerHeight)),
+    [searchScrollReset, setSearchScrollReset] = useState(0),
     [detailExtent, setDetailExtent] = useState(0.56),
     [online, setOnline] = useState(navigator.onLine);
   const catalog = useMemo(
@@ -193,9 +197,22 @@ export function useApp(mobile: boolean) {
         ? tracking.current!.result(query)
         : undefined;
     if (source !== "list") tracking.current!.reset();
+    const resolvedSource: SelectionSource = !push
+      ? "deeplink"
+      : searchId
+        ? "search_result"
+        : source === "list" && boothList
+          ? boothList.kind === "favorites"
+            ? "favorites"
+            : "custom_list"
+          : source;
+    setCreatorOrigin(resolvedSource);
     analytics.emit("creator_opened", {
       creator_id: c.id,
-      source: !push ? "deeplink" : searchId ? "search_result" : source,
+      source: resolvedSource,
+      ...(resolvedSource === "visit_path" && visitRoute.routeId
+        ? { route_id: visitRoute.routeId }
+        : {}),
       ...(searchId
         ? {
             search_id: searchId,
@@ -378,13 +395,15 @@ export function useApp(mobile: boolean) {
     () => catalog?.creators.filter((c) => favorites.has(c.id)) || [],
     [catalog, favorites],
   );
-  const listCreators = useMemo(
+  const customListCreators = useMemo(
     () =>
       boothList?.kind === "custom"
         ? catalog?.creators.filter((c) => boothList.ids.has(c.id)) || []
-        : favoriteCreators,
-    [catalog, boothList, favoriteCreators],
+        : [],
+    [catalog, boothList],
   );
+  const listCreators =
+    boothList?.kind === "custom" ? customListCreators : favoriteCreators;
   const listFandoms = useMemo(() => {
     const counts = new Map<number, number>();
     for (const creator of listCreators)
@@ -413,17 +432,35 @@ export function useApp(mobile: boolean) {
       : listCreators;
   }, [listCreators, listFandoms, listFandomIds]);
   const visitRoute = useVisitRoute(snapshot, filteredListCreators, boothList);
+  const actionOrigin: SelectionSource = showDetail
+    ? creatorOrigin
+    : boothList
+      ? favoritesMode
+        ? "favorites"
+        : "custom_list"
+      : query.trim() || fandomId !== undefined
+        ? "search_result"
+        : "list";
+  useEffect(() => {
+    if (!boothList) return;
+    const fields = { list_kind: boothList.kind, count: listCreators.length };
+    analytics.emit("booth_list_action", { ...fields, action: "opened" });
+    return () =>
+      analytics.emit("booth_list_action", { ...fields, action: "closed" });
+  }, [boothList]);
   useEffect(() => {
     if (!gallery) return;
     analytics.emit("gallery_action", {
       creator_id: gallery.id,
       action: "open",
+      origin: galleryOrigin,
       count: gallery.assets.gallery.length,
     });
     return () =>
       analytics.emit("gallery_action", {
         creator_id: gallery.id,
         action: "close",
+        origin: galleryOrigin,
       });
   }, [gallery?.id]);
   const recommendationIds = useRecommendations(
@@ -509,11 +546,15 @@ export function useApp(mobile: boolean) {
     if (record) setProfile((p) => recordFandom(p, id));
     setSearchExtent(0.94);
   };
-  const toggleFavorite = (id: number) => {
+  const toggleFavorite = (
+    id: number,
+    origin: SelectionSource = actionOrigin,
+  ) => {
     analytics.emit("bookmark_changed", {
       creator_id: id,
       action: favorites.has(id) ? "remove" : "add",
       source: "individual",
+      origin,
     });
     setFavorites((old) => {
       const next = new Set(old);
@@ -568,16 +609,38 @@ export function useApp(mobile: boolean) {
     url: string,
     title: string,
     copiedMessage: string,
+    fields: Pick<
+      Fields["share_action"],
+      "target" | "creator_id" | "count" | "origin"
+    >,
   ) => {
     if (navigator.share) {
       try {
         await navigator.share({ title, url });
+        analytics.emit("share_action", {
+          ...fields,
+          method: "native",
+          outcome: "shared",
+        });
         return true;
       } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return false;
+        if (error instanceof Error && error.name === "AbortError") {
+          analytics.emit("share_action", {
+            ...fields,
+            method: "native",
+            outcome: "cancelled",
+          });
+          return false;
+        }
       }
     }
-    return copy(url, copiedMessage);
+    const success = await copy(url, copiedMessage);
+    analytics.emit("share_action", {
+      ...fields,
+      method: "clipboard",
+      outcome: success ? "copied" : "failed",
+    });
+    return success;
   };
   const shareCreator = (c: Creator) => {
     interaction(c.id, "share");
@@ -585,10 +648,12 @@ export function useApp(mobile: boolean) {
       shareURL("creator_id", c.id),
       c.name,
       "Creator link copied!",
+      { target: "creator", creator_id: c.id, origin: creatorOrigin },
     ).then((success) =>
       analytics.emit("creator_action", {
         creator_id: c.id,
         action: "share",
+        origin: creatorOrigin,
         success,
       }),
     );
@@ -615,6 +680,7 @@ export function useApp(mobile: boolean) {
           creator_id: c.id,
           action: "add",
           source: "bulk",
+          origin: favoritesMode ? "favorites" : "custom_list",
           operation_id: operationId,
         });
       next.add(c.id);
@@ -636,7 +702,8 @@ export function useApp(mobile: boolean) {
     setFavorites(next);
     notify(`${next.size - favorites.size} creators added to favorites`);
   };
-  const openGallery = (c: Creator) => {
+  const openGallery = (c: Creator, origin: SelectionSource = actionOrigin) => {
+    setGalleryOrigin(origin);
     interaction(c.id, "gallery");
     setGallery(c);
   };
@@ -650,6 +717,8 @@ export function useApp(mobile: boolean) {
     close();
   };
   return {
+    creatorOrigin,
+    galleryOrigin,
     visitRoute,
     favoritesMode,
     boothList,
@@ -686,6 +755,7 @@ export function useApp(mobile: boolean) {
     selector,
     setSelector,
     searchExtent,
+    searchScrollReset,
     setSearchExtent,
     detailExtent,
     setDetailExtent,
@@ -702,11 +772,34 @@ export function useApp(mobile: boolean) {
     listFandoms,
     listFandomIds,
     filteredListCreators,
-    toggleListFandom: (id: number) =>
-      setListFandomIds((ids) =>
-        ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id],
-      ),
-    clearListFandoms: () => setListFandomIds([]),
+    toggleListFandom: (id: number) => {
+      const removing = listFandomIds.includes(id);
+      const next = removing
+        ? listFandomIds.filter((value) => value !== id)
+        : [...listFandomIds, id];
+      setListFandomIds(next);
+      analytics.emit("booth_list_action", {
+        action: removing ? "filter_remove" : "filter_add",
+        list_kind: boothList!.kind,
+        fandom_id: id,
+        selected_count: next.length,
+        count: next.length
+          ? listCreators.filter((c) =>
+              c.fandomIds.some((id) => next.includes(id)),
+            ).length
+          : listCreators.length,
+      });
+    },
+    clearListFandoms: () => {
+      if (!listFandomIds.length) return;
+      setListFandomIds([]);
+      analytics.emit("booth_list_action", {
+        action: "filter_clear",
+        list_kind: boothList!.kind,
+        selected_count: 0,
+        count: listCreators.length,
+      });
+    },
     recommendations,
     suggestions,
     search,
@@ -721,6 +814,7 @@ export function useApp(mobile: boolean) {
     clearSearch,
     dismissSearch: () => {
       clearSearch();
+      setSearchScrollReset((revision) => revision + 1);
       (document.activeElement as HTMLElement)?.blur();
       setSearchExtent(searchCollapsed(innerHeight));
     },
@@ -737,6 +831,7 @@ export function useApp(mobile: boolean) {
         shareURL("list", encodeList(favorites)),
         "CF23 Map · Favorites",
         "Shareable Favorites URL copied!",
+        { target: "favorites", count: favorites.size },
       ).then((success) =>
         analytics.emit("favorites_action", {
           action: "share",
@@ -750,6 +845,7 @@ export function useApp(mobile: boolean) {
         shareURL("list", encodeList(listCreators.map((creator) => creator.id))),
         "CF23 Map · Booth list",
         "Booth list link copied!",
+        { target: "custom_list", count: listCreators.length },
       );
     },
   };

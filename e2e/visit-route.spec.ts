@@ -1,6 +1,58 @@
 import { test, expect, type Locator } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { encodeList } from "../src/domain/links";
+import {
+  captureAnalytics,
+  validateAnalytics,
+  type CapturedEvent,
+} from "./analyticsCapture";
+let captured: CapturedEvent[] = [];
+test.use({ serviceWorkers: "block" });
+test.beforeEach(async ({ page }) => {
+  if (process.env.ANALYTICS_E2E) captured = await captureAnalytics(page);
+});
+test.afterEach(async () => {
+  if (process.env.ANALYTICS_E2E) validateAnalytics(captured);
+});
+
+test("route worker failures leave the UI usable and report a bounded failure", async ({
+  page,
+}) => {
+  await page.route("https://cf23-config.nnt.gg/**", (route) => route.abort());
+  await page.addInitScript(() => {
+    const OriginalWorker = window.Worker;
+    window.Worker = class extends OriginalWorker {
+      constructor(url: string | URL, options?: WorkerOptions) {
+        if (String(url).includes("visitRoute"))
+          throw new Error("private worker exception");
+        super(url, options);
+      }
+    };
+  });
+  await page.goto(
+    `/?list=${encodeList(everyDayCreators.map((c: any) => Number(c.id)))}`,
+  );
+  await page.getByRole("button", { name: "Navigate", exact: true }).click();
+  const sheet = page.getByRole("region", { name: "Visit path", exact: true });
+  await expand(sheet);
+  await expect(sheet).toContainText(
+    "Couldn't calculate this route. Try again.",
+  );
+  if (process.env.ANALYTICS_E2E) {
+    await expect
+      .poll(
+        () => captured.find((e) => e.name === "visit_path_calculated")?.data,
+      )
+      .toMatchObject({ outcome: "failed", code: "worker", stop_count: 0 });
+    expect(JSON.stringify(captured)).not.toContain("private worker exception");
+  }
+  await sheet
+    .getByRole("button", { name: "Back to list", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Navigate", exact: true }),
+  ).toBeVisible();
+});
 const catalog = JSON.parse(
   readFileSync("public/data/catalog-initial.json", "utf8"),
 );
@@ -40,6 +92,26 @@ test("all-day lists navigate immediately and show Any day without day toggles", 
       0,
     );
     await expect(sheet.getByRole("navigation")).toContainText("Stop 1 of");
+    if (process.env.ANALYTICS_E2E) {
+      await expect
+        .poll(
+          () =>
+            captured.filter(
+              (e) =>
+                e.name === "visit_path_calculated" &&
+                e.data.outcome === "ready",
+            ).length,
+        )
+        .toBe(i + 1);
+      expect(
+        captured
+          .filter((e) => e.name === "visit_path_action")
+          .map((e) => e.data.action),
+      ).not.toContain("day_prompt");
+      expect(
+        captured.find((e) => e.name === "visit_path_calculated")!.data.day_mode,
+      ).toBe("any");
+    }
     await sheet
       .getByRole("button", { name: "Back to list", exact: true })
       .click();
@@ -106,6 +178,25 @@ test("Navigate opens a separate compact page with working stop controls and expa
   await expect(
     page.getByRole("region", { name: "Creator details", exact: true }),
   ).toBeVisible();
+  if (process.env.ANALYTICS_E2E) {
+    await expect
+      .poll(
+        () =>
+          captured.filter((e) => e.name === "creator_opened").at(-1)?.data
+            .source,
+      )
+      .toBe("visit_path");
+    await page
+      .getByRole("button", { name: "Add to favorites", exact: true })
+      .click();
+    await expect
+      .poll(
+        () =>
+          captured.filter((e) => e.name === "bookmark_changed").at(-1)?.data
+            .origin,
+      )
+      .toBe("visit_path");
+  }
   await expect
     .poll(async () =>
       Math.abs((await mapTransform()).scale - routeTransform.scale),
@@ -326,4 +417,60 @@ test("day choices survive closing the route page but reset when the booth list c
   await expect(order.locator(".visit-route-entrance")).toContainText(
     "Starting here",
   );
+  if (process.env.ANALYTICS_E2E) {
+    await expect
+      .poll(
+        () =>
+          captured.filter(
+            (e) => e.name === "visit_path_action" && e.data.action === "opened",
+          ).length,
+      )
+      .toBe(3);
+    const actions = captured.filter((e) => e.name === "visit_path_action");
+    expect(actions.map((e) => e.data.action)).toEqual(
+      expect.arrayContaining([
+        "navigate",
+        "day_prompt",
+        "day_selected",
+        "opened",
+        "closed",
+        "next",
+        "skip",
+        "unskip",
+        "start_prompt",
+        "start_cancel",
+        "start_confirm",
+      ]),
+    );
+    expect(
+      actions.filter((e) => e.data.action === "start_confirm"),
+    ).toHaveLength(2);
+    expect(
+      new Set(
+        actions
+          .filter((e) => e.data.list_kind === "custom")
+          .map((e) => e.data.route_id),
+      ).size,
+    ).toBe(1);
+    expect(
+      actions.find((e) => e.data.list_kind === "favorites")!.data.route_id,
+    ).not.toBe(actions[0].data.route_id);
+    expect(
+      captured.some(
+        (e) =>
+          e.name === "visit_path_calculated" &&
+          e.data.stop_count > 0 &&
+          e.data.outcome === "ready",
+      ),
+    ).toBe(true);
+    if (isMobile)
+      expect(
+        captured.some(
+          (e) =>
+            e.name === "sheet_state_changed" &&
+            e.data.sheet === "visit_path" &&
+            e.data.state === "collapsed",
+        ),
+      ).toBe(true);
+  }
 });

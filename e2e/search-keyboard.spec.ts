@@ -149,6 +149,16 @@ test("outer search close clears the query and lowers the sheet without refocusin
   await expect(page.locator(".search-sheet")).toHaveClass(/collapsed/);
   await page.getByRole("button", { name: "Expand panel", exact: true }).tap();
   await expect(dismiss).toBeVisible();
+  const results = page.getByTestId("directory");
+  await results.evaluate((el) => {
+    el.scrollTop = 700;
+  });
+  await expect
+    .poll(() => results.evaluate((el) => el.scrollTop))
+    .toBeGreaterThan(500);
   await dismiss.tap();
   await expect(page.locator(".search-sheet")).toHaveClass(/collapsed/);
+  await expect.poll(() => results.evaluate((el) => el.scrollTop)).toBe(0);
+  await page.getByRole("button", { name: "Expand panel", exact: true }).tap();
+  await expect.poll(() => results.evaluate((el) => el.scrollTop)).toBe(0);
 });

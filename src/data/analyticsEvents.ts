@@ -1,6 +1,38 @@
 export type ListScope = "full_catalog" | "shared_list" | "search_result_list";
 export type SelectionSource =
-  "map" | "list" | "search_result" | "recommendation" | "random" | "deeplink";
+  | "map"
+  | "list"
+  | "search_result"
+  | "recommendation"
+  | "random"
+  | "deeplink"
+  | "favorites"
+  | "custom_list"
+  | "visit_path";
+export type ListKind = "favorites" | "custom";
+export type VisitAction =
+  | "navigate"
+  | "day_prompt"
+  | "day_cancel"
+  | "day_selected"
+  | "opened"
+  | "closed"
+  | "next"
+  | "previous"
+  | "show_stop"
+  | "overview"
+  | "follow"
+  | "skip"
+  | "unskip"
+  | "start_prompt"
+  | "start_cancel"
+  | "start_confirm";
+export interface VisitContext {
+  route_id: string;
+  list_kind: ListKind;
+  day_mode: "any" | "selected";
+  day_id: string;
+}
 export type SearchSource = "typed" | "suggestion" | "creator_fandom_chip";
 export type SearchTrigger = "settled" | "submitted" | "selection" | "result";
 export type Fields = {
@@ -13,6 +45,7 @@ export type Fields = {
     source: SelectionSource;
     search_id?: string;
     result_position?: number;
+    route_id?: string;
   };
   creator_closed: {
     creator_id?: number;
@@ -24,6 +57,7 @@ export type Fields = {
     action: "add" | "remove";
     source: "individual" | "bulk";
     operation_id?: string;
+    origin?: SelectionSource;
   };
   creator_action: {
     creator_id?: number;
@@ -31,12 +65,14 @@ export type Fields = {
       "external_link" | "catalog" | "circle_cut" | "share" | "source_code";
     success: boolean;
     expanded?: boolean;
+    origin?: SelectionSource;
   };
   gallery_action: {
     creator_id: number;
     action: "open" | "close" | "image_changed";
     index?: number;
     count?: number;
+    origin?: SelectionSource;
   };
   booth_selected: { count: number; outcome: "empty" | "opened" | "chooser" };
   list_scope_changed: {
@@ -66,7 +102,7 @@ export type Fields = {
   map_interacted: { action: "pan" | "zoom" | "both" };
   sheet_state_changed: {
     state: "collapsed" | "partiallyExpanded" | "expanded";
-    sheet: "search" | "detail";
+    sheet: "search" | "detail" | "favorites" | "booth_list" | "visit_path";
     source: "gesture" | "programmatic";
   };
   favorites_action: {
@@ -78,6 +114,39 @@ export type Fields = {
     added?: number;
     skipped?: number;
     failed?: number;
+  };
+  booth_list_action: {
+    action:
+      "opened" | "closed" | "filter_add" | "filter_remove" | "filter_clear";
+    list_kind: ListKind;
+    count: number;
+    fandom_id?: number;
+    selected_count?: number;
+  };
+  share_action: {
+    target: "creator" | "favorites" | "custom_list";
+    method: "native" | "clipboard";
+    outcome: "shared" | "copied" | "cancelled" | "failed";
+    creator_id?: number;
+    count?: number;
+    origin?: SelectionSource;
+  };
+  visit_path_action: VisitContext & {
+    action: VisitAction;
+    stop_position?: number;
+    stop_count?: number;
+    creator_id?: number;
+    target?: "entrance" | "booth";
+    source?: "initial" | "toggle" | "confirmation";
+    count?: number;
+  };
+  visit_path_calculated: VisitContext & {
+    outcome: "ready" | "failed";
+    duration_ms: number;
+    count: number;
+    stop_count: number;
+    unreachable_count: number;
+    code?: "unsupported_map" | "timeout" | "worker";
   };
   deeplink_processed: {
     type: "list" | "custom_list" | "creator_id" | "creator";
@@ -170,6 +239,9 @@ export class AnalyticsLifecycle {
         "creator_action",
         "gallery_action",
         "favorites_action",
+        "booth_list_action",
+        "visit_path_action",
+        "share_action",
       ].includes(name) ||
       (name === "sheet_state_changed" &&
         (fields as Fields["sheet_state_changed"]).source === "gesture")

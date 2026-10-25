@@ -5,13 +5,16 @@ import { safeURL } from "../domain/links";
 import { clamp } from "../map/geometry";
 import { analytics } from "../data/analytics";
 import { LoadingImage } from "./LoadingImage";
+import type { SelectionSource } from "../data/analyticsEvents";
 
 export function Gallery({
   creator,
   onClose,
+  origin,
 }: {
   creator: Creator;
   onClose: () => void;
+  origin: SelectionSource;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -70,6 +73,7 @@ export function Gallery({
     analytics.emit("gallery_action", {
       creator_id: creator.id,
       action: "image_changed",
+      origin,
       index,
     });
   }, [index]);

@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { encodeList } from "../src/domain/links";
+import { captureAnalytics, validateAnalytics } from "./analyticsCapture";
+test.use({ serviceWorkers: "block" });
 
 const catalog = JSON.parse(
   readFileSync("public/data/catalog-initial.json", "utf8"),
@@ -11,6 +13,9 @@ const ids = catalog.exhibitors
 
 for (const mode of ["native", "cancel", "fallback"] as const) {
   test(`creator and list sharing: ${mode}`, async ({ page }) => {
+    const events = process.env.ANALYTICS_E2E
+      ? await captureAnalytics(page)
+      : [];
     await page.route("https://cf23-config.nnt.gg/**", (route) => route.abort());
     await page.addInitScript(
       ({ mode, ids }) => {
@@ -89,6 +94,32 @@ for (const mode of ["native", "cancel", "fallback"] as const) {
                 copied: [],
               },
         );
+      if (process.env.ANALYTICS_E2E) {
+        const target = kind === "list" ? "custom_list" : kind;
+        await expect
+          .poll(
+            () =>
+              events.find(
+                (event) =>
+                  event.name === "share_action" && event.data.target === target,
+              )?.data,
+            { timeout: 15000 },
+          )
+          .toMatchObject({
+            target,
+            method: mode === "fallback" ? "clipboard" : "native",
+            outcome:
+              mode === "fallback"
+                ? "copied"
+                : mode === "cancel"
+                  ? "cancelled"
+                  : "shared",
+            ...(kind === "creator"
+              ? { creator_id: ids[0], origin: "deeplink" }
+              : { count: ids.length }),
+          });
+      }
     }
+    if (process.env.ANALYTICS_E2E) validateAnalytics(events);
   });
 }

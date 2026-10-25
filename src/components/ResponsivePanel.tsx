@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Presence } from "./Presence";
 import { Sheet } from "./Sheet";
+import type { Fields } from "../data/analyticsEvents";
 
 /** Navigation and content are shared; only the panel's presentation changes. */
 export function ResponsivePanel({
@@ -13,6 +14,7 @@ export function ResponsivePanel({
   children,
   minimumExtent,
   twoDetents,
+  analyticsSheet,
 }: {
   mobile: boolean;
   kind: "search" | "detail" | "list";
@@ -23,6 +25,7 @@ export function ResponsivePanel({
   children: ReactNode;
   minimumExtent?: number;
   twoDetents?: boolean;
+  analyticsSheet?: Fields["sheet_state_changed"]["sheet"];
 }) {
   const search = kind === "search";
   if (!mobile) {
@@ -56,6 +59,7 @@ export function ResponsivePanel({
       hidden={!visible}
       minimumExtent={minimumExtent}
       twoDetents={twoDetents}
+      analyticsSheet={analyticsSheet}
     >
       {children}
     </Sheet>

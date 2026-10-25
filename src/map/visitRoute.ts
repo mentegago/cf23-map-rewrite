@@ -5,6 +5,8 @@ export const VISIT_ROUTE_START = { x: 4970.75, y: 1407.15 } as const;
 
 import type { Creator, Feature, MapDocument } from "../domain/types";
 import { boothKey } from "../domain/search";
+import { GridPathfinder } from "./gridPath";
+import { optimizeVisitOrder } from "./optimizeVisitOrder";
 
 export interface RoutePoint {
   x: number;
@@ -201,7 +203,7 @@ export function buildVisitRoute(
   const previous = new Int32Array(size),
     queue = new Int32Array(size);
   result.points.push(point(current));
-  // Nearest reachable stop by walking distance; not a globally optimal tour.
+  // Multi-target BFS builds a feasible nearest-neighbor seed and chooses accessible faces.
   while (remaining.size) {
     previous.fill(-1);
     previous[current] = current;
@@ -261,6 +263,65 @@ export function buildVisitRoute(
   // Retain only turns; each resulting segment follows the same collision-free cells.
   result.points = simplifyRoute(result.points);
   result.unreachable = [...remaining];
+  if (result.stops.length > 1) {
+    const pathfinder = new GridPathfinder(cols, blocked);
+    const paths = new Map<string, { distance: number; points: RoutePoint[] }>();
+    const key = (a: number, b: number) => `${Math.min(a, b)}:${Math.max(a, b)}`;
+    const save = (a: number, b: number, points: RoutePoint[]) => {
+      const distance =
+        points
+          .slice(1)
+          .reduce(
+            (sum, p, i) =>
+              sum + Math.abs(p.x - points[i].x) + Math.abs(p.y - points[i].y),
+            0,
+          ) / step;
+      paths.set(key(a, b), {
+        distance,
+        points: a <= b ? points : [...points].reverse(),
+      });
+    };
+    let from = index(start);
+    for (let i = 0; i < result.stops.length; i++) {
+      const to = index(result.stops[i].point);
+      save(from, to, result.legs[i]);
+      from = to;
+    }
+    // Bound exploratory work, not path quality: an unfinished candidate is discarded.
+    let budget = 4_000_000;
+    const distance = (a: number, b: number) => {
+      if (a === b) return 0;
+      const cached = paths.get(key(a, b));
+      if (cached) return cached.distance;
+      if (budget <= 0) return Infinity;
+      const found = pathfinder.find(a, b, budget);
+      budget -= found.expanded;
+      if (!found.cells) return Infinity;
+      save(a, b, simplifyRoute(found.cells.map(point)));
+      return found.cells.length - 1;
+    };
+    const stopsByCell = new Map(
+      result.stops.map((stop) => [index(stop.point), stop]),
+    );
+    const order = optimizeVisitOrder(
+      index(start),
+      [...stopsByCell.keys()],
+      distance,
+      pathfinder.lowerBound,
+    );
+    result.stops = order.map((cell) => stopsByCell.get(cell)!);
+    from = index(start);
+    result.legs = order.map((to) => {
+      const points =
+        from === to ? [point(to)] : paths.get(key(from, to))!.points;
+      const leg = from <= to ? points : [...points].reverse();
+      from = to;
+      return leg;
+    });
+    result.points = simplifyRoute(
+      result.legs.flatMap((leg, i) => (i ? leg.slice(1) : leg)),
+    );
+  }
   return result;
 }
 
