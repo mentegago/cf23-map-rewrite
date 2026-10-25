@@ -619,6 +619,15 @@ export function useApp(mobile: boolean) {
     interaction(c.id, "gallery");
     setGallery(c);
   };
+  const clearSearch = () => {
+    analytics.emit("search_cleared", {});
+    tracking.current!.reset();
+    const url = new URL(location.href);
+    url.searchParams.delete("fandom");
+    updateNavigationURL(url, "replace");
+    setSearchSelection(emptySearch);
+    close();
+  };
   return {
     favoritesMode,
     boothList,
@@ -686,14 +695,11 @@ export function useApp(mobile: boolean) {
       setSearchExtent(0.94);
     },
     submitSearch: () => tracking.current!.submit(query),
-    clearSearch: () => {
-      analytics.emit("search_cleared", {});
-      tracking.current!.reset();
-      const url = new URL(location.href);
-      url.searchParams.delete("fandom");
-      updateNavigationURL(url, "replace");
-      setSearchSelection(emptySearch);
-      close();
+    clearSearch,
+    dismissSearch: () => {
+      clearSearch();
+      (document.activeElement as HTMLElement)?.blur();
+      setSearchExtent(searchCollapsed(innerHeight));
     },
     searchFandom,
     toggleFavorite,

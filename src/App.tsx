@@ -109,45 +109,65 @@ export default function App() {
       </div>
     );
   const detail = app.selected && app.showDetail;
+  const searchRaised = mobile && app.searchExtent >= 0.3;
   const searchHeader = (
     <header className="search-header" data-drag>
       <div className="desktop-kicker kicker">CF23 creator directory</div>
-      <form
-        className="search-box"
-        onSubmit={(e) => {
-          e.preventDefault();
-          app.submitSearch();
-          if (!app.applyLink(app.query))
-            (document.activeElement as HTMLElement)?.blur();
-        }}
-      >
-        <Search className="search-icon" size={22} />
-        <input
-          ref={searchInput}
-          aria-label="Search name, booth, or fandom"
-          placeholder="Search name, booth, or fandom..."
-          value={app.query}
-          onFocus={app.openSearch}
-          onChange={(e) => app.search(e.target.value)}
-          autoComplete="off"
-          enterKeyHint="search"
-        />
-        {(app.query || app.selected) && (
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Clear search"
-            onPointerDown={(e) => e.preventDefault()}
-            onClick={() => {
-              app.clearSearch();
-              // Keep this synchronous with the tap so iOS can open the keyboard.
-              searchInput.current?.focus({ preventScroll: true });
-            }}
+      <div className={`search-row ${searchRaised ? "search-raised" : ""}`}>
+        <form
+          className="search-box"
+          onSubmit={(e) => {
+            e.preventDefault();
+            app.submitSearch();
+            if (!app.applyLink(app.query))
+              (document.activeElement as HTMLElement)?.blur();
+          }}
+        >
+          <Search className="search-icon" size={22} />
+          <input
+            ref={searchInput}
+            aria-label="Search name, booth, or fandom"
+            placeholder="Search name, booth, or fandom..."
+            value={app.query}
+            onFocus={app.openSearch}
+            onChange={(e) => app.search(e.target.value)}
+            autoComplete="off"
+            enterKeyHint="search"
+          />
+          {(app.query || app.selected) && (
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Clear search"
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() => {
+                app.clearSearch();
+                // Keep this synchronous with the tap so iOS can open the keyboard.
+                searchInput.current?.focus({ preventScroll: true });
+              }}
+            >
+              <X size={19} />
+            </button>
+          )}
+        </form>
+        {mobile && (
+          <div
+            className="search-dismiss-slot"
+            inert={!searchRaised}
+            aria-hidden={!searchRaised}
           >
-            <X size={19} />
-          </button>
+            <button
+              type="button"
+              className="icon-button search-dismiss"
+              aria-label="Clear and close search"
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={app.dismissSearch}
+            >
+              <X size={24} />
+            </button>
+          </div>
         )}
-      </form>
+      </div>
       <FandomSuggestions
         fandoms={app.suggestions}
         onSelect={app.searchFandom}
