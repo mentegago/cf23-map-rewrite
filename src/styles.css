@@ -596,6 +596,77 @@ h2 {
   text-align: center;
   padding: 28px 16px;
 }
+.search-link-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 36px);
+  margin: 16px 20px 20px 16px;
+  padding: 16px;
+  text-align: left;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px 5px 16px 5px;
+  box-shadow: 3px 3px var(--cyan);
+  transition:
+    background-color 160ms,
+    transform 160ms,
+    box-shadow 160ms;
+}
+.search-link-card:hover {
+  background: color-mix(in srgb, var(--cyan) 8%, var(--paper));
+}
+.search-link-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px var(--cyan);
+}
+.search-link-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px 4px 12px 4px;
+  background: color-mix(in srgb, var(--cyan) 15%, var(--paper));
+  color: var(--ink);
+}
+.search-link-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+.search-link-copy strong {
+  font-weight: var(--weight-display);
+  font-size: 16px;
+}
+.search-link-copy > span {
+  color: var(--muted);
+}
+.search-link-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 5px;
+}
+.search-link-card > svg {
+  flex-shrink: 0;
+}
+.search-link-unavailable {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 20px 16px;
+}
+.search-link-unavailable > svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.search-link-unavailable p {
+  color: var(--muted);
+  margin: 6px 0 0;
+}
 .detail-content {
   padding: var(--detail-top-padding, 16px) 16px 40px;
 }

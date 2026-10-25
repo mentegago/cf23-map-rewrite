@@ -3,10 +3,12 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import type { AppModel } from "../state/useApp";
 import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
+import { SearchLinkCard } from "./SearchLinkCard";
 import { useDismissKeyboardOnSwipe } from "../state/useDismissKeyboardOnSwipe";
 type Row =
   | { type: "creator"; creator: Creator; recommendation?: boolean }
   | { type: "heading"; title: string }
+  | { type: "link" }
   | { type: "empty" };
 export function Directory({
   app,
@@ -21,6 +23,7 @@ export function Directory({
   const previousQuery = useRef(app.query);
   const previousFandom = useRef(app.fandomId);
   const rows = useMemo(() => {
+    if (app.searchLink) return [{ type: "link" }] as Row[];
     const r: Row[] = [];
     const add = (list: Creator[], recommendation = false) =>
       list.forEach((creator) =>
@@ -45,13 +48,20 @@ export function Directory({
       add(app.creators);
     }
     return r;
-  }, [app.query, app.results, app.recommendations, app.creators]);
+  }, [
+    app.query,
+    app.results,
+    app.recommendations,
+    app.creators,
+    app.searchLink,
+  ]);
   const virtual = useVirtualizer({
     enabled: !app.showDetail,
     initialOffset: () => savedScroll.current,
     count: rows.length,
     getScrollElement: () => ref.current,
-    estimateSize: (i) => (rows[i].type === "creator" ? 110 : 54),
+    estimateSize: (i) =>
+      rows[i].type === "link" ? 144 : rows[i].type === "creator" ? 110 : 54,
     overscan: 6,
     getItemKey: (i) =>
       rows[i].type === "creator"
@@ -106,7 +116,12 @@ export function Directory({
                 transform: `translateY(${v.start}px)`,
               }}
             >
-              {row.type === "creator" ? (
+              {row.type === "link" && app.searchLink ? (
+                <SearchLinkCard
+                  target={app.searchLink}
+                  onOpen={() => app.applyLink(app.query)}
+                />
+              ) : row.type === "creator" ? (
                 <CreatorRow
                   creator={row.creator}
                   favorite={app.favorites.has(row.creator.id)}

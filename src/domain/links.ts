@@ -1,3 +1,6 @@
+import type { Catalog } from "./search";
+import type { Creator, Fandom } from "./types";
+
 /** Wire compatible with Flutter IntEncoding (sorted delta varints, URL-safe base64). */
 export function encodeList(ids: Iterable<number>): string {
   const sorted = [...new Set(ids)].sort((a, b) => a - b);
@@ -86,6 +89,37 @@ export function parseLink(input: string): DeepLink {
     return null;
   }
 }
+export type LinkTarget =
+  | { kind: "creator"; creator: Creator }
+  | { kind: "list"; ids: number[] }
+  | { kind: "fandom"; fandom: Fandom }
+  | { kind: "invalid" }
+  | null;
+
+/** Use the same catalog lookup for the search preview and opening the link. */
+export function resolveLink(input: string, catalog: Catalog): LinkTarget {
+  const link = parseLink(input);
+  if (!link || link.kind === "invalid") return link;
+  if (link.kind === "list")
+    return link.ids.every((id) => catalog.byId.has(id))
+      ? link
+      : { kind: "invalid" };
+  if (link.kind === "fandom") {
+    const fandom = catalog.fandoms.get(link.id);
+    return fandom ? { kind: "fandom", fandom } : { kind: "invalid" };
+  }
+  const creator =
+    link.kind === "creator"
+      ? catalog.byId.get(link.id)
+      : catalog.creators.find(
+          (c) => c.name.toLowerCase() === link.name.toLowerCase(),
+        ) ||
+        catalog.creators.find((c) =>
+          c.name.toLowerCase().includes(link.name.toLowerCase()),
+        );
+  return creator ? { kind: "creator", creator } : { kind: "invalid" };
+}
+
 export function shareURL(
   kind: "creator_id" | "list" | "fandom",
   value: string | number,

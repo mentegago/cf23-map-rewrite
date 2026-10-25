@@ -12,7 +12,7 @@ import {
   rankedInterestedFandoms,
   type RecommendationSource,
 } from "../domain/recommendations";
-import { parseLink, encodeList, shareURL } from "../domain/links";
+import { parseLink, resolveLink, encodeList, shareURL } from "../domain/links";
 import { searchCollapsed } from "../components/Sheet";
 import { useRecommendations } from "./useRecommendations";
 import { analytics } from "../data/analytics";
@@ -248,6 +248,8 @@ export function useApp(mobile: boolean) {
     if (!catalog) return false;
     const link = parseLink(text);
     if (!link) return false;
+    const target = resolveLink(text, catalog);
+    (document.activeElement as HTMLElement)?.blur();
     tracking.current!.reset();
     const params = new URL(text, location.href).searchParams;
     const type = (
@@ -278,7 +280,7 @@ export function useApp(mobile: boolean) {
       );
       return true;
     } else if (link.kind === "list") {
-      if (link.ids.every((id) => catalog.byId.has(id))) {
+      if (target?.kind === "list") {
         setBoothList({ kind: "custom", ids: new Set(link.ids) });
         if (
           boothList?.kind !== "custom" ||
@@ -308,15 +310,7 @@ export function useApp(mobile: boolean) {
         return true;
       }
     } else if (link.kind === "creator" || link.kind === "name") {
-      const c =
-        link.kind === "creator"
-          ? catalog.byId.get(link.id)
-          : catalog.creators.find(
-              (c) => c.name.toLowerCase() === link.name.toLowerCase(),
-            ) ||
-            catalog.creators.find((c) =>
-              c.name.toLowerCase().includes(link.name.toLowerCase()),
-            );
+      const c = target?.kind === "creator" ? target.creator : undefined;
       if (c) {
         const fandom = parseLink(
           `?fandom=${new URL(text, location.href).searchParams.get("fandom") ?? ""}`,
@@ -371,6 +365,13 @@ export function useApp(mobile: boolean) {
   const results = useMemo(
     () => catalog?.search(query, fandomId) || [],
     [catalog, query, fandomId],
+  );
+  const searchLink = useMemo(
+    () =>
+      searchSelection.kind === "text" && catalog
+        ? resolveLink(query, catalog)
+        : null,
+    [searchSelection, query, catalog],
   );
   const favoriteCreators = useMemo(
     () => catalog?.creators.filter((c) => favorites.has(c.id)) || [],
@@ -674,6 +675,7 @@ export function useApp(mobile: boolean) {
     applyLink,
     creators,
     results,
+    searchLink,
     favoriteCreators,
     listCreators,
     listFandoms,
