@@ -11,11 +11,21 @@ import { Gallery } from "./components/Gallery";
 import { Updates } from "./components/Updates";
 import { FandomSuggestions } from "./components/FandomSuggestions";
 import { analytics } from "./data/analytics";
+import { useSearchKeyboard } from "./state/useSearchKeyboard";
 export default function App() {
   const [mobile, setMobile] = useState(matchMedia("(max-width:768px)").matches);
   const app = useApp(mobile);
   const searchInput = useRef<HTMLInputElement>(null);
+  const fandomScroll = useRef({ key: "", left: 0 });
   const listOpen = !!app.boothList && !app.showDetail;
+  const keyboardOpen = useSearchKeyboard(searchInput, mobile);
+  const floatingSuggestions =
+    keyboardOpen &&
+    !app.showDetail &&
+    !listOpen &&
+    !app.gallery &&
+    !app.selector &&
+    app.suggestions.length > 0;
   const [listExtent, setListExtent] = useState(0.56);
   const closeBoothList = () => {
     app.closeBoothList();
@@ -168,33 +178,43 @@ export default function App() {
           </div>
         )}
       </div>
-      <FandomSuggestions
-        fandoms={app.suggestions}
-        onSelect={app.searchFandom}
-        leading={
-          !app.query.trim() &&
-          app.fandomId === undefined &&
-          app.favoriteCreators.length > 0 ? (
-            <button
-              type="button"
-              className="tag pink-tint favorites-tag"
-              aria-label="Favorites"
-              onClick={() => {
-                setListExtent(0.56);
-                app.openFavorites();
-              }}
-            >
-              <Heart size={14} fill="currentColor" /> Favorites{" "}
-              <span>{app.favoriteCreators.length}</span>
-            </button>
-          ) : undefined
-        }
-      />
+      <div
+        className={`header-suggestions ${floatingSuggestions ? "suggestions-away" : ""}`}
+        inert={floatingSuggestions}
+        aria-hidden={floatingSuggestions}
+      >
+        <FandomSuggestions
+          scrollPosition={fandomScroll}
+          active={!floatingSuggestions}
+          fandoms={app.suggestions}
+          onSelect={app.searchFandom}
+          leading={
+            !app.query.trim() &&
+            app.fandomId === undefined &&
+            app.favoriteCreators.length > 0 ? (
+              <button
+                type="button"
+                className="tag pink-tint favorites-tag"
+                aria-label="Favorites"
+                onClick={() => {
+                  setListExtent(0.56);
+                  app.openFavorites();
+                }}
+              >
+                <Heart size={14} fill="currentColor" /> Favorites{" "}
+                <span>{app.favoriteCreators.length}</span>
+              </button>
+            ) : undefined
+          }
+        />
+      </div>
     </header>
   );
   return (
     <>
-      <div className={`app-shell ${detail ? "showing-detail" : ""}`}>
+      <div
+        className={`app-shell ${detail ? "showing-detail" : ""} ${floatingSuggestions ? "keyboard-suggestions-open" : ""}`}
+      >
         <MapView app={app} />
         <div className="directory-region">
           <ResponsivePanel
@@ -228,6 +248,18 @@ export default function App() {
           </ResponsivePanel>
         </div>
         <Updates />
+      </div>
+      <div
+        className={`keyboard-suggestions ${floatingSuggestions ? "visible" : ""}`}
+        inert={!floatingSuggestions}
+        aria-hidden={!floatingSuggestions}
+      >
+        <FandomSuggestions
+          scrollPosition={fandomScroll}
+          active={floatingSuggestions}
+          fandoms={app.suggestions}
+          onSelect={app.searchFandom}
+        />
       </div>
       <div
         className={`toast ${app.toast ? "visible" : ""}`}
