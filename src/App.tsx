@@ -21,13 +21,17 @@ export default function App() {
   const fandomScroll = useRef({ key: "", left: 0 });
   const listOpen = !!app.boothList && !app.showDetail;
   const keyboardOpen = useSearchKeyboard(searchInput, mobile);
+  const showFavorites =
+    !app.query.trim() &&
+    app.fandomId === undefined &&
+    app.favoriteCreators.length > 0;
   const floatingSuggestions =
     keyboardOpen &&
     !app.showDetail &&
     !listOpen &&
     !app.gallery &&
     !app.selector &&
-    app.suggestions.length > 0;
+    (app.suggestions.length > 0 || showFavorites);
   const [listExtent, setListExtent] = useState(0.56);
   const routeMinimum = Math.min(
     0.45,
@@ -135,6 +139,20 @@ export default function App() {
     );
   const detail = app.selected && app.showDetail;
   const searchRaised = mobile && app.searchExtent >= 0.3;
+  const favoritesPill = showFavorites ? (
+    <button
+      type="button"
+      className="tag pink-tint favorites-tag"
+      aria-label="Favorites"
+      onClick={() => {
+        setListExtent(0.56);
+        app.openFavorites();
+      }}
+    >
+      <Heart size={14} fill="currentColor" /> Favorites{" "}
+      <span>{app.favoriteCreators.length}</span>
+    </button>
+  ) : undefined;
   const searchHeader = (
     <header className="search-header" data-drag>
       <div className="desktop-kicker kicker">CF23 creator directory</div>
@@ -203,24 +221,7 @@ export default function App() {
           active={!floatingSuggestions}
           fandoms={app.suggestions}
           onSelect={app.searchFandom}
-          leading={
-            !app.query.trim() &&
-            app.fandomId === undefined &&
-            app.favoriteCreators.length > 0 ? (
-              <button
-                type="button"
-                className="tag pink-tint favorites-tag"
-                aria-label="Favorites"
-                onClick={() => {
-                  setListExtent(0.56);
-                  app.openFavorites();
-                }}
-              >
-                <Heart size={14} fill="currentColor" /> Favorites{" "}
-                <span>{app.favoriteCreators.length}</span>
-              </button>
-            ) : undefined
-          }
+          leading={favoritesPill}
         />
       </div>
     </header>
@@ -312,6 +313,7 @@ export default function App() {
           active={floatingSuggestions}
           fandoms={app.suggestions}
           onSelect={app.searchFandom}
+          leading={favoritesPill}
         />
       </div>
       <div

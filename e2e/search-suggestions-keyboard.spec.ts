@@ -1,10 +1,20 @@
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
 
 test("fandom suggestions dock above the keyboard and return on dismissal", async ({
   page,
 }, info) => {
   test.skip(info.project.name !== "mobile");
   await page.route("https://**/*", (route) => route.abort());
+  const catalog = JSON.parse(
+    readFileSync("public/data/catalog-initial.json", "utf8"),
+  );
+  await page.addInitScript((id) => {
+    localStorage.setItem(
+      "flutter.favorite_creator_ids",
+      JSON.stringify([String(id)]),
+    );
+  }, catalog.exhibitors[0].id);
   await page.goto("/");
   const input = page.getByRole("textbox", {
     name: "Search name, booth, or fandom",
@@ -85,4 +95,17 @@ test("fandom suggestions dock above the keyboard and return on dismissal", async
   await expect(page).toHaveURL(/fandom=/);
   await expect(floating).toBeHidden();
   await expect(page.locator(".header-suggestions")).toBeVisible();
+  await input.fill("");
+  await resize(400);
+  const favorites = floating.getByRole("button", {
+    name: "Favorites",
+    exact: true,
+  });
+  await expect(favorites).toBeVisible();
+  await expect(favorites).toHaveText("Favorites 1");
+  await favorites.tap();
+  await expect(
+    page.getByRole("button", { name: "Close favorites" }),
+  ).toBeVisible();
+  await expect(floating).toBeHidden();
 });
