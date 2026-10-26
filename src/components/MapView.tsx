@@ -73,7 +73,7 @@ export function MapView({ app }: { app: AppModel }) {
         ref={canvas}
         className="map-canvas"
         tabIndex={0}
-        aria-label="Interactive CF23 booth map. Drag to pan, pinch or scroll to zoom. Keyboard: arrow keys to pan, plus and minus to zoom, zero for overview. Use the directory to select creators."
+        aria-label="Interactive CF23 booth map. Drag or scroll to pan, pinch or Ctrl-scroll to zoom. Keyboard: arrow keys to pan, plus and minus to zoom, zero for overview. Use the directory to select creators."
       />
       <div className="map-tools">
         <button

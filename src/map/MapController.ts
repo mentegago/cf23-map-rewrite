@@ -387,13 +387,27 @@ export class MapController {
       this.reportInteraction(this.wheelStart);
       this.wheelStart = undefined;
     }, 180);
-    const p = this.local(e);
-    this.state.transform = zoomAt(
-      this.state.transform,
-      p.x,
-      p.y,
-      Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002)),
-    );
+    const unit = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+    const dx =
+      e.deltaX *
+      (e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? this.width : unit);
+    const dy =
+      e.deltaY *
+      (e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? this.height : unit);
+    if (e.ctrlKey) {
+      // Browsers report trackpad pinch as a Ctrl+wheel gesture.
+      const p = this.local(e);
+      this.state.transform = zoomAt(
+        this.state.transform,
+        p.x,
+        p.y,
+        Math.exp(-dy * 0.01),
+      );
+    } else {
+      // Consume the browser's deltas directly, including trackpad momentum.
+      this.state.transform.x -= e.shiftKey && !dx ? dy : dx;
+      this.state.transform.y -= e.shiftKey && !dx ? 0 : dy;
+    }
     this.constrain();
     this.draw();
   };
