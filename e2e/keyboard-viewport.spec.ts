@@ -86,3 +86,67 @@ test("collapsed search focus remains visible through keyboard resize and viewpor
     )
     .toBe(0);
 });
+
+for (const safeBottom of [0, 34]) {
+  test(`search close preserves collapsed height with a ${safeBottom}px safe area`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile");
+    await page.route("https://**/*", (route) => route.abort());
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "standalone", {
+        value: true,
+        configurable: true,
+      });
+    });
+    await page.goto("/");
+    // Supply the resolved iOS safe-area padding, which Chromium cannot emulate.
+    await page.addStyleTag({
+      content: `.search-sheet { padding-bottom: ${safeBottom}px !important; }`,
+    });
+    const sheet = page.getByRole("region", { name: "Creator directory" });
+    const expectedHeight = await page
+      .locator("#app")
+      .evaluate(
+        (el, safe) =>
+          Math.max(0.16, Math.min(0.24, (132 + safe) / el.clientHeight)) *
+          el.clientHeight,
+        safeBottom,
+      );
+    for (const keyboard of [false, true]) {
+      await page.getByRole("textbox").tap();
+      await expect(sheet).not.toHaveClass(/collapsed/);
+      if (keyboard) {
+        await page.evaluate(() => {
+          Object.defineProperty(visualViewport, "height", {
+            configurable: true,
+            value: 350,
+          });
+          visualViewport!.dispatchEvent(new Event("resize"));
+        });
+      }
+      await page
+        .getByRole("button", { name: "Clear and close search", exact: true })
+        .tap();
+      if (keyboard) {
+        await page.evaluate(() => {
+          delete (visualViewport as unknown as Record<string, unknown>).height;
+          visualViewport!.dispatchEvent(new Event("resize"));
+        });
+      }
+      await expect(sheet).toHaveClass(/collapsed/);
+      await expect
+        .poll(() => sheet.evaluate((el) => el.getBoundingClientRect().height))
+        .toBeCloseTo(expectedHeight, 0);
+      await page
+        .getByRole("button", { name: "Expand panel", exact: true })
+        .tap();
+      await page
+        .getByRole("button", { name: "Collapse panel", exact: true })
+        .tap();
+      await expect
+        .poll(() => sheet.evaluate((el) => el.getBoundingClientRect().height))
+        .toBeCloseTo(expectedHeight, 0);
+    }
+  });
+}

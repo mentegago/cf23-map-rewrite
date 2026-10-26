@@ -64,8 +64,18 @@ export function Sheet({
   }, [extent, hidden]);
   useLayoutEffect(() => {
     const el = ref.current!;
-    el.style.setProperty("--extent", String(extent));
-  }, [extent]);
+    // Collapse requests may originate before the keyboard finishes resizing.
+    // Resolve them against the same viewport and safe area used by gestures.
+    const value =
+      kind === "search" && extent < 0.3
+        ? searchCollapsed(
+            document.getElementById("app")!.clientHeight,
+            parseFloat(getComputedStyle(el).paddingBottom) || 0,
+          )
+        : extent;
+    el.style.setProperty("--extent", String(value));
+    if (Math.abs(value - extent) > 0.001) callback.current(value);
+  }, [extent, kind]);
   useLayoutEffect(() => {
     const el = ref.current!;
     let startX = 0,
@@ -83,10 +93,7 @@ export function Sheet({
     const resize = new ResizeObserver(() => {
       el.style.setProperty("--collapsed-extent", String(min()));
       if (kind === "search" && current() < 0.3) {
-        const value = searchCollapsed(
-          height(),
-          parseFloat(getComputedStyle(el).paddingBottom) || 0,
-        );
+        const value = min();
         if (Math.abs(value - current()) > 0.001) {
           el.style.setProperty("--extent", String(value));
           callback.current(value);
@@ -99,9 +106,7 @@ export function Sheet({
         ? 0.28
         : searchCollapsed(
             height(),
-            parseFloat(
-              getComputedStyle(el).getPropertyValue("--safe-bottom"),
-            ) || 0,
+            parseFloat(getComputedStyle(el).paddingBottom) || 0,
           ));
     const current = () =>
       Number(el.style.getPropertyValue("--extent")) || min();
