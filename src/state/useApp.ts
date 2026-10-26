@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Catalog, normalize } from "../domain/search";
+import { fandomRanks, searchFandomRanks } from "../domain/fandomOrdering";
 import type { Creator, Snapshot } from "../domain/types";
 import { emptySearch, type SearchSelection } from "../domain/searchSelection";
 import { loadSnapshot, refreshSnapshot } from "../data/snapshots";
@@ -463,7 +464,7 @@ export function useApp(mobile: boolean) {
         origin: galleryOrigin,
       });
   }, [gallery?.id]);
-  const recommendationIds = useRecommendations(
+  const recommendationEntries = useRecommendations(
     snapshot,
     profile,
     favorites,
@@ -474,18 +475,39 @@ export function useApp(mobile: boolean) {
   );
   const recommendations = useMemo(
     () =>
-      recommendationIds
-        .map((id) => catalog?.byId.get(id))
+      recommendationEntries
+        .map(({ id }) => catalog?.byId.get(id))
         .filter((c): c is Creator => !!c),
-    [recommendationIds, catalog],
+    [recommendationEntries, catalog],
+  );
+  const recommendationFandomRanks = useMemo(
+    () =>
+      new Map(
+        recommendationEntries.map((r) => [r.id, fandomRanks(r.matchingIds)]),
+      ),
+    [recommendationEntries],
+  );
+  const interestedFandoms = useMemo(
+    () => (catalog ? rankedInterestedFandoms(catalog, profile, favorites) : []),
+    [catalog, profile, favorites],
+  );
+  const interestFandomRanks = useMemo(
+    () => fandomRanks(interestedFandoms.map((f) => f.id)),
+    [interestedFandoms],
+  );
+  const matchedFandomRanks = useMemo(
+    () =>
+      catalog
+        ? searchFandomRanks(catalog, query, fandomId)
+        : new Map<number, number>(),
+    [catalog, query, fandomId],
   );
   const suggestions = useMemo(() => {
     if (!catalog) return [];
     if (query.trim() || fandomId !== undefined)
       return catalog.suggestions(query, fandomId);
-    const ranked = rankedInterestedFandoms(catalog, profile, favorites);
     const seen = new Set<string>();
-    return [...ranked, ...catalog.popular]
+    return [...interestedFandoms, ...catalog.popular]
       .filter((f) => {
         const key = normalize(f.name);
         if (!key || seen.has(key)) return false;
@@ -493,7 +515,7 @@ export function useApp(mobile: boolean) {
         return true;
       })
       .slice(0, 20);
-  }, [catalog, query, fandomId, profile, favorites]);
+  }, [catalog, query, fandomId, interestedFandoms]);
   const search = (text: string) => {
     setBoothList(null);
     analytics.emit("creator_closed", { reason: "search_opened" });
@@ -801,6 +823,9 @@ export function useApp(mobile: boolean) {
       });
     },
     recommendations,
+    recommendationFandomRanks,
+    interestFandomRanks,
+    matchedFandomRanks,
     suggestions,
     search,
     openSearch: () => {

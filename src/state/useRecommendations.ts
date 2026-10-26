@@ -11,17 +11,24 @@ export function useRecommendations(
     generation = useRef(0),
     sentSnapshot = useRef<Snapshot | null>(null),
     refreshPending = useRef(true);
-  const [ids, setIds] = useState<number[]>([]);
+  const [recommendations, setRecommendations] = useState<
+    { id: number; matchingIds: number[] }[]
+  >([]);
   useEffect(() => {
     const w = new Worker(
       new URL("../domain/recommendations.worker.ts", import.meta.url),
       { type: "module" },
     );
     worker.current = w;
-    w.onmessage = (e: MessageEvent<{ id: number; ids: number[] }>) => {
+    w.onmessage = (
+      e: MessageEvent<{
+        id: number;
+        recommendations: { id: number; matchingIds: number[] }[];
+      }>,
+    ) => {
       if (e.data.id === generation.current) {
         refreshPending.current = false;
-        setIds(e.data.ids);
+        setRecommendations(e.data.recommendations);
       }
     };
     return () => {
@@ -44,11 +51,11 @@ export function useRecommendations(
         snapshot: sentSnapshot.current === snapshot ? undefined : snapshot,
         profile,
         favorites: [...favorites],
-        previousIds: ids,
+        previousIds: recommendations.map((r) => r.id),
       });
       sentSnapshot.current = snapshot;
     }, 120);
     return () => clearTimeout(timer);
   }, [snapshot, profile, favorites, allowRefresh]);
-  return ids;
+  return recommendations;
 }

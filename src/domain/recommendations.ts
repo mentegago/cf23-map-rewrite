@@ -311,12 +311,17 @@ export function rankRecommendations(
       }
     }
   }
-  const candidates: { creator: Creator; score: number; matching: string[] }[] =
-    [];
+  const candidates: {
+    creator: Creator;
+    score: number;
+    matching: string[];
+    matchingIds: number[];
+  }[] = [];
   for (const c of catalog.creators) {
     if (c.id === -1 || favorites.has(c.id)) continue;
     const matches = c.fandoms
       .map((f) => ({
+        id: f.id,
         name: f.name,
         value:
           Math.max(0, ...[...vector].map(([id, v]) => v * relation(f.id, id))) *
@@ -348,6 +353,7 @@ export function rankRecommendations(
         0.08 * (nearby.get(c.id) || 0) +
         (c.assets.gallery.length ? galleryBonus : 0),
       matching: matches.slice(0, 3).map((m) => m.name),
+      matchingIds: matches.slice(0, 3).map((m) => m.id),
     });
   }
   candidates.sort((a, b) => b.score - a.score || a.creator.id - b.creator.id);

@@ -1,5 +1,6 @@
 import { Heart, Images } from "lucide-react";
-import type { Creator } from "../domain/types";
+import type { Creator, Fandom } from "../domain/types";
+import { orderCreatorFandoms } from "../domain/fandomOrdering";
 import { safeURL } from "../domain/links";
 import { useState } from "react";
 import { LoadingImage } from "./LoadingImage";
@@ -57,16 +58,18 @@ export function CreatorRow({
   onGallery,
   favorite,
   onFavorite,
+  orderedFandoms,
 }: {
   creator: Creator;
   onSelect: (c: Creator) => void;
   onGallery: (c: Creator) => void;
   favorite: boolean;
   onFavorite: (id: number) => void;
+  orderedFandoms?: Fandom[];
 }) {
-  const fandoms = [...creator.fandoms].sort(
-    (a, b) => Number(b.name === "Original") - Number(a.name === "Original"),
-  );
+  const fandoms =
+    orderedFandoms ??
+    orderCreatorFandoms(creator.fandoms, { originalFirst: true });
   return (
     <article
       className={`creator-row ${creator.assets.gallery.length ? "has-gallery" : ""}`}

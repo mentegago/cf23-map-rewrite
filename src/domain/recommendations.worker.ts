@@ -1,5 +1,5 @@
 import { Catalog } from "./search";
-import { recommend } from "./recommendations";
+import { rankRecommendations } from "./recommendations";
 import type { Profile, Snapshot } from "./types";
 let catalog: Catalog | null = null;
 let proximity: Snapshot["proximity"] | null = null;
@@ -18,19 +18,19 @@ self.onmessage = (
       catalog = new Catalog(snapshot.catalog, snapshot.registry);
       proximity = snapshot.proximity;
     }
-    const ids =
+    const recommendations =
       catalog && proximity
-        ? recommend(
+        ? rankRecommendations(
             catalog,
             profile,
             new Set(favorites),
             proximity,
             20,
             new Set(previousIds),
-          ).map((c) => c.id)
+          ).map((r) => ({ id: r.creator.id, matchingIds: r.matchingIds }))
         : [];
-    self.postMessage({ id, ids });
+    self.postMessage({ id, recommendations });
   } catch {
-    self.postMessage({ id, ids: [] });
+    self.postMessage({ id, recommendations: [] });
   }
 };
