@@ -43,7 +43,11 @@ test("bulk bookmarks share an operation ID and clipboard failure reports the act
     page.getByRole("region", { name: "Booth list", exact: true }),
   ).toBeVisible();
   if (await expand.isVisible()) await expand.click();
-  await page.getByRole("button", { name: "Favorite all" }).click();
+  await page.getByRole("button", { name: "Add all…" }).click();
+  await page
+    .getByRole("dialog", { name: "Add to collection" })
+    .getByRole("button", { name: /Favorites/ })
+    .click();
   const named = (name: string) =>
     events.filter((e) => e.name === name).map((e) => e.data);
   await expect.poll(() => named("favorites_action").length).toBe(1);

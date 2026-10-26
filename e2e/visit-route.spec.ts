@@ -181,9 +181,7 @@ test("Navigate opens a separate compact page with working stop controls and expa
   const list = page.getByRole("region", { name: "Booth list", exact: true });
   await expect(list).toBeVisible();
   const bulk = list.locator(".booth-list-bulk");
-  await expect(
-    bulk.getByRole("button", { name: "Favorite all" }),
-  ).toBeVisible();
+  await expect(bulk.getByRole("button", { name: "Add all…" })).toBeVisible();
   await bulk.getByRole("button", { name: "Navigate", exact: true }).click();
   const dayDialog = page.getByRole("dialog", {
     name: "When are you visiting?",
@@ -448,7 +446,11 @@ test("day choices survive closing the route page but reset when the booth list c
   await sheet
     .getByRole("button", { name: "Back to list", exact: true })
     .click();
-  await list.getByRole("button", { name: "Favorite all", exact: true }).click();
+  await list.getByRole("button", { name: "Add all…", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Add to collection" })
+    .getByRole("button", { name: /Favorites/ })
+    .click();
   await list
     .getByRole("button", { name: "Close booth list", exact: true })
     .click();

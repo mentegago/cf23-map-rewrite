@@ -28,7 +28,9 @@ test("list actions and fandoms scroll away while the header stays fixed", async 
   for (const favorites of [false, true]) {
     await page.goto(favorites ? "/" : `/?list=${encodeList(ids)}`);
     if (favorites)
-      await page.getByRole("button", { name: "Favorites", exact: true }).click();
+      await page
+        .getByRole("button", { name: "Favorites", exact: true })
+        .click();
     const sheet = page.getByRole("region", {
       name: favorites ? "Favorites" : "Booth list",
       exact: true,
@@ -117,8 +119,10 @@ test("pasted encoded list filters independently, saves the entire list, and surv
         count: matches.length,
       });
   }
-  await sheet
-    .getByRole("button", { name: "Favorite all", exact: true })
+  await sheet.getByRole("button", { name: "Add all…", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Add to collection" })
+    .getByRole("button", { name: /Favorites/ })
     .click();
   await expect
     .poll(() =>

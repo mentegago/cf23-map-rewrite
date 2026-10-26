@@ -1,4 +1,4 @@
-import { Heart, Images } from "lucide-react";
+import { Heart, Images, Bookmark } from "lucide-react";
 import type { Creator } from "../domain/types";
 import { orderCreatorFandoms } from "../domain/fandomOrdering";
 import { safeURL } from "../domain/links";
@@ -88,6 +88,7 @@ export function CreatorRow({
   fandomPriority,
   fandomInterests,
   originalFirst = true,
+  collection = false,
 }: {
   creator: Creator;
   onSelect: (c: Creator) => void;
@@ -97,6 +98,7 @@ export function CreatorRow({
   fandomPriority?: ReadonlyMap<number, number>;
   fandomInterests?: ReadonlyMap<number, number>;
   originalFirst?: boolean;
+  collection?: boolean;
 }) {
   const fandoms = useMemo(
     () =>
@@ -145,11 +147,15 @@ export function CreatorRow({
         )}
         <button
           className={`icon-button ${favorite ? "is-favorite" : ""}`}
-          aria-label={`${favorite ? "Remove" : "Add"} ${creator.name} ${favorite ? "from" : "to"} favorites`}
+          aria-label={`${favorite ? "Remove" : "Add"} ${creator.name} ${favorite ? "from" : "to"} ${collection ? "collection" : "favorites"}`}
           aria-pressed={favorite}
           onClick={() => onFavorite(creator.id)}
         >
-          <Heart size={21} fill={favorite ? "currentColor" : "none"} />
+          {collection ? (
+            <Bookmark size={21} fill={favorite ? "currentColor" : "none"} />
+          ) : (
+            <Heart size={21} fill={favorite ? "currentColor" : "none"} />
+          )}
         </button>
       </div>
     </article>

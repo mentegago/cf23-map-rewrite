@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, X, Heart } from "lucide-react";
+import { Search, X, Heart, FolderHeart } from "lucide-react";
+import { CollectionsSheet } from "./components/Collections";
 import { BoothListSheet } from "./components/BoothListSheet";
 import { VisitPathSheet } from "./components/VisitPathSheet";
 import { VisitDayDialog } from "./components/VisitDayDialog";
@@ -23,6 +24,8 @@ export default function App() {
     app.fandomId === undefined &&
     app.favoriteCreators.length > 0;
   const [listExtent, setListExtent] = useState(0.56);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const listParent = useRef<"search" | "collections">("search");
   const [viewportHeight, setViewportHeight] = useState(
     visualViewport?.height || innerHeight,
   );
@@ -41,7 +44,11 @@ export default function App() {
   const [choosingVisitDay, setChoosingVisitDay] = useState(false);
   const routeOpen = listOpen && app.visitRoute.enabled;
   const closeBoothList = () => {
+    const returnToCollections = listParent.current === "collections";
+    listParent.current = "search";
+    setCollectionsOpen(returnToCollections);
     app.closeBoothList();
+    if (returnToCollections) return;
     requestAnimationFrame(() =>
       document
         .querySelector<HTMLButtonElement>(".favorites-tag")
@@ -51,6 +58,12 @@ export default function App() {
   useEffect(() => {
     setListExtent(0.56);
   }, [app.boothList]);
+  useEffect(() => {
+    if (app.showDetail || app.boothList) setCollectionsOpen(false);
+  }, [app.showDetail, app.boothList]);
+  useEffect(() => {
+    if (!app.boothList && !collectionsOpen) listParent.current = "search";
+  }, [app.boothList, collectionsOpen]);
   useEffect(() => {
     const activity = () => analytics.activity();
     window.addEventListener("wheel", activity, { passive: true });
@@ -210,7 +223,25 @@ export default function App() {
         <FandomSuggestions
           fandoms={app.suggestions}
           onSelect={app.searchFandom}
-          leading={favoritesPill}
+          leading={
+            !app.query.trim() && app.fandomId === undefined ? (
+              <>
+                {favoritesPill}
+                {app.collections.length > 0 && (
+                  <button
+                    className="tag pink-tint"
+                    onClick={() => {
+                      app.closeBoothList();
+                      setListExtent(0.56);
+                      setCollectionsOpen(true);
+                    }}
+                  >
+                    <FolderHeart size={14} /> Collections
+                  </button>
+                )}
+              </>
+            ) : undefined
+          }
         />
       </div>
     </header>
@@ -223,12 +254,31 @@ export default function App() {
           <ResponsivePanel
             mobile={mobile}
             kind="search"
-            visible={!detail && !listOpen}
+            visible={!detail && !listOpen && !collectionsOpen}
             extent={app.searchExtent}
             onExtent={app.setSearchExtent}
           >
             {searchHeader}
             <Directory app={app} searchInput={searchInput} />
+          </ResponsivePanel>
+          <ResponsivePanel
+            mobile={mobile}
+            kind="list"
+            label="Collections"
+            visible={collectionsOpen}
+            extent={listExtent}
+            onExtent={setListExtent}
+          >
+            {collectionsOpen && (
+              <CollectionsSheet
+                app={app}
+                onClose={() => setCollectionsOpen(false)}
+                onOpen={() => {
+                  listParent.current = "collections";
+                  setCollectionsOpen(false);
+                }}
+              />
+            )}
           </ResponsivePanel>
           <ResponsivePanel
             mobile={mobile}
@@ -242,7 +292,10 @@ export default function App() {
           <ResponsivePanel
             mobile={mobile}
             kind="list"
-            label={app.favoritesMode ? "Favorites" : "Booth list"}
+            label={
+              app.activeCollection?.name ||
+              (app.favoritesMode ? "Favorites" : "Booth list")
+            }
             analyticsSheet={app.favoritesMode ? "favorites" : "booth_list"}
             visible={listOpen && !routeOpen}
             extent={listExtent}

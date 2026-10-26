@@ -1,51 +1,10 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Heart, X, Share2, List } from "lucide-react";
+import { Heart, X, Share2, List, MoreHorizontal, Plus } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { CreatorRow } from "./CreatorRow";
 import { useHorizontalWheel } from "../state/useHorizontalWheel";
-
-function FavoriteRowExit({
-  exiting,
-  onExit,
-  children,
-}: {
-  exiting: boolean;
-  onExit: () => void;
-  children: ReactNode;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const finish = useRef(onExit);
-  finish.current = onExit;
-  useLayoutEffect(() => {
-    if (!exiting || !ref.current) return;
-    const element = ref.current;
-    const animation = element.animate(
-      [
-        {
-          height: `${element.getBoundingClientRect().height}px`,
-          opacity: 1,
-          transform: "translateX(0)",
-        },
-        { height: "0px", opacity: 0, transform: "translateX(12px)" },
-      ],
-      {
-        duration: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? 0
-          : 240,
-        easing: "cubic-bezier(.22, 1, .36, 1)",
-        fill: "forwards",
-      },
-    );
-    animation.onfinish = () => finish.current();
-    return () => animation.cancel();
-  }, [exiting]);
-  return (
-    <div ref={ref} className="favorite-row-presence" inert={exiting}>
-      {children}
-    </div>
-  );
-}
+import { CollectionDialog, CollectionPicker } from "./Collections";
 
 /** Shared content for the mobile sheet and desktop sidebar. */
 export function BoothListSheet({
@@ -59,8 +18,12 @@ export function BoothListSheet({
 }) {
   const isFavorites = app.boothList?.kind === "favorites";
   const horizontalWheel = useHorizontalWheel();
-  const title = isFavorites ? "Favorites" : "Booth list";
-  const allSaved = app.listCreators.every((c) => app.favorites.has(c.id));
+  const title =
+    app.activeCollection?.name || (isFavorites ? "Favorites" : "Booth list");
+  const [picker, setPicker] = useState(false);
+  const [manage, setManage] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [name, setName] = useState(title);
   const scroll = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const [controlsHeight, setControlsHeight] = useState(0);
@@ -74,26 +37,8 @@ export function BoothListSheet({
     return () => observer.disconnect();
   }, []);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const creators = app.filteredListCreators;
-  const [rows, setRows] = useState(creators);
-  useLayoutEffect(() => {
-    setRows((previous) => {
-      const next = [...creators];
-      // Keep unsaved rows only for their exit animation, not for filter changes.
-      previous.forEach((creator, index) => {
-        if (
-          isFavorites &&
-          !app.favorites.has(creator.id) &&
-          !next.some((c) => c.id === creator.id)
-        )
-          next.splice(Math.min(index, next.length), 0, creator);
-      });
-      return next;
-    });
-    // Virtual rows may leave the viewport mid-animation; still retire them.
-    const timer = setTimeout(() => setRows(creators), 260);
-    return () => clearTimeout(timer);
-  }, [creators, app.favorites, isFavorites]);
+  const creators = app.filteredListRows;
+  const rows = creators;
   const virtual = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scroll.current,
@@ -131,6 +76,18 @@ export function BoothListSheet({
         </div>
         <div className="favorites-actions">
           <div className="detail-action-group">
+            {app.activeCollection && (
+              <button
+                className="icon-button"
+                aria-label="Manage collection"
+                onClick={() => {
+                  setName(title);
+                  setManage(true);
+                }}
+              >
+                <MoreHorizontal size={21} />
+              </button>
+            )}
             <button
               className="icon-button"
               aria-label={isFavorites ? "Share Favorites" : "Share booth list"}
@@ -158,24 +115,20 @@ export function BoothListSheet({
         <div ref={controlsRef}>
           {!!creators.length && (
             <div className="booth-list-bulk">
-              {!isFavorites && (
+              {!isFavorites && !app.activeCollection && (
                 <button
                   className="action pink"
-                  aria-label={
-                    allSaved ? "All saved to favorites" : "Favorite all"
-                  }
-                  onClick={app.addAll}
-                  disabled={allSaved}
+                  disabled={!app.listCreators.length}
+                  onClick={() => setPicker(true)}
                 >
-                  {allSaved ? (
-                    <Heart size={17} fill="currentColor" />
-                  ) : (
-                    <Heart size={17} />
-                  )}
-                  {allSaved ? "All saved" : "Favorite all"}
+                  <Plus size={17} /> Add all…
                 </button>
               )}
-              <button className="action cyan" onClick={onNavigate}>
+              <button
+                className="action cyan"
+                disabled={!app.filteredListCreators.length}
+                onClick={onNavigate}
+              >
                 Navigate
               </button>
             </div>
@@ -228,22 +181,22 @@ export function BoothListSheet({
                   transform: `translateY(${v.start - controlsHeight}px)`,
                 }}
               >
-                <FavoriteRowExit
-                  exiting={isFavorites && !app.favorites.has(rows[v.index].id)}
-                  onExit={() =>
-                    setRows((current) =>
-                      current.filter((c) => c.id !== rows[v.index].id),
-                    )
+                <CreatorRow
+                  creator={rows[v.index]}
+                  favorite={
+                    app.activeCollection
+                      ? app.activeCollection.ids.includes(rows[v.index].id)
+                      : app.favorites.has(rows[v.index].id)
                   }
-                >
-                  <CreatorRow
-                    creator={rows[v.index]}
-                    favorite={app.favorites.has(rows[v.index].id)}
-                    onFavorite={app.toggleFavorite}
-                    onSelect={(c) => app.select(c, true, "list")}
-                    onGallery={app.openGallery}
-                  />
-                </FavoriteRowExit>
+                  collection={!!app.activeCollection}
+                  onFavorite={
+                    app.activeCollection
+                      ? app.toggleCollectionCreator
+                      : app.toggleFavorite
+                  }
+                  onSelect={(c) => app.select(c, true, "list")}
+                  onGallery={app.openGallery}
+                />
               </div>
             ))}
           </div>
@@ -256,7 +209,9 @@ export function BoothListSheet({
             <p>
               {isFavorites
                 ? "Tap the heart on a creator to save them here."
-                : "The creators in this list are no longer in the catalog."}
+                : app.activeCollection
+                  ? "Open a booth list and choose Add all… to add creators here."
+                  : "The creators in this list are no longer in the catalog."}
             </p>
             <button className="action cyan" onClick={onClose}>
               Browse creators
@@ -264,6 +219,58 @@ export function BoothListSheet({
           </div>
         )}
       </div>
+      {picker && (
+        <CollectionPicker app={app} onClose={() => setPicker(false)} />
+      )}
+      {manage && (
+        <CollectionDialog
+          title="Manage collection"
+          onClose={() => setManage(false)}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (app.renameCollection(name)) setManage(false);
+            }}
+          >
+            <label>
+              Collection name
+              <input
+                autoFocus
+                maxLength={80}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <button className="action cyan" disabled={!name.trim()}>
+              Save name
+            </button>
+          </form>
+          <button
+            className="collection-remove"
+            onClick={() => {
+              setManage(false);
+              setDeleting(true);
+            }}
+          >
+            Delete collection
+          </button>
+        </CollectionDialog>
+      )}
+      {deleting && (
+        <CollectionDialog
+          title={`Delete ${title}?`}
+          onClose={() => setDeleting(false)}
+        >
+          <p>Your favorites and other collections will be kept.</p>
+          <button
+            className="action pink"
+            onClick={() => app.deleteCollection()}
+          >
+            Delete collection
+          </button>
+        </CollectionDialog>
+      )}
     </>
   );
 }

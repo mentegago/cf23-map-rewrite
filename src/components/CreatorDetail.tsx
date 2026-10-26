@@ -9,16 +9,20 @@ import {
   CalendarDays,
   Link,
   Heart,
+  Bookmark,
+  FolderPlus,
   MapPin,
 } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { safeURL } from "../domain/links";
 import { Artwork } from "./CreatorRow";
+import { CollectionPicker } from "./Collections";
 import { analytics } from "../data/analytics";
 import { launchForAnalytics } from "../data/analyticsActions";
 export function CreatorDetail({ app }: { app: AppModel }) {
   const c = app.selected!;
   const [expanded, setExpanded] = useState(false);
+  const [collectionPicker, setCollectionPicker] = useState(false);
   const cut = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = cut.current!;
@@ -29,7 +33,14 @@ export function CreatorDetail({ app }: { app: AppModel }) {
     el.style.height = `${el.clientWidth / (expanded ? 0.7 : 2)}px`;
     return () => resize.disconnect();
   }, [expanded]);
-  const favorite = app.favorites.has(c.id);
+  const collection =
+    app.activeCollection &&
+    (app.creatorOrigin === "custom_list" || app.creatorOrigin === "visit_path")
+      ? app.activeCollection
+      : undefined;
+  const saved = collection
+    ? collection.ids.includes(c.id)
+    : app.favorites.has(c.id);
   const catalog = safeURL(c.catalogUrl);
   return (
     <>
@@ -40,12 +51,35 @@ export function CreatorDetail({ app }: { app: AppModel }) {
           aria-label="Creator actions"
         >
           <button
-            className={`icon-button ${favorite ? "is-favorite" : ""}`}
-            aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
-            aria-pressed={favorite}
-            onClick={() => app.toggleFavorite(c.id)}
+            className={`icon-button ${saved ? "is-favorite" : ""}`}
+            aria-label={
+              collection
+                ? saved
+                  ? "Remove from collection"
+                  : "Restore to collection"
+                : saved
+                  ? "Remove from favorites"
+                  : "Add to favorites"
+            }
+            aria-pressed={saved}
+            onClick={() =>
+              collection
+                ? app.toggleCollectionCreator(c.id)
+                : app.toggleFavorite(c.id)
+            }
           >
-            <Heart fill={favorite ? "currentColor" : "none"} size={22} />
+            {collection ? (
+              <Bookmark fill={saved ? "currentColor" : "none"} size={22} />
+            ) : (
+              <Heart fill={saved ? "currentColor" : "none"} size={22} />
+            )}
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Add to collection"
+            onClick={() => setCollectionPicker(true)}
+          >
+            <FolderPlus size={22} />
           </button>
           <button
             className="icon-button"
@@ -219,6 +253,13 @@ export function CreatorDetail({ app }: { app: AppModel }) {
           </section>
         </div>
       </div>
+      {collectionPicker && (
+        <CollectionPicker
+          app={app}
+          creatorIds={[c.id]}
+          onClose={() => setCollectionPicker(false)}
+        />
+      )}
     </>
   );
 }

@@ -27,10 +27,19 @@ import { SearchTracking, type SearchContext } from "../domain/searchTracking";
 import { telemetryId } from "../domain/eventId";
 import { resetStandaloneURL, updateNavigationURL } from "./navigation";
 import { useVisitRoute } from "./useVisitRoute";
+import {
+  loadCollections,
+  saveCollections,
+  mergeCreatorIds,
+  type Collection,
+} from "../data/collections";
 export function useApp(mobile: boolean) {
+  const [collections, setCollections] = useState(loadCollections);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [boothList, setBoothList] = useState<
-      { kind: "favorites" } | { kind: "custom"; ids: Set<number> } | null
+      | { kind: "favorites" }
+      | { kind: "custom"; ids: Set<number>; collectionId?: string }
+      | null
     >(null),
     [listFandomIds, setListFandomIds] = useState<number[]>([]),
     [error, setError] = useState(""),
@@ -358,7 +367,10 @@ export function useApp(mobile: boolean) {
       setSelectedId(null);
       setShowDetail(false);
       setBoothList((previous) =>
-        previous?.kind === "favorites" ? previous : null,
+        previous?.kind === "favorites" ||
+        (previous?.kind === "custom" && previous.collectionId)
+          ? previous
+          : null,
       );
       tracking.current!.reset();
       scope.current = { current: "full_catalog", origin: "full_catalog" };
@@ -396,18 +408,35 @@ export function useApp(mobile: boolean) {
     () => catalog?.creators.filter((c) => favorites.has(c.id)) || [],
     [catalog, favorites],
   );
-  const customListCreators = useMemo(
-    () =>
-      boothList?.kind === "custom"
-        ? catalog?.creators.filter((c) => boothList.ids.has(c.id)) || []
-        : [],
-    [catalog, boothList],
-  );
+  const customListCreators = useMemo(() => {
+    if (boothList?.kind !== "custom") return [];
+    const ids = boothList.collectionId
+      ? new Set(
+          collections.find((item) => item.id === boothList.collectionId)?.ids ||
+            [],
+        )
+      : boothList.ids;
+    return catalog?.creators.filter((c) => ids.has(c.id)) || [];
+  }, [catalog, boothList, collections]);
   const listCreators =
     boothList?.kind === "custom" ? customListCreators : favoriteCreators;
+  const retainedList = useRef<{ scope: typeof boothList; ids: Set<number> }>({
+    scope: null,
+    ids: new Set(),
+  });
+  const listRowCreators = useMemo(() => {
+    if (retainedList.current.scope !== boothList)
+      retainedList.current = { scope: boothList, ids: new Set() };
+    if (!boothList) return [];
+    for (const creator of listCreators)
+      retainedList.current.ids.add(creator.id);
+    return (
+      catalog?.creators.filter((c) => retainedList.current.ids.has(c.id)) || []
+    );
+  }, [boothList, listCreators, catalog]);
   const listFandoms = useMemo(() => {
     const counts = new Map<number, number>();
-    for (const creator of listCreators)
+    for (const creator of listRowCreators)
       for (const id of new Set(creator.fandomIds))
         if (catalog?.fandoms.has(id)) counts.set(id, (counts.get(id) || 0) + 1);
     return [...counts]
@@ -416,7 +445,16 @@ export function useApp(mobile: boolean) {
         (a, b) =>
           b.count - a.count || a.name.localeCompare(b.name) || a.id - b.id,
       );
-  }, [listCreators, catalog]);
+  }, [listRowCreators, catalog]);
+  const filteredListRows = useMemo(
+    () =>
+      listFandomIds.length
+        ? listRowCreators.filter((c) =>
+            c.fandomIds.some((id) => listFandomIds.includes(id)),
+          )
+        : listRowCreators,
+    [listRowCreators, listFandomIds],
+  );
   useEffect(() => {
     const available = new Set(listFandoms.map((f) => f.id));
     setListFandomIds((ids) =>
@@ -693,36 +731,40 @@ export function useApp(mobile: boolean) {
     u.search = "";
     updateNavigationURL(u, "replace");
   };
-  const addAll = () => {
+  const addAll = (ids = listCreators.map((c) => c.id)) => {
     const operationId = telemetryId();
     const next = new Set(favorites);
-    listCreators.forEach((c) => {
-      if (!next.has(c.id))
+    ids.forEach((id) => {
+      if (!next.has(id))
         analytics.emit("bookmark_changed", {
-          creator_id: c.id,
+          creator_id: id,
           action: "add",
           source: "bulk",
           origin: favoritesMode ? "favorites" : "custom_list",
           operation_id: operationId,
         });
-      next.add(c.id);
+      next.add(id);
     });
-    if (!saveFavorites(next))
+    if (!saveFavorites(next)) {
       analytics.emit("operation_failed", {
         operation: "favorites_persistence",
         code: "storage",
       });
+      notify("Couldn't save favorites. Your device storage may be full.");
+      return false;
+    }
     analytics.emit("favorites_action", {
       action: "bulk_add",
       success: true,
       operation_id: operationId,
-      requested: listCreators.length,
+      requested: ids.length,
       added: next.size - favorites.size,
-      skipped: listCreators.length - (next.size - favorites.size),
+      skipped: ids.length - (next.size - favorites.size),
       failed: 0,
     });
     setFavorites(next);
     notify(`${next.size - favorites.size} creators added to favorites`);
+    return true;
   };
   const openGallery = (c: Creator, origin: SelectionSource = actionOrigin) => {
     setGalleryOrigin(origin);
@@ -738,7 +780,103 @@ export function useApp(mobile: boolean) {
     setSearchSelection(emptySearch);
     close();
   };
+  const updateCollections = (next: Collection[]) => {
+    if (!saveCollections(next)) {
+      notify("Couldn't save this collection. Your device storage may be full.");
+      return false;
+    }
+    setCollections(next);
+    return true;
+  };
+  const activeCollection =
+    boothList?.kind === "custom"
+      ? collections.find((c) => c.id === boothList.collectionId)
+      : undefined;
   return {
+    collections,
+    activeCollection,
+    openCollection: (collection: Collection) => {
+      fullList();
+      close();
+      setListFandomIds([]);
+      setBoothList({
+        kind: "custom",
+        ids: new Set(collection.ids),
+        collectionId: collection.id,
+      });
+      scope.current = { current: "shared_list", origin: "shared_list" };
+    },
+    saveToCollection: (
+      id: string | null,
+      name = "",
+      incoming = listCreators.map((c) => c.id),
+    ) => {
+      const existing = collections.find((c) => c.id === id);
+      const title = existing?.name || name.trim();
+      if (!title) return false;
+      const ids = mergeCreatorIds(existing?.ids || [], incoming);
+      const item = {
+        id:
+          existing?.id ||
+          telemetryId() ||
+          `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: title,
+        ids,
+      };
+      if (
+        !updateCollections(
+          existing
+            ? collections.map((c) => (c.id === id ? item : c))
+            : [...collections, item],
+        )
+      )
+        return false;
+      const added = ids.length - (existing?.ids.length || 0);
+      notify(
+        !existing
+          ? `Created ${title}`
+          : added
+            ? `Added ${added} creators to ${title}`
+            : "Already in this collection",
+      );
+      return true;
+    },
+    renameCollection: (name: string) =>
+      !!activeCollection &&
+      !!name.trim() &&
+      updateCollections(
+        collections.map((c) =>
+          c.id === activeCollection.id ? { ...c, name: name.trim() } : c,
+        ),
+      ),
+    toggleCollectionCreator: (id: number) =>
+      activeCollection &&
+      updateCollections(
+        collections.map((c) =>
+          c.id === activeCollection.id
+            ? {
+                ...c,
+                ids: c.ids.includes(id)
+                  ? c.ids.filter((value) => value !== id)
+                  : [...c.ids, id],
+              }
+            : c,
+        ),
+      ),
+    deleteCollection: () => {
+      if (
+        activeCollection &&
+        updateCollections(
+          collections.filter((c) => c.id !== activeCollection.id),
+        )
+      ) {
+        setBoothList(null);
+        close();
+        fullList();
+        return true;
+      }
+      return false;
+    },
     creatorOrigin,
     galleryOrigin,
     visitRoute,
@@ -791,6 +929,8 @@ export function useApp(mobile: boolean) {
     searchLink,
     favoriteCreators,
     listCreators,
+    listRowCreators,
+    filteredListRows,
     listFandoms,
     listFandomIds,
     filteredListCreators,
@@ -868,7 +1008,7 @@ export function useApp(mobile: boolean) {
     shareBoothList: () => {
       void shareLink(
         shareURL("list", encodeList(listCreators.map((creator) => creator.id))),
-        "CF23 Map · Booth list",
+        `CF23 Map · ${activeCollection?.name || "Booth list"}`,
         "Booth list link copied!",
         { target: "custom_list", count: listCreators.length },
       );

@@ -12,6 +12,60 @@ test.beforeEach(async ({ page }) => {
   await page.route("https://**/*", (r) => r.abort());
 });
 
+test("removed favorites stay available to undo until the list is closed", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "cf23.collections.v1",
+      JSON.stringify([{ id: "test", name: "Test", ids: [] }]),
+    ),
+  );
+  await page.addInitScript(
+    (id) =>
+      localStorage.setItem(
+        "flutter.favorite_creator_ids",
+        JSON.stringify([String(id)]),
+      ),
+    creator.id,
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "Favorites", exact: true }).click();
+  const sheet = page.getByRole("region", { name: "Favorites", exact: true });
+  await sheet
+    .getByRole("button", {
+      name: `Remove ${creator.name} from favorites`,
+      exact: true,
+    })
+    .click();
+  await expect(sheet.locator(".creator-select")).toHaveCount(1);
+  await sheet.locator(".creator-select").click();
+  await page
+    .getByRole("button", { name: "Close creator details", exact: true })
+    .click();
+  await sheet
+    .getByRole("button", {
+      name: `Add ${creator.name} to favorites`,
+      exact: true,
+    })
+    .click();
+  await sheet
+    .getByRole("button", {
+      name: `Remove ${creator.name} from favorites`,
+      exact: true,
+    })
+    .click();
+  await sheet
+    .getByRole("button", { name: "Close favorites", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Collections", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Collections", exact: true })
+    .getByRole("button", { name: /Favorites/ })
+    .click();
+  await expect(sheet.locator(".creator-select")).toHaveCount(0);
+});
+
 test("recommendations stay fixed through details and galleries, then refresh in favorites", async ({
   page,
 }, info) => {
@@ -105,7 +159,12 @@ test("row hearts save and remove favorites without opening creator details", asy
       exact: true,
     })
     .click();
-  await expect(sheet.getByText("No favorites yet")).toBeVisible();
+  await expect(
+    sheet.getByRole("button", {
+      name: `Add ${creator.name} to favorites`,
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-pressed", "false");
   await expect(page).not.toHaveURL(/creator_id=/);
 });
 
