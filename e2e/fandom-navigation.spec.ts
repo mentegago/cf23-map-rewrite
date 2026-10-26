@@ -77,3 +77,56 @@ test("desktop fandoms use native scrolling and reset with new results", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(strip).toHaveCSS("scrollbar-width", "none");
 });
+
+test("vertical wheel scrolls fandoms while horizontal gestures stay native", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "desktop");
+  await page.route("https://**/*", (route) => route.abort());
+  await page.goto("/");
+  const strip = page.getByRole("group", { name: "Creator filters" });
+  await strip.hover();
+  await page.mouse.wheel(0, 120);
+  await expect.poll(() => strip.evaluate((el) => el.scrollLeft)).toBe(120);
+  await page.mouse.wheel(80, 0);
+  await expect
+    .poll(() => strip.evaluate((el) => el.scrollLeft))
+    .toBeGreaterThan(120);
+  // Synthetic wheel dispatch tests cancellation without invoking browser defaults.
+  const result = await strip.evaluate((el) => {
+    const dispatch = (options: WheelEventInit) => {
+      const event = new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        ...options,
+      });
+      const before = el.scrollLeft;
+      el.dispatchEvent(event);
+      return {
+        cancelled: event.defaultPrevented,
+        change: el.scrollLeft - before,
+      };
+    };
+    el.scrollLeft = 100;
+    const horizontal = dispatch({ deltaX: 50, deltaY: 0 });
+    const diagonal = dispatch({ deltaX: 2, deltaY: 100 });
+    const zoom = dispatch({ deltaY: 100, ctrlKey: true });
+    const shift = dispatch({ deltaY: 100, shiftKey: true });
+    const lines = dispatch({ deltaY: 3, deltaMode: WheelEvent.DOM_DELTA_LINE });
+    el.scrollLeft = el.scrollWidth;
+    const end = dispatch({ deltaY: 100 });
+    el.scrollLeft = 0;
+    const start = dispatch({ deltaY: -100 });
+    return { horizontal, diagonal, zoom, shift, lines, end, start };
+  });
+  for (const key of [
+    "horizontal",
+    "diagonal",
+    "zoom",
+    "shift",
+    "end",
+    "start",
+  ] as const)
+    expect(result[key]).toEqual({ cancelled: false, change: 0 });
+  expect(result.lines).toEqual({ cancelled: true, change: 48 });
+});

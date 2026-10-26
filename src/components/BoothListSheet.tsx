@@ -3,6 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Heart, X, Share2, List } from "lucide-react";
 import type { AppModel } from "../state/useApp";
 import { CreatorRow } from "./CreatorRow";
+import { useHorizontalWheel } from "../state/useHorizontalWheel";
 
 function FavoriteRowExit({
   exiting,
@@ -57,6 +58,7 @@ export function BoothListSheet({
   onNavigate: () => void;
 }) {
   const isFavorites = app.boothList?.kind === "favorites";
+  const horizontalWheel = useHorizontalWheel();
   const title = isFavorites ? "Favorites" : "Booth list";
   const allSaved = app.listCreators.every((c) => app.favorites.has(c.id));
   const scroll = useRef<HTMLDivElement>(null);
@@ -181,6 +183,7 @@ export function BoothListSheet({
           {!!app.listFandoms.length && (
             <div
               className="suggestions favorites-filters"
+              ref={horizontalWheel}
               role="group"
               aria-label={
                 isFavorites

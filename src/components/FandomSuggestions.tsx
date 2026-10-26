@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useCallback, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useHorizontalWheel } from "../state/useHorizontalWheel";
 import type { Fandom } from "../domain/types";
 
 export function FandomSuggestions({
@@ -11,6 +12,18 @@ export function FandomSuggestions({
   leading?: ReactNode;
 }) {
   const strip = useRef<HTMLDivElement>(null);
+  const horizontalWheel = useHorizontalWheel();
+  const setStrip = useCallback(
+    (element: HTMLDivElement | null) => {
+      strip.current = element;
+      const cleanup = horizontalWheel(element);
+      return () => {
+        cleanup?.();
+        strip.current = null;
+      };
+    },
+    [horizontalWheel],
+  );
   const contentKey = fandoms.map((f) => f.id).join(",");
   useLayoutEffect(() => {
     strip.current?.scrollTo({
@@ -21,7 +34,7 @@ export function FandomSuggestions({
   if (!fandoms.length && !leading) return null;
   return (
     <div
-      ref={strip}
+      ref={setStrip}
       className="suggestions"
       role="group"
       aria-label="Creator filters"
