@@ -54,12 +54,14 @@ type Score = {
   score: number;
   coverage: number;
   canonical: boolean;
+  fandomDepth?: number;
 };
 const compare = (a: Score, b: Score) =>
   a.tier - b.tier ||
   Number(b.canonical) - Number(a.canonical) ||
   b.score - a.score ||
-  b.coverage - a.coverage;
+  b.coverage - a.coverage ||
+  (a.fandomDepth ?? 0) - (b.fandomDepth ?? 0);
 function labelScore(
   query: string,
   label: string,
@@ -204,9 +206,16 @@ export class Catalog {
   }
   search(query: string, fandomId?: number): Creator[] {
     if (fandomId !== undefined)
-      return [...(this.byFandom.get(fandomId) || [])].sort((a, b) =>
-        compareNames(a.name, b.name),
-      );
+      return [...(this.byFandom.get(fandomId) || [])]
+        .map((creator) => ({
+          creator,
+          depth: this.fandomDepth(creator, fandomId),
+        }))
+        .sort(
+          (a, b) =>
+            a.depth - b.depth || compareNames(a.creator.name, b.creator.name),
+        )
+        .map(({ creator }) => creator);
     if (!query.trim()) return this.creators;
     const key = query.trim().toLowerCase();
     if (this.cache.has(key)) return this.cache.get(key)!;
@@ -235,8 +244,13 @@ export class Catalog {
     }
     for (const { fandom, score } of this.fandomMatches(query)) {
       for (const c of this.byFandom.get(fandom.id) || []) {
+        const candidate = {
+          ...score,
+          fandomDepth: this.fandomDepth(c, fandom.id),
+        };
         const current = scores.get(c);
-        if (!current || compare(score, current) < 0) scores.set(c, score);
+        if (!current || compare(candidate, current) < 0)
+          scores.set(c, candidate);
       }
     }
     const result = [...scores]
@@ -245,5 +259,12 @@ export class Catalog {
     if (this.cache.size >= 60) this.cache.clear();
     this.cache.set(key, result);
     return result;
+  }
+  private fandomDepth(creator: Creator, fandomId: number) {
+    return Math.min(
+      ...creator.fandoms.map(
+        (f) => this.ancestors(f.id).get(fandomId) ?? Infinity,
+      ),
+    );
   }
 }

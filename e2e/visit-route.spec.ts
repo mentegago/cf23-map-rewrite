@@ -74,6 +74,60 @@ async function expand(sheet: Locator) {
   if (await button.isVisible()) await button.click();
 }
 
+for (const openWith of ["button", "Enter"] as const) {
+  test(`navigation stays collapsed after opening a searched list with ${openWith} and dismissing the keyboard`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile");
+    await page.route("https://cf23-config.nnt.gg/**", (r) => r.abort());
+    await page.goto("/");
+    const input = page.getByRole("textbox");
+    await input.tap();
+    await page.evaluate(() => {
+      Object.defineProperty(visualViewport, "height", {
+        configurable: true,
+        value: 400,
+      });
+      visualViewport!.dispatchEvent(new Event("resize"));
+    });
+    await input.fill(
+      `https://cf23.nnt.gg/?list=${encodeList(everyDayCreators.map((c: any) => Number(c.id)))}`,
+    );
+    if (openWith === "Enter") await input.press("Enter");
+    else
+      await page
+        .getByRole("button", { name: "Open booth list", exact: true })
+        .click();
+    await page.getByRole("button", { name: "Navigate", exact: true }).click();
+    const sheet = page.getByRole("region", { name: "Visit path", exact: true });
+    await expect(sheet).toBeVisible();
+    // A software keyboard can finish closing after navigation has already opened.
+    await page.evaluate(() => {
+      delete (visualViewport as unknown as Record<string, unknown>).height;
+      visualViewport!.dispatchEvent(new Event("resize"));
+    });
+    await expect
+      .poll(() => sheet.evaluate((el) => el.getBoundingClientRect().height))
+      .toBeCloseTo(176, 0);
+    await expand(sheet);
+    await expect
+      .poll(() =>
+        sheet.evaluate(
+          (el) =>
+            el.getBoundingClientRect().height /
+            document.getElementById("app")!.clientHeight,
+        ),
+      )
+      .toBeCloseTo(0.94, 2);
+    await sheet
+      .getByRole("button", { name: "Collapse panel", exact: true })
+      .click();
+    await expect
+      .poll(() => sheet.evaluate((el) => el.getBoundingClientRect().height))
+      .toBeCloseTo(176, 0);
+  });
+}
+
 test("all-day lists navigate immediately and show Any day without day toggles", async ({
   page,
 }) => {

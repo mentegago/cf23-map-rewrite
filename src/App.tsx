@@ -23,6 +23,9 @@ export default function App() {
     app.fandomId === undefined &&
     app.favoriteCreators.length > 0;
   const [listExtent, setListExtent] = useState(0.56);
+  const [viewportHeight, setViewportHeight] = useState(
+    visualViewport?.height || innerHeight,
+  );
   const routeMinimum = Math.min(
     0.45,
     (176 +
@@ -31,9 +34,10 @@ export default function App() {
           "--safe-bottom",
         ),
       ) || 0)) /
-      (visualViewport?.height || innerHeight),
+      viewportHeight,
   );
-  const [routeExtent, setRouteExtent] = useState(routeMinimum);
+  const [routeExpanded, setRouteExpanded] = useState(false);
+  const routeExtent = routeExpanded ? 0.94 : routeMinimum;
   const [choosingVisitDay, setChoosingVisitDay] = useState(false);
   const routeOpen = listOpen && app.visitRoute.enabled;
   const closeBoothList = () => {
@@ -74,6 +78,7 @@ export default function App() {
       if (window.scrollX !== 0 || window.scrollY !== 0)
         window.scrollTo({ left: 0, top: 0, behavior: "instant" });
       const height = viewport?.height || innerHeight;
+      setViewportHeight(height);
       document.documentElement.style.setProperty("--app-height", `${height}px`);
       // Keyboard focus can pan the visual viewport independently of resizing it.
       // Keep the fixed app inside that visible rectangle; do not scroll the page.
@@ -251,7 +256,7 @@ export default function App() {
                   app.visitRoute.track("navigate", {
                     count: app.filteredListCreators.length,
                   });
-                  setRouteExtent(routeMinimum);
+                  setRouteExpanded(false);
                   if (!app.visitRoute.needsDaySelection)
                     app.visitRoute.setEnabled(true);
                   else {
@@ -271,14 +276,14 @@ export default function App() {
             extent={routeExtent}
             minimumExtent={routeMinimum}
             twoDetents
-            onExtent={setRouteExtent}
+            onExtent={(extent) => setRouteExpanded(extent >= 0.9)}
           >
             {routeOpen && (
               <VisitPathSheet
                 app={app}
                 collapsed={mobile && routeExtent <= routeMinimum + 0.01}
                 onClose={() => app.visitRoute.setEnabled(false)}
-                onShowPath={() => setRouteExtent(routeMinimum)}
+                onShowPath={() => setRouteExpanded(false)}
               />
             )}
           </ResponsivePanel>

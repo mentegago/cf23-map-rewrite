@@ -37,6 +37,20 @@ const snapshot: Snapshot = {
   mapVersion: 2,
 };
 const catalog = new Catalog(snapshot.catalog, snapshot.registry);
+
+it("puts direct fandom results before child matches in text, alias, and ID search", () => {
+  const parent = snapshot.registry.fandoms.find((f) => f.id === 126)!;
+  for (const results of [
+    catalog.search("", 126),
+    catalog.search(parent.name),
+    catalog.search("green yuri"),
+  ]) {
+    const direct = results.findIndex((c) => c.name === "Nemui(n duit amin)");
+    const child = results.findIndex((c) => c.name === "mx iwa x aosoora");
+    expect(direct).toBeGreaterThanOrEqual(0);
+    expect(child).toBeGreaterThan(direct);
+  }
+});
 describe("Flutter link compatibility", () => {
   it("matches known delta varint bytes", () => {
     expect(encodeList([300, 1, 128])).toBe("AX-sAQ");
