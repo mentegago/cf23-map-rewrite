@@ -11,10 +11,11 @@ import type {
 } from "../data/analyticsEvents";
 
 interface DayPlan {
-  skipped: { stop: VisitStop; index: number }[];
+  skipped: { stop: VisitStop }[];
   start: VisitStop | null;
+  end: VisitStop | null;
 }
-const emptyPlan: DayPlan = { skipped: [], start: null };
+const emptyPlan: DayPlan = { skipped: [], start: null, end: null };
 
 export function useVisitRoute(
   snapshot: Snapshot | null,
@@ -72,6 +73,29 @@ export function useVisitRoute(
     };
   }, [enabled, scope]);
   const plan = plans[selectedDay] || emptyPlan;
+  // A filter/catalog change must not leave an endpoint outside the day's list.
+  useEffect(() => {
+    const available = new Set(
+      creators
+        .filter((c) => c.attendanceDates.includes(selectedDay))
+        .map((c) => c.id),
+    );
+    setPlans((all) => {
+      const previous = all[selectedDay];
+      if (!previous) return all;
+      const valid = (stop: VisitStop | null) =>
+        !stop || stop.creatorIds.every((id) => available.has(id));
+      if (valid(previous.start) && valid(previous.end)) return all;
+      return {
+        ...all,
+        [selectedDay]: {
+          ...previous,
+          start: valid(previous.start) ? previous.start : null,
+          end: valid(previous.end) ? previous.end : null,
+        },
+      };
+    });
+  }, [creators, selectedDay]);
   const key = useMemo(
     () => ({}),
     [snapshot, creators, scope, selectedDay, enabled, plan],
@@ -101,6 +125,7 @@ export function useVisitRoute(
         ...context,
         outcome: code ? "failed" : "ready",
         duration_ms: Math.round(performance.now() - started),
+        fixed_end: !!plan.end,
         count: attendees.length,
         stop_count: route?.stops.length ?? 0,
         unreachable_count: route?.unreachable.length ?? 0,
@@ -166,6 +191,7 @@ export function useVisitRoute(
       creators: attendees,
       skippedIds: plan.skipped.flatMap(({ stop }) => stop.creatorIds),
       start: plan.start,
+      end: plan.end,
     });
     return () => {
       completed = true;
@@ -175,7 +201,7 @@ export function useVisitRoute(
   }, [enabled, scope, snapshot, creators, selectedDay, key, plan]);
   const active = enabled && !!scope;
   const current = result?.key === key ? result : undefined;
-  // Keep the itinerary mounted while recalculating so focus and scroll survive.
+  // Retain the previous result internally; loading views hide it until ready.
   const displayRoute =
     active && result?.day === selectedDay && result.scope === scope
       ? result.route
@@ -192,6 +218,9 @@ export function useVisitRoute(
       number: String(i + 1),
       skipped: false,
       starting: false,
+      ending:
+        !!plan.end &&
+        stop.creatorIds.some((id) => plan.end!.creatorIds.includes(id)),
     }));
     if (plan.start)
       entries.unshift({
@@ -199,6 +228,7 @@ export function useVisitRoute(
         number: "S",
         skipped: plan.start.creatorIds.some((id) => skippedIds.has(id)),
         starting: true,
+        ending: false,
       });
     for (const skipped of plan.skipped) {
       if (
@@ -206,11 +236,12 @@ export function useVisitRoute(
         !skipped.stop.creatorIds.some((id) => creators.some((c) => c.id === id))
       )
         continue;
-      entries.splice(Math.min(skipped.index, entries.length), 0, {
+      entries.push({
         stop: skipped.stop,
         number: "–",
         skipped: true,
         starting: false,
+        ending: false,
       });
     }
     return entries;
@@ -267,6 +298,32 @@ export function useVisitRoute(
     route: displayRoute,
     entries,
     start: plan.start,
+    end: plan.end,
+    endAt: (stop: VisitStop | null) => {
+      track("end_confirm", {
+        target: stop ? "booth" : "anywhere",
+        ...(stop?.creatorIds.length === 1
+          ? { creator_id: stop.creatorIds[0] }
+          : {}),
+      });
+      setFocused(null);
+      setOverview(false);
+      updatePlan((previous) => ({
+        ...previous,
+        end: stop,
+        start:
+          stop &&
+          previous.start?.creatorIds.some((id) => stop.creatorIds.includes(id))
+            ? null
+            : previous.start,
+        skipped: stop
+          ? previous.skipped.filter(
+              ({ stop: skipped }) =>
+                !skipped.creatorIds.some((id) => stop.creatorIds.includes(id)),
+            )
+          : previous.skipped,
+      }));
+    },
     startFrom: (stop: VisitStop | null) => {
       track("start_confirm", {
         target: stop ? "booth" : "entrance",
@@ -276,9 +333,17 @@ export function useVisitRoute(
       });
       setFocused(null);
       setOverview(false);
-      updatePlan((previous) => ({ ...previous, start: stop }));
+      updatePlan((previous) => ({
+        ...previous,
+        start: stop,
+        end:
+          stop &&
+          previous.end?.creatorIds.some((id) => stop.creatorIds.includes(id))
+            ? null
+            : previous.end,
+      }));
     },
-    toggleSkip: (stop: VisitStop, index: number) => {
+    toggleSkip: (stop: VisitStop) => {
       track(
         plan.skipped.some((s) => s.stop.booth === stop.booth)
           ? "unskip"
@@ -293,7 +358,7 @@ export function useVisitRoute(
         ...previous,
         skipped: previous.skipped.some((s) => s.stop.booth === stop.booth)
           ? previous.skipped.filter((s) => s.stop.booth !== stop.booth)
-          : [...previous.skipped, { stop, index }],
+          : [...previous.skipped, { stop }],
       }));
     },
     error: active ? current?.error : undefined,

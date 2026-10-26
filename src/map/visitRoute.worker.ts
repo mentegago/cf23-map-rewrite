@@ -10,6 +10,7 @@ self.onmessage = (event) => {
             !event.data.start?.creatorIds.includes(creator.id),
         ),
         event.data.start?.point,
+        event.data.end?.creatorIds,
       ),
     });
   } catch {

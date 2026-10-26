@@ -1,12 +1,16 @@
 import {
+  MapPin,
+  Flag,
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
   ArrowUpRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { ContextMenu } from "./ContextMenu";
 import { VisitDayDialog } from "./VisitDayDialog";
-import { VisitStartDialog } from "./VisitStartDialog";
+import { VisitEndpointPicker } from "./VisitEndpointPicker";
+import { VisitEndpointDialog } from "./VisitEndpointDialog";
 import type { VisitStop } from "../map/visitRoute";
 import type { AppModel } from "../state/useApp";
 
@@ -21,40 +25,93 @@ export function VisitPathSheet({
   onShowPath: () => void;
   collapsed: boolean;
 }) {
+  const itinerary = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    itinerary.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [app.visitRoute.start, app.visitRoute.end, app.visitRoute.day]);
   const route = app.visitRoute.route;
   const leg = app.visitRoute.legIndex;
-  const destination = route?.stops[leg];
+  const destination = app.visitRoute.loading ? undefined : route?.stops[leg];
+  const [choosingEndpoint, setChoosingEndpoint] = useState<
+    "start" | "end" | null
+  >(null);
   const [pendingStart, setPendingStart] = useState<{
+    kind?: "start" | "end";
     stop: VisitStop | null;
   } | null>(null);
   const [pendingDay, setPendingDay] = useState<{
     id: string;
     label: string;
   } | null>(null);
+  const stopName = (stop: VisitStop) =>
+    stop.creatorIds
+      .map((id) => app.catalog?.byId.get(id)?.name)
+      .filter(Boolean)
+      .join(" · ") || stop.booth;
+  const requestEndpoint = (kind: "start" | "end", stop: VisitStop | null) => {
+    app.visitRoute.track(kind === "start" ? "start_prompt" : "end_prompt", {
+      target: stop ? "booth" : kind === "start" ? "entrance" : "anywhere",
+      ...(stop?.creatorIds.length === 1
+        ? { creator_id: stop.creatorIds[0] }
+        : {}),
+    });
+    setChoosingEndpoint(null);
+    setPendingStart({ kind, stop });
+  };
   const creatorNames = destination?.creatorIds
     .map((id) => app.catalog?.byId.get(id)?.name)
     .filter(Boolean)
     .join(" · ");
   return (
     <>
+      {choosingEndpoint && (
+        <VisitEndpointPicker
+          kind={choosingEndpoint}
+          stops={app.visitRoute.entries.map((e) => e.stop)}
+          name={stopName}
+          onClose={() => setChoosingEndpoint(null)}
+          onChoose={(stop) => requestEndpoint(choosingEndpoint, stop)}
+        />
+      )}
       {pendingStart && (
-        <VisitStartDialog
+        <VisitEndpointDialog
+          kind={pendingStart.kind}
+          conflict={
+            !!pendingStart.stop &&
+            (pendingStart.kind === "end"
+              ? app.visitRoute.start
+              : app.visitRoute.end
+            )?.creatorIds.some((id) =>
+              pendingStart.stop!.creatorIds.includes(id),
+            )
+          }
           booth={
             pendingStart.stop
               ? pendingStart.stop.creatorIds
                   .map((id) => app.catalog?.byId.get(id)?.name)
                   .filter(Boolean)
                   .join(" · ") || pendingStart.stop.booth
-              : "Entrance"
+              : pendingStart.kind === "end"
+                ? "Anywhere"
+                : "Entrance"
           }
           onClose={() => {
-            app.visitRoute.track("start_cancel", {
-              target: pendingStart.stop ? "booth" : "entrance",
-            });
+            app.visitRoute.track(
+              pendingStart.kind === "end" ? "end_cancel" : "start_cancel",
+              {
+                target: pendingStart.stop
+                  ? "booth"
+                  : pendingStart.kind === "end"
+                    ? "anywhere"
+                    : "entrance",
+              },
+            );
             setPendingStart(null);
           }}
           onConfirm={() => {
-            app.visitRoute.startFrom(pendingStart.stop);
+            if (pendingStart.kind === "end")
+              app.visitRoute.endAt(pendingStart.stop);
+            else app.visitRoute.startFrom(pendingStart.stop);
             setPendingStart(null);
             onShowPath();
           }}
@@ -126,48 +183,74 @@ export function VisitPathSheet({
               <ChevronLeft size={22} />
             </button>
             <div aria-live="polite">
-              <strong
-                className={
-                  destination && destination.booths.length > 1
-                    ? "multi-booth-destination"
-                    : undefined
-                }
-              >
-                {app.visitRoute.loading
-                  ? "Finding a path…"
-                  : destination
-                    ? destination.booth
-                    : app.visitRoute.overview
-                      ? "Whole visit path"
-                      : "No stops"}
-              </strong>
-              {creatorNames && (
-                <span className="visit-destination-name" title={creatorNames}>
-                  {destination!.creatorIds.map((id) => {
-                    const creator = app.catalog?.byId.get(id);
-                    return (
-                      creator && (
-                        <button
-                          key={id}
-                          className="visit-destination-link"
-                          aria-label={`Open details for ${creator.name}`}
-                          onClick={() =>
-                            app.select(creator, true, "visit_path")
-                          }
-                        >
-                          {creator.name}
-                          <ArrowUpRight size={13} aria-hidden="true" />
-                        </button>
-                      )
-                    );
-                  })}
-                </span>
+              {app.visitRoute.loading ? (
+                <div className="visit-route-loading">
+                  <svg viewBox="0 0 100 32" aria-hidden="true">
+                    <path
+                      className="route-loading-track"
+                      d="M8 24H34Q42 24 42 16T50 8H92"
+                    />
+                    <path
+                      className="route-loading-trail"
+                      d="M8 24H34Q42 24 42 16T50 8H92"
+                    />
+                    <circle cx="8" cy="24" r="4" />
+                    <circle
+                      className="route-loading-end"
+                      cx="92"
+                      cy="8"
+                      r="5"
+                    />
+                  </svg>
+                  <strong>Finding your way…</strong>
+                </div>
+              ) : (
+                <>
+                  <strong
+                    className={
+                      destination && destination.booths.length > 1
+                        ? "multi-booth-destination"
+                        : undefined
+                    }
+                  >
+                    {destination
+                      ? destination.booth
+                      : app.visitRoute.overview
+                        ? "Whole visit path"
+                        : "No stops"}
+                  </strong>
+                  {creatorNames && (
+                    <span
+                      className="visit-destination-name"
+                      title={creatorNames}
+                    >
+                      {destination!.creatorIds.map((id) => {
+                        const creator = app.catalog?.byId.get(id);
+                        return (
+                          creator && (
+                            <button
+                              key={id}
+                              className="visit-destination-link"
+                              aria-label={`Open details for ${creator.name}`}
+                              onClick={() =>
+                                app.select(creator, true, "visit_path")
+                              }
+                            >
+                              {creator.name}
+                              <ArrowUpRight size={13} aria-hidden="true" />
+                            </button>
+                          )
+                        );
+                      })}
+                    </span>
+                  )}
+                  <small>
+                    {destination
+                      ? `Stop ${leg + 1} of ${route!.stops.length} · From ${leg ? route!.stops[leg - 1].booth : app.visitRoute.start?.booth || "Entrance"}`
+                      : "Expand for visit details"}
+                  </small>
+                </>
               )}
-              <small>
-                {destination
-                  ? `Stop ${leg + 1} of ${route!.stops.length} · From ${leg ? route!.stops[leg - 1].booth : app.visitRoute.start?.booth || "Entrance"}`
-                  : "Expand for visit details"}
-              </small>
             </div>
             <button
               className="icon-button"
@@ -185,11 +268,63 @@ export function VisitPathSheet({
         </nav>
       </header>
       <div
+        ref={itinerary}
         className={`sheet-scroll visit-path-content ${collapsed ? "visit-path-collapsed" : ""}`}
         inert={collapsed}
         aria-hidden={collapsed}
       >
         <section className="visit-route-controls" aria-label="Booth visit path">
+          <div
+            className="visit-endpoints"
+            role="group"
+            aria-label="Route endpoints"
+          >
+            {(["start", "end"] as const).map((kind) => {
+              const stop =
+                kind === "start" ? app.visitRoute.start : app.visitRoute.end;
+              return (
+                <div className="visit-endpoint" key={kind}>
+                  <button
+                    disabled={app.visitRoute.loading}
+                    aria-label={
+                      kind === "start" ? "Change start" : "Change end"
+                    }
+                    onClick={() => setChoosingEndpoint(kind)}
+                  >
+                    <small>{kind === "start" ? "Start" : "End"}</small>
+                    <strong>
+                      {stop
+                        ? stop.booth
+                        : kind === "start"
+                          ? "Entrance"
+                          : "Anywhere"}
+                    </strong>
+                    <span>
+                      {stop
+                        ? stopName(stop)
+                        : kind === "start"
+                          ? "Default starting point"
+                          : "No fixed end"}
+                    </span>
+                  </button>
+                  {stop && (
+                    <button
+                      className="endpoint-reset"
+                      disabled={app.visitRoute.loading}
+                      aria-label={
+                        kind === "start"
+                          ? "Reset start to Entrance"
+                          : "Clear fixed end"
+                      }
+                      onClick={() => requestEndpoint(kind, null)}
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           <div className="visit-path-toolbar">
             <button
               className="visit-overview"
@@ -210,44 +345,43 @@ export function VisitPathSheet({
                   : "")}
           </p>
         </section>
-        {app.visitRoute.route && (
+        {!app.visitRoute.loading && app.visitRoute.route && (
           <ol className="visit-route-stops" aria-label="Visit order">
-            <li className="visit-route-entrance">
-              <span>0</span>
-              <div>
-                <strong>Entrance</strong>
-                {!app.visitRoute.start && (
+            {!app.visitRoute.start && (
+              <li className="visit-route-entrance">
+                <span>0</span>
+                <div>
+                  <strong>Entrance</strong>
                   <small className="visit-route-start-label">
                     Starting here
                   </small>
-                )}
-                <div className="visit-stop-actions">
-                  <button
-                    disabled={app.visitRoute.loading || !app.visitRoute.start}
-                    onClick={() => {
-                      app.visitRoute.track("start_prompt", {
-                        target: "entrance",
-                      });
-                      setPendingStart({ stop: null });
-                    }}
-                  >
-                    Start from here
-                  </button>
                 </div>
-              </div>
-            </li>
+              </li>
+            )}
             {app.visitRoute.entries.map(
-              ({ stop, number, skipped, starting }, i) => (
+              ({ stop, number, skipped, starting, ending }, i) => (
                 <li
                   key={stop.booth}
+                  data-current={
+                    !app.visitRoute.overview &&
+                    destination?.booth === stop.booth
+                  }
                   className={skipped ? "visit-stop-skipped" : undefined}
                 >
+                  {skipped && !app.visitRoute.entries[i - 1]?.skipped && (
+                    <h3 className="visit-skipped-heading">Skipped</h3>
+                  )}
                   <span>{number}</span>
                   <div>
                     <strong>{stop.booth}</strong>
                     {starting && (
                       <small className="visit-route-start-label">
                         Starting here
+                      </small>
+                    )}
+                    {ending && (
+                      <small className="visit-route-start-label visit-route-end-label">
+                        Ending here
                       </small>
                     )}
                     {stop.creatorIds.map((id) => (
@@ -283,27 +417,35 @@ export function VisitPathSheet({
                           Show path
                         </button>
                       )}
-                      <button
-                        aria-pressed={skipped}
-                        disabled={app.visitRoute.loading}
-                        onClick={() => app.visitRoute.toggleSkip(stop, i)}
-                      >
-                        {skipped ? "Unskip" : "Skip"}
-                      </button>
-                      <button
-                        disabled={app.visitRoute.loading || starting}
-                        onClick={() => {
-                          app.visitRoute.track("start_prompt", {
-                            target: "booth",
-                            ...(stop.creatorIds.length === 1
-                              ? { creator_id: stop.creatorIds[0] }
-                              : {}),
-                          });
-                          setPendingStart({ stop });
-                        }}
-                      >
-                        Start from here
-                      </button>
+                      {!starting && (
+                        <button
+                          aria-pressed={skipped}
+                          disabled={app.visitRoute.loading || ending}
+                          onClick={() => app.visitRoute.toggleSkip(stop)}
+                        >
+                          {skipped ? "Unskip" : "Skip"}
+                        </button>
+                      )}
+                      <ContextMenu
+                        label="Route options"
+                        className="visit-route-options"
+                        items={[
+                          {
+                            id: "start",
+                            label: "Start from here",
+                            icon: <MapPin size={18} />,
+                            disabled: app.visitRoute.loading || starting,
+                            onSelect: () => requestEndpoint("start", stop),
+                          },
+                          {
+                            id: "end",
+                            label: "End here",
+                            icon: <Flag size={18} />,
+                            disabled: app.visitRoute.loading || ending,
+                            onSelect: () => requestEndpoint("end", stop),
+                          },
+                        ]}
+                      />
                     </div>
                   </div>
                 </li>
@@ -312,7 +454,7 @@ export function VisitPathSheet({
           </ol>
         )}
 
-        {app.visitRoute.route && (
+        {!app.visitRoute.loading && app.visitRoute.route && (
           <div className="visit-route-missing">
             {app.visitRoute.route.unreachable.map((id) => (
               <p key={id}>{app.catalog?.byId.get(id)?.name} · No path found</p>

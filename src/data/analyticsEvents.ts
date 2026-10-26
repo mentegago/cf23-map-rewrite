@@ -27,7 +27,10 @@ export type VisitAction =
   | "unskip"
   | "start_prompt"
   | "start_cancel"
-  | "start_confirm";
+  | "start_confirm"
+  | "end_prompt"
+  | "end_cancel"
+  | "end_confirm";
 export interface VisitContext {
   route_id: string;
   list_kind: ListKind;
@@ -171,11 +174,12 @@ export type Fields = {
     stop_position?: number;
     stop_count?: number;
     creator_id?: number;
-    target?: "entrance" | "booth";
+    target?: "entrance" | "booth" | "anywhere";
     source?: "initial" | "toggle" | "confirmation";
     count?: number;
   };
   visit_path_calculated: VisitContext & {
+    fixed_end?: boolean;
     outcome: "ready" | "failed";
     duration_ms: number;
     count: number;

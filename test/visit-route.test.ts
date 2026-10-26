@@ -192,3 +192,63 @@ describe("visit routes", () => {
     ).toBe(creators.length);
   });
 });
+
+it("reserves the chosen finish, including shared and multibooth creators", () => {
+  const doc = map([
+    booth("A-01a", 30, 12),
+    booth("A-02a", 78, 12),
+    booth("A-03a", 12, 78),
+  ]);
+  const people = [
+    creator(1, ["A-01a", "A-02a"]),
+    creator(2, ["A-01a"]),
+    creator(3, ["A-03a"]),
+  ];
+  const route = buildVisitRoute(doc, people, { x: 9, y: 9 }, [1, 2]);
+  expect(route.unreachable).toEqual([]);
+  expect(route.stops.at(-1)!.creatorIds.sort()).toEqual([1, 2]);
+  expect(new Set(route.stops.flatMap((s) => s.creatorIds))).toEqual(
+    new Set([1, 2, 3]),
+  );
+  route.legs.forEach((leg, i) =>
+    expect(leg.at(-1)).toEqual(route.stops[i].point),
+  );
+});
+
+it("still reaches the finish when an intermediate booth is inaccessible", () => {
+  const doc = map([
+    booth("A-01a", 12, 12),
+    booth("A-02a", 78, 12),
+    {
+      uid: "wall",
+      id: null,
+      kind: "wall",
+      geometry: { x: 48, y: 0, width: 6, height: 120 },
+    },
+  ]);
+  const route = buildVisitRoute(
+    doc,
+    [creator(1, ["A-01a"]), creator(2, ["A-02a"])],
+    { x: 9, y: 9 },
+    [1],
+  );
+  expect(route.unreachable).toEqual([2]);
+  expect(route.stops.at(-1)!.creatorIds).toEqual([1]);
+});
+
+it("keeps a complete route with a fixed end when the optimization budget expires", () => {
+  const doc = map([
+    booth("A-01a", 30, 12),
+    booth("A-02a", 78, 12),
+    booth("A-03a", 12, 78),
+  ]);
+  const people = [
+    creator(1, ["A-01a"]),
+    creator(2, ["A-02a"]),
+    creator(3, ["A-03a"]),
+  ];
+  const route = buildVisitRoute(doc, people, { x: 9, y: 9 }, [1], 0);
+  expect(route.stops.at(-1)!.creatorIds).toEqual([1]);
+  expect(route.stops).toHaveLength(3);
+  expect(route.legs).toHaveLength(3);
+});

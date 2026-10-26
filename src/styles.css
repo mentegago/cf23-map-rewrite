@@ -2155,6 +2155,57 @@ a.tag:active,
 .route-navigation-main button:disabled {
   opacity: 0.3;
 }
+.visit-route-loading {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding-block: 4px;
+}
+.visit-route-loading svg {
+  width: 100px;
+  height: 32px;
+  overflow: visible;
+  fill: var(--cyan);
+}
+.visit-route-loading path {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.route-loading-track {
+  stroke: var(--outline);
+}
+.route-loading-trail {
+  stroke: var(--cyan);
+  stroke-dasharray: 12 8;
+  animation: route-trail-walk 900ms linear infinite;
+}
+.visit-route-loading .route-loading-end {
+  fill: var(--yellow);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: route-end-bounce 1200ms ease-in-out infinite;
+}
+@keyframes route-trail-walk {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+@keyframes route-end-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-loading-trail,
+  .visit-route-loading .route-loading-end {
+    animation: none;
+  }
+}
 .visit-stop-actions button[aria-pressed="true"] {
   background: var(--cyan);
   color: #191522;
@@ -2547,4 +2598,254 @@ a.tag:active,
 }
 .collection-options > button:disabled:hover {
   background: transparent;
+}
+
+/* Route editing lives in the expanded itinerary, leaving the compact navigator alone. */
+.visit-endpoints {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.visit-endpoint {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--outline);
+  border-radius: 14px 4px 14px 4px;
+  background: color-mix(in srgb, var(--cyan) 5%, transparent);
+  overflow: hidden;
+}
+.visit-endpoint > button:first-child {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.visit-endpoint small {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.visit-endpoint strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.visit-endpoint span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.visit-endpoint > button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cyan) 10%, transparent);
+}
+.endpoint-reset {
+  border: 0;
+  border-top: 1px solid var(--outline);
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--cyan);
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.endpoint-choices {
+  display: grid;
+  gap: 0;
+}
+.endpoint-choices button {
+  display: grid;
+  gap: 5px;
+  padding: 14px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--outline);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.endpoint-choices button:hover {
+  background: color-mix(in srgb, var(--cyan) 8%, transparent);
+}
+.endpoint-choices small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.visit-route-stops li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--outline);
+  flex-wrap: wrap;
+}
+.visit-skipped-heading {
+  flex-basis: 100%;
+  margin: 4px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.visit-route-stops li > div {
+  min-width: 0;
+  flex: 1;
+}
+.visit-route-stops strong {
+  font-size: 13px;
+}
+.visit-route-stops .visit-stop-creator {
+  line-height: 1.5;
+}
+.visit-route-stops .visit-stop-actions {
+  gap: 6px;
+  margin-top: 8px;
+  align-items: flex-start;
+}
+.visit-route-stops .visit-stop-actions button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+}
+.visit-route-end-label {
+  color: #ffdc60;
+}
+.visit-route-stops li[data-current="true"] > span {
+  box-shadow: 0 0 0 3px color-mix(in srgb, #ffdc60 22%, transparent);
+}
+.visit-endpoint small {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.visit-endpoint small::after {
+  content: "Change";
+  color: var(--cyan);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Shared action menu: browser popover top layer, independent of sheet/list styles. */
+.context-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: max-content;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  background: var(--raised);
+  color: var(--ink);
+  box-shadow:
+    0 8px 28px #0005,
+    0 2px 6px #0003;
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-ui);
+}
+.context-menu:popover-open {
+  animation: context-menu-in 140ms ease-out;
+}
+.context-menu[data-side="above"] {
+  transform-origin: bottom right;
+}
+.context-menu[data-side="below"] {
+  transform-origin: top right;
+}
+.context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--weight-label);
+  text-align: left;
+  cursor: pointer;
+}
+.context-menu button > span:first-child:has(svg) {
+  display: flex;
+  color: var(--muted);
+}
+.context-menu button:hover:not(:disabled),
+.context-menu button:focus-visible {
+  background: color-mix(in srgb, var(--cyan) 13%, transparent);
+  outline: none;
+}
+.context-menu button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.context-menu button.is-destructive {
+  color: var(--pink);
+}
+.visit-route-stops .visit-stop-actions .visit-route-options {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+@keyframes context-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .context-menu:popover-open {
+    animation: none;
+  }
+}
+
+.endpoint-dialog .collection-dialog-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--outline);
+}
+.endpoint-dialog .endpoint-choices {
+  display: block;
+  padding: 8px;
+  scroll-padding: 8px;
+}
+.endpoint-dialog .endpoint-choices button {
+  width: 100%;
+  min-height: 64px;
+  gap: 5px;
+  padding: 14px 12px;
+  border: 0;
+  border-radius: 12px;
+}
+.endpoint-dialog .endpoint-choices button + button {
+  margin-top: 2px;
+}
+.endpoint-dialog .endpoint-choices button:first-child {
+  background: color-mix(in srgb, var(--cyan) 8%, transparent);
+  margin-bottom: 8px;
+}
+.endpoint-dialog .endpoint-choices strong {
+  font-size: 13px;
+}
+.endpoint-dialog .endpoint-choices small {
+  font-size: 12px;
+}
+.endpoint-dialog .endpoint-choices button:hover {
+  background: color-mix(in srgb, var(--cyan) 14%, transparent);
+}
+.endpoint-dialog {
+  max-height: min(600px, calc(var(--app-height, 100dvh) - 48px));
 }

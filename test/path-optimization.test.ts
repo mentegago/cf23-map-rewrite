@@ -94,3 +94,65 @@ it("keeps a valid seed when optimization candidates exceed the search budget", (
     1, 2, 3,
   ]);
 });
+
+it("optimizes the middle for a fixed finish rather than appending it afterward", () => {
+  const points = [
+    [8, 9],
+    [25, 16],
+    [11, 8],
+    [28, 14],
+    [14, 5],
+    [0, 10],
+  ];
+  const walk = (a: number, b: number) =>
+    Math.abs(points[a][0] - points[b][0]) +
+    Math.abs(points[a][1] - points[b][1]);
+  const cost = (order: number[]) =>
+    order.reduce((sum, id, i) => sum + walk(i ? order[i - 1] : 0, id), 0);
+  const free = optimizeVisitOrder(0, [1, 2, 3, 4, 5], walk, walk);
+  const appended = [...free.filter((id) => id !== 2), 2];
+  const fixed = optimizeVisitOrder(0, [1, 2, 3, 4, 5], walk, walk, { end: 2 });
+  expect(fixed.at(-1)).toBe(2);
+  expect(new Set(fixed)).toEqual(new Set([1, 2, 3, 4, 5]));
+  expect(cost(fixed)).toBeLessThan(cost(appended));
+  // Check against exhaustive open-path solutions for this small fixture.
+  const permutations = (xs: number[]): number[][] =>
+    xs.length
+      ? xs.flatMap((x) =>
+          permutations(xs.filter((v) => v !== x)).map((rest) => [x, ...rest]),
+        )
+      : [[]];
+  expect(cost(fixed)).toBe(
+    Math.min(...permutations([1, 3, 4, 5]).map((p) => cost([...p, 2]))),
+  );
+});
+
+it("retains valid endpoints and never worsens the seed across bounded searches", () => {
+  for (let sample = 0; sample < 25; sample++) {
+    const points = Array.from({ length: 12 }, (_, i) => [
+      (i * 37 + sample * 13) % 91,
+      (i * i * 17 + sample * 29) % 97,
+    ]);
+    const walk = (a: number, b: number) =>
+      Math.abs(points[a][0] - points[b][0]) +
+      Math.abs(points[a][1] - points[b][1]);
+    const seed = Array.from({ length: 11 }, (_, i) => i + 1);
+    const cost = (order: number[]) =>
+      order.reduce((sum, id, i) => sum + walk(i ? order[i - 1] : 0, id), 0);
+    for (const budget of [0, 10, 100, 50000]) {
+      const result = optimizeVisitOrder(0, seed, walk, walk, {
+        end: 11,
+        maxChecks: budget,
+      });
+      expect(result.at(-1)).toBe(11);
+      expect([...result].sort((a, b) => a - b)).toEqual(seed);
+      expect(cost(result)).toBeLessThanOrEqual(cost(seed));
+    }
+    expect(
+      optimizeVisitOrder(0, seed, walk, walk, {
+        end: 11,
+        shouldStop: () => true,
+      }),
+    ).toEqual(seed);
+  }
+});

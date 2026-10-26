@@ -2216,7 +2216,10 @@
                 "unskip",
                 "start_prompt",
                 "start_cancel",
-                "start_confirm"
+                "start_confirm",
+                "end_prompt",
+                "end_cancel",
+                "end_confirm"
               ]
             },
             "stop_position": {
@@ -2234,7 +2237,8 @@
             "target": {
               "enum": [
                 "entrance",
-                "booth"
+                "booth",
+                "anywhere"
               ]
             },
             "source": {
@@ -2364,6 +2368,9 @@
                 "timeout",
                 "worker"
               ]
+            },
+            "fixed_end": {
+              "type": "boolean"
             }
           },
           "allOf": [

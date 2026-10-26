@@ -368,11 +368,20 @@ test("day choices survive closing the route page but reset when the booth list c
   await first.getByRole("button", { name: "Skip", exact: true }).click();
   await ready();
   await expect(row).toHaveClass("visit-stop-skipped");
+  await expect(order.locator("li").last()).toContainText(booth);
+  await expect(
+    order.getByRole("heading", { name: "Skipped", exact: true }),
+  ).toBeVisible();
+  await expect(sheet.getByRole("status")).toContainText(`${count - 2} stops`);
+  await expect(
+    row.getByRole("button", { name: "Show path", exact: true }),
+  ).toHaveCount(0);
   await expect(order.locator("li")).toHaveCount(count);
   await sheet.getByRole("button", { name: "Next route stop" }).click();
   await expect(sheet.getByRole("navigation")).toContainText("Stop 2 of");
-  await row
-    .getByRole("button", { name: "Start from here", exact: true })
+  await row.getByRole("button", { name: "Route options", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "Start from here", exact: true })
     .click();
   const startDialog = page.getByRole("dialog", {
     name: `Start from ${creatorName}?`,
@@ -385,8 +394,9 @@ test("day choices survive closing the route page but reset when the booth list c
     "aria-hidden",
     "false",
   );
-  await row
-    .getByRole("button", { name: "Start from here", exact: true })
+  await row.getByRole("button", { name: "Route options", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "Start from here", exact: true })
     .click();
   await startDialog
     .getByRole("button", { name: "Start from here", exact: true })
@@ -423,9 +433,8 @@ test("day choices survive closing the route page but reset when the booth list c
   await expect(row).toContainText("Starting here");
   await sheet.getByRole("button", { name: "Next route stop" }).click();
   await expect(sheet.getByRole("navigation")).toContainText("Stop 2 of");
-  await order
-    .locator(".visit-route-entrance")
-    .getByRole("button", { name: "Start from here" })
+  await sheet
+    .getByRole("button", { name: "Reset start to Entrance", exact: true })
     .click();
   await page
     .getByRole("dialog", { name: "Start from Entrance?", exact: true })

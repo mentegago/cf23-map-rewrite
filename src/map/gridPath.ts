@@ -22,7 +22,12 @@ export class GridPathfinder {
     Math.abs((a % this.cols) - (b % this.cols)) +
     Math.abs(Math.floor(a / this.cols) - Math.floor(b / this.cols));
 
-  find(start: number, goal: number, budget = Infinity) {
+  find(
+    start: number,
+    goal: number,
+    budget = Infinity,
+    shouldStop?: () => boolean,
+  ) {
     if (
       start < 0 ||
       goal < 0 ||
@@ -76,6 +81,8 @@ export class GridPathfinder {
       const { node, cost } = pop();
       if (cost !== this.costs[node]) continue;
       expanded++;
+      if ((expanded & 1023) === 0 && shouldStop?.())
+        return { cells: null, expanded };
       if (node === goal) {
         const cells = [goal];
         for (let i = goal; i !== start;) {

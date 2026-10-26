@@ -2,6 +2,7 @@
  * Coordinates are in map units, independent of screen size, pan, and zoom.
  */
 export const VISIT_ROUTE_START = { x: 4970.75, y: 1407.15 } as const;
+export const VISIT_OPTIMIZATION_MS = 3000;
 
 import type { Creator, Feature, MapDocument } from "../domain/types";
 import { boothKey } from "../domain/search";
@@ -81,7 +82,11 @@ export function buildVisitRoute(
   map: MapDocument,
   creators: Creator[],
   start: RoutePoint = VISIT_ROUTE_START,
+  endCreatorIds: number[] = [],
+  optimizationMs = VISIT_OPTIMIZATION_MS,
 ): VisitRoute {
+  const deadline = performance.now() + optimizationMs;
+  const endIds = new Set(endCreatorIds);
   const step = 6,
     cols = Math.ceil(map.bounds.width / step),
     rows = Math.ceil(map.bounds.height / step);
@@ -205,6 +210,9 @@ export function buildVisitRoute(
   result.points.push(point(current));
   // Multi-target BFS builds a feasible nearest-neighbor seed and chooses accessible faces.
   while (remaining.size) {
+    const ordinary = [...remaining].some((id) => !endIds.has(id));
+    const eligible = (id: number) =>
+      remaining.has(id) && (!ordinary || !endIds.has(id));
     previous.fill(-1);
     previous[current] = current;
     let head = 0,
@@ -213,7 +221,12 @@ export function buildVisitRoute(
     queue[0] = current;
     while (head < tail) {
       const i = queue[head++];
-      if (targets.get(i)?.some((t) => t.ids.some((id) => remaining.has(id)))) {
+      const groups = targets.get(i);
+      if (
+        groups?.some((t) => t.ids.some(eligible)) &&
+        (ordinary ||
+          [...remaining].every((id) => groups.some((t) => t.ids.includes(id))))
+      ) {
         found = i;
         break;
       }
@@ -230,20 +243,24 @@ export function buildVisitRoute(
         queue[tail++] = next;
       }
     }
-    if (found < 0) break;
+    if (found < 0) {
+      if (ordinary && [...remaining].some((id) => endIds.has(id))) {
+        for (const id of [...remaining])
+          if (!endIds.has(id)) {
+            result.unreachable.push(id);
+            remaining.delete(id);
+          }
+        continue;
+      }
+      break;
+    }
     const leg: number[] = [];
     for (let i = found; i !== current; i = previous[i]) leg.push(i);
     const legPoints = leg.reverse().map(point);
     result.legs.push(simplifyRoute([point(current), ...legPoints]));
     result.points.push(...legPoints);
-    const reached = targets
-      .get(found)!
-      .filter((t) => t.ids.some((id) => remaining.has(id)));
-    const ids = [
-      ...new Set(
-        reached.flatMap((t) => t.ids).filter((id) => remaining.has(id)),
-      ),
-    ];
+    const reached = targets.get(found)!.filter((t) => t.ids.some(eligible));
+    const ids = [...new Set(reached.flatMap((t) => t.ids).filter(eligible))];
     const allocation = new Map<string, string>();
     for (const id of ids)
       for (const code of byCreator.get(id)!.booths)
@@ -262,7 +279,7 @@ export function buildVisitRoute(
   }
   // Retain only turns; each resulting segment follows the same collision-free cells.
   result.points = simplifyRoute(result.points);
-  result.unreachable = [...remaining];
+  result.unreachable.push(...remaining);
   if (result.stops.length > 1) {
     const pathfinder = new GridPathfinder(cols, blocked);
     const paths = new Map<string, { distance: number; points: RoutePoint[] }>();
@@ -293,25 +310,87 @@ export function buildVisitRoute(
       if (a === b) return 0;
       const cached = paths.get(key(a, b));
       if (cached) return cached.distance;
-      if (budget <= 0) return Infinity;
-      const found = pathfinder.find(a, b, budget);
+      if (budget <= 0 || performance.now() >= deadline) return Infinity;
+      const found = pathfinder.find(
+        a,
+        b,
+        budget,
+        () => performance.now() >= deadline,
+      );
       budget -= found.expanded;
       if (!found.cells) return Infinity;
       save(a, b, simplifyRoute(found.cells.map(point)));
       return found.cells.length - 1;
     };
-    const stopsByCell = new Map(
-      result.stops.map((stop) => [index(stop.point), stop]),
+    const stops = result.stops;
+    const cells = stops.map((stop) => index(stop.point));
+    const startCell = index(start);
+    const cell = (id: number) => (id < 0 ? startCell : cells[id]);
+    const end = stops.findIndex((stop) =>
+      stop.creatorIds.some((id) => endIds.has(id)),
     );
-    const order = optimizeVisitOrder(
-      index(start),
-      [...stopsByCell.keys()],
-      distance,
-      pathfinder.lowerBound,
+    const options = {
+      end: end < 0 ? undefined : end,
+      shouldStop: () => performance.now() >= deadline || budget <= 0,
+    };
+    let order = optimizeVisitOrder(
+      -1,
+      stops.map((_, i) => i),
+      (a, b) => distance(cell(a), cell(b)),
+      (a, b) => pathfinder.lowerBound(cell(a), cell(b)),
+      options,
     );
-    result.stops = order.map((cell) => stopsByCell.get(cell)!);
+    // Reconsider accessible approach cells using both adjacent legs, including multibooths.
+    for (const [position, id] of order.entries()) {
+      if (options.shouldStop()) break;
+      const previousCell = position ? cells[order[position - 1]] : startCell;
+      const nextCell =
+        position + 1 < order.length ? cells[order[position + 1]] : undefined;
+      let best =
+        distance(previousCell, cells[id]) +
+        (nextCell === undefined ? 0 : distance(cells[id], nextCell));
+      const candidates = [...targets]
+        .filter(([, groups]) =>
+          stops[id].creatorIds.every((creatorId) =>
+            groups.some((g) => g.ids.includes(creatorId)),
+          ),
+        )
+        .map(([candidate]) => candidate)
+        .sort(
+          (a, b) =>
+            pathfinder.lowerBound(previousCell, a) +
+            (nextCell === undefined ? 0 : pathfinder.lowerBound(a, nextCell)) -
+            (pathfinder.lowerBound(previousCell, b) +
+              (nextCell === undefined
+                ? 0
+                : pathfinder.lowerBound(b, nextCell))),
+        )
+        .slice(0, 12);
+      for (const candidate of candidates) {
+        if (options.shouldStop()) break;
+        const total =
+          distance(previousCell, candidate) +
+          (nextCell === undefined ? 0 : distance(candidate, nextCell));
+        if (total < best) {
+          best = total;
+          cells[id] = candidate;
+        }
+      }
+    }
+    order = optimizeVisitOrder(
+      -1,
+      order,
+      (a, b) => distance(cell(a), cell(b)),
+      (a, b) => pathfinder.lowerBound(cell(a), cell(b)),
+      options,
+    );
+    result.stops = order.map((id) => ({
+      ...stops[id],
+      point: point(cells[id]),
+    }));
     from = index(start);
-    result.legs = order.map((to) => {
+    result.legs = order.map((id) => {
+      const to = cells[id];
       const points =
         from === to ? [point(to)] : paths.get(key(from, to))!.points;
       const leg = from <= to ? points : [...points].reverse();

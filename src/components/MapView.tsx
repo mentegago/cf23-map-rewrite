@@ -58,15 +58,15 @@ export function MapView({ app }: { app: AppModel }) {
   useEffect(() => {
     if (app.selected) controller.current!.focus(app.selected);
   }, [app.selected?.id]);
+  const route = app.visitRoute.loading ? undefined : app.visitRoute.route;
   useEffect(() => {
     controller.current!.setRoute(
-      app.visitRoute.route,
+      route,
       0,
       app.visitRoute.legIndex,
       !app.showDetail,
     );
-  }, [app.visitRoute.route, app.visitRoute.legIndex, app.showDetail]);
-  const route = app.visitRoute.route;
+  }, [route, app.visitRoute.legIndex, app.showDetail]);
   return (
     <div className="map-region">
       <canvas
@@ -98,7 +98,7 @@ export function MapView({ app }: { app: AppModel }) {
           <Expand size={19} />
         </button>
       </div>
-      {!route && (
+      {!route && !app.visitRoute.loading && (
         <div className="map-actions">
           <button
             className="action yellow"
