@@ -1,6 +1,14 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { ChevronRight, FolderHeart, Heart, Plus, X } from "lucide-react";
 import type { AppModel } from "../state/useApp";
+
+import { analytics } from "../data/analytics";
 
 const collectionNames = [
   "Original Comics",
@@ -28,8 +36,10 @@ export function CollectionDialog({
   useLayoutEffect(() => {
     const dialog = ref.current!;
     dialog.showModal();
-    (dialog.querySelector<HTMLInputElement>("input") ||
-      dialog.querySelector<HTMLElement>("h2"))?.focus({ preventScroll: true });
+    (
+      dialog.querySelector<HTMLInputElement>("input") ||
+      dialog.querySelector<HTMLElement>("h2")
+    )?.focus({ preventScroll: true });
     return () => dialog.close();
   }, []);
   return (
@@ -65,6 +75,15 @@ export function CollectionPicker({
   onClose: () => void;
   creatorIds?: number[];
 }) {
+  const source = app.showDetail ? "creator_detail" : "booth_list";
+  useEffect(() => {
+    analytics.emit("collection_action", {
+      action: "picker_open",
+      source,
+      count: new Set(creatorIds).size,
+      origin: app.showDetail ? app.creatorOrigin : "custom_list",
+    });
+  }, []);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [placeholder, setPlaceholder] = useState(randomCollectionName);
@@ -73,7 +92,14 @@ export function CollectionPicker({
     <CollectionDialog
       key={creating ? "create" : "picker"}
       title={creating ? "New collection" : "Add to collection"}
-      onClose={creating ? () => setCreating(false) : onClose}
+      onClose={() => {
+        analytics.emit("collection_action", {
+          action: creating ? "create_cancel" : "picker_cancel",
+          source,
+        });
+        if (creating) setCreating(false);
+        else onClose();
+      }}
     >
       {creating ? (
         <form
@@ -103,7 +129,23 @@ export function CollectionPicker({
           <button
             disabled={favoritesComplete}
             onClick={() => {
-              if (app.addAll(creatorIds)) onClose();
+              const added = creatorIds.filter(
+                (id) => !app.favorites.has(id),
+              ).length;
+              if (
+                app.addAll(creatorIds, app.showDetail ? "individual" : "bulk")
+              ) {
+                analytics.emit("collection_action", {
+                  action: "merge",
+                  source,
+                  destination: "favorites",
+                  requested: creatorIds.length,
+                  added,
+                  skipped: creatorIds.length - added,
+                  count: app.favorites.size + added,
+                });
+                onClose();
+              }
             }}
           >
             <span className="collection-avatar">
@@ -144,6 +186,10 @@ export function CollectionPicker({
           <button
             className="collection-create action pink"
             onClick={() => {
+              analytics.emit("collection_action", {
+                action: "create_prompt",
+                source,
+              });
               setPlaceholder(randomCollectionName());
               setCreating(true);
             }}
@@ -166,6 +212,18 @@ export function CollectionsSheet({
   onClose: () => void;
   onOpen: () => void;
 }) {
+  useEffect(() => {
+    analytics.emit("collection_action", {
+      action: "library_open",
+      source: "collections",
+      count: app.collections.length,
+    });
+    return () =>
+      analytics.emit("collection_action", {
+        action: "library_close",
+        source: "collections",
+      });
+  }, []);
   return (
     <>
       <header className="favorites-header" data-drag>

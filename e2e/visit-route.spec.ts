@@ -11,8 +11,9 @@ test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ page }) => {
   if (process.env.ANALYTICS_E2E) captured = await captureAnalytics(page);
 });
-test.afterEach(async () => {
-  if (process.env.ANALYTICS_E2E) validateAnalytics(captured);
+test.afterEach(async ({}, info) => {
+  if (process.env.ANALYTICS_E2E && info.status !== "skipped")
+    validateAnalytics(captured);
 });
 
 test("route worker failures leave the UI usable and report a bounded failure", async ({

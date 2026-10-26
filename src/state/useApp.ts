@@ -214,7 +214,9 @@ export function useApp(mobile: boolean) {
         : source === "list" && boothList
           ? boothList.kind === "favorites"
             ? "favorites"
-            : "custom_list"
+            : boothList.collectionId
+              ? "collection"
+              : "custom_list"
           : source;
     setCreatorOrigin(resolvedSource);
     analytics.emit("creator_opened", {
@@ -476,13 +478,20 @@ export function useApp(mobile: boolean) {
     : boothList
       ? favoritesMode
         ? "favorites"
-        : "custom_list"
+        : boothList.kind === "custom" && boothList.collectionId
+          ? "collection"
+          : "custom_list"
       : query.trim() || fandomId !== undefined
         ? "search_result"
         : "list";
   useEffect(() => {
     if (!boothList) return;
-    const fields = { list_kind: boothList.kind, count: listCreators.length };
+    const fields = {
+      list_kind: (boothList.kind === "custom" && boothList.collectionId
+        ? "collection"
+        : boothList.kind) as import("../data/analyticsEvents").ListKind,
+      count: listCreators.length,
+    };
     analytics.emit("booth_list_action", { ...fields, action: "opened" });
     return () =>
       analytics.emit("booth_list_action", { ...fields, action: "closed" });
@@ -731,20 +740,14 @@ export function useApp(mobile: boolean) {
     u.search = "";
     updateNavigationURL(u, "replace");
   };
-  const addAll = (ids = listCreators.map((c) => c.id)) => {
+  const addAll = (
+    ids = listCreators.map((c) => c.id),
+    source: "individual" | "bulk" = "bulk",
+  ) => {
     const operationId = telemetryId();
     const next = new Set(favorites);
-    ids.forEach((id) => {
-      if (!next.has(id))
-        analytics.emit("bookmark_changed", {
-          creator_id: id,
-          action: "add",
-          source: "bulk",
-          origin: favoritesMode ? "favorites" : "custom_list",
-          operation_id: operationId,
-        });
-      next.add(id);
-    });
+    ids = [...new Set(ids)];
+    ids.forEach((id) => next.add(id));
     if (!saveFavorites(next)) {
       analytics.emit("operation_failed", {
         operation: "favorites_persistence",
@@ -753,15 +756,27 @@ export function useApp(mobile: boolean) {
       notify("Couldn't save favorites. Your device storage may be full.");
       return false;
     }
-    analytics.emit("favorites_action", {
-      action: "bulk_add",
-      success: true,
-      operation_id: operationId,
-      requested: ids.length,
-      added: next.size - favorites.size,
-      skipped: ids.length - (next.size - favorites.size),
-      failed: 0,
-    });
+    ids
+      .filter((id) => !favorites.has(id))
+      .forEach((id) =>
+        analytics.emit("bookmark_changed", {
+          creator_id: id,
+          action: "add",
+          source,
+          origin: actionOrigin,
+          ...(source === "bulk" ? { operation_id: operationId } : {}),
+        }),
+      );
+    if (source === "bulk")
+      analytics.emit("favorites_action", {
+        action: "bulk_add",
+        success: true,
+        operation_id: operationId,
+        requested: ids.length,
+        added: next.size - favorites.size,
+        skipped: ids.length - (next.size - favorites.size),
+        failed: 0,
+      });
     setFavorites(next);
     notify(`${next.size - favorites.size} creators added to favorites`);
     return true;
@@ -782,12 +797,19 @@ export function useApp(mobile: boolean) {
   };
   const updateCollections = (next: Collection[]) => {
     if (!saveCollections(next)) {
+      analytics.emit("operation_failed", {
+        operation: "collections_persistence",
+        code: "storage",
+      });
       notify("Couldn't save this collection. Your device storage may be full.");
       return false;
     }
     setCollections(next);
     return true;
   };
+  const collectionSource = showDetail
+    ? ("creator_detail" as const)
+    : ("booth_list" as const);
   const activeCollection =
     boothList?.kind === "custom"
       ? collections.find((c) => c.id === boothList.collectionId)
@@ -832,6 +854,16 @@ export function useApp(mobile: boolean) {
       )
         return false;
       const added = ids.length - (existing?.ids.length || 0);
+      analytics.emit("collection_action", {
+        action: existing ? "merge" : "create",
+        source: collectionSource,
+        origin: actionOrigin,
+        destination: "collection",
+        count: ids.length,
+        requested: new Set(incoming).size,
+        added,
+        skipped: new Set(incoming).size - added,
+      });
       notify(
         !existing
           ? `Created ${title}`
@@ -841,28 +873,45 @@ export function useApp(mobile: boolean) {
       );
       return true;
     },
-    renameCollection: (name: string) =>
-      !!activeCollection &&
-      !!name.trim() &&
-      updateCollections(
-        collections.map((c) =>
-          c.id === activeCollection.id ? { ...c, name: name.trim() } : c,
-        ),
-      ),
-    toggleCollectionCreator: (id: number) =>
-      activeCollection &&
-      updateCollections(
-        collections.map((c) =>
-          c.id === activeCollection.id
-            ? {
-                ...c,
-                ids: c.ids.includes(id)
-                  ? c.ids.filter((value) => value !== id)
-                  : [...c.ids, id],
-              }
-            : c,
-        ),
-      ),
+    renameCollection: (name: string) => {
+      if (!activeCollection || !name.trim()) return false;
+      if (name.trim() === activeCollection.name) return true;
+      if (
+        !updateCollections(
+          collections.map((c) =>
+            c.id === activeCollection.id ? { ...c, name: name.trim() } : c,
+          ),
+        )
+      )
+        return false;
+      analytics.emit("collection_action", {
+        action: "rename",
+        source: "booth_list",
+        count: activeCollection.ids.length,
+      });
+      return true;
+    },
+    toggleCollectionCreator: (id: number) => {
+      if (!activeCollection) return;
+      const removing = activeCollection.ids.includes(id);
+      const ids = removing
+        ? activeCollection.ids.filter((value) => value !== id)
+        : [...activeCollection.ids, id];
+      if (
+        updateCollections(
+          collections.map((c) =>
+            c.id === activeCollection.id ? { ...c, ids } : c,
+          ),
+        )
+      )
+        analytics.emit("collection_action", {
+          action: removing ? "remove" : "add",
+          source: collectionSource,
+          origin: actionOrigin,
+          creator_id: id,
+          count: ids.length,
+        });
+    },
     deleteCollection: () => {
       if (
         activeCollection &&
@@ -870,6 +919,11 @@ export function useApp(mobile: boolean) {
           collections.filter((c) => c.id !== activeCollection.id),
         )
       ) {
+        analytics.emit("collection_action", {
+          action: "delete",
+          source: "booth_list",
+          count: activeCollection.ids.length,
+        });
         setBoothList(null);
         close();
         fullList();
@@ -942,7 +996,7 @@ export function useApp(mobile: boolean) {
       setListFandomIds(next);
       analytics.emit("booth_list_action", {
         action: removing ? "filter_remove" : "filter_add",
-        list_kind: boothList!.kind,
+        list_kind: activeCollection ? "collection" : boothList!.kind,
         fandom_id: id,
         selected_count: next.length,
         count: next.length
@@ -957,7 +1011,7 @@ export function useApp(mobile: boolean) {
       setListFandomIds([]);
       analytics.emit("booth_list_action", {
         action: "filter_clear",
-        list_kind: boothList!.kind,
+        list_kind: activeCollection ? "collection" : boothList!.kind,
         selected_count: 0,
         count: listCreators.length,
       });
@@ -1010,7 +1064,10 @@ export function useApp(mobile: boolean) {
         shareURL("list", encodeList(listCreators.map((creator) => creator.id))),
         `CF23 Map · ${activeCollection?.name || "Booth list"}`,
         "Booth list link copied!",
-        { target: "custom_list", count: listCreators.length },
+        {
+          target: activeCollection ? "collection" : "custom_list",
+          count: listCreators.length,
+        },
       );
     },
   };

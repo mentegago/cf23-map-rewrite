@@ -35,6 +35,9 @@ export function validateAnalytics(events: CapturedEvent[]) {
       "creator_ids",
       "coordinates",
       "list_code",
+      "collection_id",
+      "collection_name",
+      "name",
     ])
       expect(event.data).not.toHaveProperty(key);
   }

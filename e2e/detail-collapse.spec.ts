@@ -53,6 +53,14 @@ test("detail content scrolls natively and a new swipe at the top collapses repea
     await expect.poll(extent).toBeCloseTo(0.94, 2);
     const box = (await content.boundingBox())!;
     const x = box.x + box.width / 2;
+    // Start below the floating detail actions; those buttons are not the scroller.
+    const scrollStartY = box.y + 90;
+    expect(
+      await page.evaluate(
+        ({ x, y }) => !!document.elementFromPoint(x, y)?.closest("button"),
+        { x, y: scrollStartY },
+      ),
+    ).toBe(false);
     await drag(x, box.y + box.height - 30, -180);
     await expect
       .poll(() => content.evaluate((el) => el.scrollTop))
@@ -63,14 +71,14 @@ test("detail content scrolls natively and a new swipe at the top collapses repea
       n < 15 && (await content.evaluate((el) => el.scrollTop)) > 1;
       n++
     ) {
-      await drag(x, box.y + 30, 400);
+      await drag(x, scrollStartY, 400);
       await settle();
       await expect.poll(extent).toBeCloseTo(0.94, 2);
     }
     await expect
       .poll(() => content.evaluate((el) => el.scrollTop))
       .toBeLessThanOrEqual(1);
-    await drag(x, box.y + 30, 430);
+    await drag(x, scrollStartY, 430);
     await expect.poll(extent).toBeCloseTo(0.28, 2);
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(sheet).not.toHaveClass(/dragging/);

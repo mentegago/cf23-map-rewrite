@@ -265,6 +265,7 @@ export default function App() {
             mobile={mobile}
             kind="list"
             label="Collections"
+            analyticsSheet="collections"
             visible={collectionsOpen}
             extent={listExtent}
             onExtent={setListExtent}
@@ -296,7 +297,13 @@ export default function App() {
               app.activeCollection?.name ||
               (app.favoritesMode ? "Favorites" : "Booth list")
             }
-            analyticsSheet={app.favoritesMode ? "favorites" : "booth_list"}
+            analyticsSheet={
+              app.activeCollection
+                ? "collection"
+                : app.favoritesMode
+                  ? "favorites"
+                  : "booth_list"
+            }
             visible={listOpen && !routeOpen}
             extent={listExtent}
             onExtent={setListExtent}

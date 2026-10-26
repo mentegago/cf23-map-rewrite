@@ -35,7 +35,7 @@ export function CreatorDetail({ app }: { app: AppModel }) {
   }, [expanded]);
   const collection =
     app.activeCollection &&
-    (app.creatorOrigin === "custom_list" || app.creatorOrigin === "visit_path")
+    (app.creatorOrigin === "collection" || app.creatorOrigin === "visit_path")
       ? app.activeCollection
       : undefined;
   const saved = collection

@@ -8,8 +8,9 @@ export type SelectionSource =
   | "deeplink"
   | "favorites"
   | "custom_list"
+  | "collection"
   | "visit_path";
-export type ListKind = "favorites" | "custom";
+export type ListKind = "favorites" | "custom" | "collection";
 export type VisitAction =
   | "navigate"
   | "day_prompt"
@@ -102,7 +103,14 @@ export type Fields = {
   map_interacted: { action: "pan" | "zoom" | "both" };
   sheet_state_changed: {
     state: "collapsed" | "partiallyExpanded" | "expanded";
-    sheet: "search" | "detail" | "favorites" | "booth_list" | "visit_path";
+    sheet:
+      | "search"
+      | "detail"
+      | "favorites"
+      | "booth_list"
+      | "visit_path"
+      | "collection"
+      | "collections";
     source: "gesture" | "programmatic";
   };
   favorites_action: {
@@ -115,6 +123,33 @@ export type Fields = {
     skipped?: number;
     failed?: number;
   };
+  collection_action: {
+    action:
+      | "library_open"
+      | "library_close"
+      | "picker_open"
+      | "picker_cancel"
+      | "create_prompt"
+      | "create_cancel"
+      | "create"
+      | "merge"
+      | "manage_open"
+      | "manage_cancel"
+      | "rename"
+      | "delete_prompt"
+      | "delete_cancel"
+      | "delete"
+      | "add"
+      | "remove";
+    source: "creator_detail" | "booth_list" | "collections";
+    count?: number;
+    requested?: number;
+    added?: number;
+    skipped?: number;
+    creator_id?: number;
+    destination?: "favorites" | "collection";
+    origin?: SelectionSource;
+  };
   booth_list_action: {
     action:
       "opened" | "closed" | "filter_add" | "filter_remove" | "filter_clear";
@@ -124,7 +159,7 @@ export type Fields = {
     selected_count?: number;
   };
   share_action: {
-    target: "creator" | "favorites" | "custom_list";
+    target: "creator" | "favorites" | "custom_list" | "collection";
     method: "native" | "clipboard";
     outcome: "shared" | "copied" | "cancelled" | "failed";
     creator_id?: number;
@@ -160,6 +195,7 @@ export type Fields = {
       | "clipboard"
       | "link_launch"
       | "favorites_persistence"
+      | "collections_persistence"
       | "catalog_load"
       | "map_load"
       | "deeplink";
@@ -240,6 +276,7 @@ export class AnalyticsLifecycle {
         "gallery_action",
         "favorites_action",
         "booth_list_action",
+        "collection_action",
         "visit_path_action",
         "share_action",
       ].includes(name) ||

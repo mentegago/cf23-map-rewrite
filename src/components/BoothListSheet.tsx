@@ -3,6 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Heart, X, List, MoreHorizontal, Plus } from "lucide-react";
 import { ShareIcon } from "./ShareIcon";
 import type { AppModel } from "../state/useApp";
+import { analytics } from "../data/analytics";
 import { CreatorRow } from "./CreatorRow";
 import { useHorizontalWheel } from "../state/useHorizontalWheel";
 import { CollectionDialog, CollectionPicker } from "./Collections";
@@ -82,6 +83,10 @@ export function BoothListSheet({
                 className="icon-button"
                 aria-label="Manage collection"
                 onClick={() => {
+                  analytics.emit("collection_action", {
+                    action: "manage_open",
+                    source: "booth_list",
+                  });
                   setName(title);
                   setManage(true);
                 }}
@@ -226,7 +231,13 @@ export function BoothListSheet({
       {manage && (
         <CollectionDialog
           title="Manage collection"
-          onClose={() => setManage(false)}
+          onClose={() => {
+            analytics.emit("collection_action", {
+              action: "manage_cancel",
+              source: "booth_list",
+            });
+            setManage(false);
+          }}
         >
           <form
             onSubmit={(e) => {
@@ -251,6 +262,10 @@ export function BoothListSheet({
             className="collection-remove"
             onClick={() => {
               setManage(false);
+              analytics.emit("collection_action", {
+                action: "delete_prompt",
+                source: "booth_list",
+              });
               setDeleting(true);
             }}
           >
@@ -261,7 +276,13 @@ export function BoothListSheet({
       {deleting && (
         <CollectionDialog
           title={`Delete ${title}?`}
-          onClose={() => setDeleting(false)}
+          onClose={() => {
+            analytics.emit("collection_action", {
+              action: "delete_cancel",
+              source: "booth_list",
+            });
+            setDeleting(false);
+          }}
         >
           <p>Your favorites and other collections will be kept.</p>
           <button

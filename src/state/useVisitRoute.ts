@@ -19,7 +19,7 @@ const emptyPlan: DayPlan = { skipped: [], start: null };
 export function useVisitRoute(
   snapshot: Snapshot | null,
   creators: Creator[],
-  scope: { kind: ListKind } | null,
+  scope: { kind: ListKind; collectionId?: string } | null,
 ) {
   const routeId = useMemo(() => telemetryId(), [scope]);
   const [enabled, setEnabled] = useState(false);
@@ -45,7 +45,7 @@ export function useVisitRoute(
   const selectedDay = days.some((d) => d.id === day) ? day : days[0]?.id || "";
   const context: VisitContext = {
     route_id: routeId ?? "",
-    list_kind: scope?.kind ?? "custom",
+    list_kind: scope?.collectionId ? "collection" : (scope?.kind ?? "custom"),
     day_mode: needsDaySelection ? "selected" : "any",
     day_id: selectedDay,
   };
@@ -66,7 +66,7 @@ export function useVisitRoute(
         analytics.emit("visit_path_action", {
           ...session.context,
           route_id: routeId,
-          list_kind: scope.kind,
+          list_kind: scope.collectionId ? "collection" : scope.kind,
           action: "closed",
         });
     };

@@ -452,7 +452,8 @@
                 "deeplink",
                 "favorites",
                 "custom_list",
-                "visit_path"
+                "visit_path",
+                "collection"
               ]
             },
             "search_id": {
@@ -711,7 +712,8 @@
                 "deeplink",
                 "favorites",
                 "custom_list",
-                "visit_path"
+                "visit_path",
+                "collection"
               ]
             }
           },
@@ -1050,7 +1052,9 @@
                 "detail",
                 "favorites",
                 "booth_list",
-                "visit_path"
+                "visit_path",
+                "collection",
+                "collections"
               ]
             },
             "source": {
@@ -1180,7 +1184,8 @@
                 "deeplink",
                 "favorites",
                 "custom_list",
-                "visit_path"
+                "visit_path",
+                "collection"
               ]
             }
           },
@@ -1311,7 +1316,8 @@
                 "deeplink",
                 "favorites",
                 "custom_list",
-                "visit_path"
+                "visit_path",
+                "collection"
               ]
             }
           },
@@ -1745,7 +1751,8 @@
                 "favorites_persistence",
                 "catalog_load",
                 "map_load",
-                "deeplink"
+                "deeplink",
+                "collections_persistence"
               ]
             },
             "code": {
@@ -1897,7 +1904,8 @@
             "list_kind": {
               "enum": [
                 "favorites",
-                "custom"
+                "custom",
+                "collection"
               ]
             },
             "count": {
@@ -2008,7 +2016,8 @@
               "enum": [
                 "creator",
                 "favorites",
-                "custom_list"
+                "custom_list",
+                "collection"
               ]
             },
             "method": {
@@ -2043,7 +2052,8 @@
                 "deeplink",
                 "favorites",
                 "custom_list",
-                "visit_path"
+                "visit_path",
+                "collection"
               ]
             }
           },
@@ -2175,7 +2185,8 @@
             "list_kind": {
               "enum": [
                 "favorites",
-                "custom"
+                "custom",
+                "collection"
               ]
             },
             "day_mode": {
@@ -2311,7 +2322,8 @@
             "list_kind": {
               "enum": [
                 "favorites",
-                "custom"
+                "custom",
+                "collection"
               ]
             },
             "day_mode": {
@@ -2374,6 +2386,198 @@
                     "code"
                   ]
                 }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "data"
+      ],
+      "properties": {
+        "name": {
+          "const": "collection_action"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_version",
+            "event_edition",
+            "app_version",
+            "client_event_id",
+            "occurred_at_ms",
+            "app_run_id",
+            "sequence",
+            "action",
+            "source"
+          ],
+          "properties": {
+            "schema_version": {
+              "const": 3
+            },
+            "event_edition": {
+              "const": "comic-frontier-23"
+            },
+            "app_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "catalog_version": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "client_event_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "occurred_at_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "app_run_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "action": {
+              "enum": [
+                "library_open",
+                "library_close",
+                "picker_open",
+                "picker_cancel",
+                "create_prompt",
+                "create_cancel",
+                "create",
+                "merge",
+                "manage_open",
+                "manage_cancel",
+                "rename",
+                "delete_prompt",
+                "delete_cancel",
+                "delete",
+                "add",
+                "remove"
+              ]
+            },
+            "source": {
+              "enum": [
+                "creator_detail",
+                "booth_list",
+                "collections"
+              ]
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "requested": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "added": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "creator_id": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "creator_name": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "destination": {
+              "enum": [
+                "favorites",
+                "collection"
+              ]
+            },
+            "origin": {
+              "enum": [
+                "map",
+                "list",
+                "search_result",
+                "recommendation",
+                "random",
+                "deeplink",
+                "favorites",
+                "custom_list",
+                "visit_path",
+                "collection"
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "add",
+                      "remove"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "creator_id",
+                  "count",
+                  "origin"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "create",
+                      "merge"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "destination",
+                  "count",
+                  "requested",
+                  "added",
+                  "skipped"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "library_open",
+                      "picker_open",
+                      "rename",
+                      "delete"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "count"
+                ]
               }
             }
           ]
