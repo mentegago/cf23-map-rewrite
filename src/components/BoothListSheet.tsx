@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Heart, X, Share2, List, MoreHorizontal, Plus } from "lucide-react";
+import { Heart, X, List, MoreHorizontal, Plus } from "lucide-react";
+import { ShareIcon } from "./ShareIcon";
 import type { AppModel } from "../state/useApp";
 import { CreatorRow } from "./CreatorRow";
 import { useHorizontalWheel } from "../state/useHorizontalWheel";
@@ -94,7 +95,7 @@ export function BoothListSheet({
               onClick={isFavorites ? app.shareFavorites : app.shareBoothList}
               disabled={!app.listCreators.length}
             >
-              <Share2 size={21} />
+              <ShareIcon />
             </button>
           </div>
           <button

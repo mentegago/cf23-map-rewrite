@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import {
-  Share2,
   X,
   Maximize,
   Minimize,
@@ -17,6 +16,7 @@ import type { AppModel } from "../state/useApp";
 import { safeURL } from "../domain/links";
 import { Artwork } from "./CreatorRow";
 import { CollectionPicker } from "./Collections";
+import { ShareIcon } from "./ShareIcon";
 import { analytics } from "../data/analytics";
 import { launchForAnalytics } from "../data/analyticsActions";
 export function CreatorDetail({ app }: { app: AppModel }) {
@@ -86,7 +86,7 @@ export function CreatorDetail({ app }: { app: AppModel }) {
             aria-label="Share creator"
             onClick={() => app.shareCreator(c)}
           >
-            <Share2 size={21} />
+            <ShareIcon />
           </button>
         </div>
         <button

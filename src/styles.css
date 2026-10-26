@@ -740,6 +740,9 @@ h2 {
   display: flex;
   gap: 8px;
 }
+.detail-actions .share-icon-network {
+  translate: -2px -1px;
+}
 .detail-action-group {
   display: flex;
   height: 44px;
