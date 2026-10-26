@@ -13,7 +13,11 @@ export interface Creator {
   attendanceDates: string[];
   contentRating?: string;
   offerings: string[];
-  assets: { thumbnail?: string | null; gallery: string[] };
+  assets: {
+    thumbnail?: string | null;
+    icon?: string | null;
+    gallery: string[];
+  };
   links: { type: string; url: string }[];
   fandomIds: number[];
   fandoms: Fandom[];

@@ -111,6 +111,7 @@ export class Catalog {
         links: c.links || [],
         assets: {
           thumbnail: c.assets?.thumbnail,
+          icon: c.assets?.icon,
           gallery: c.assets?.gallery || [],
         },
         fandomIds: c.fandomIds || [],

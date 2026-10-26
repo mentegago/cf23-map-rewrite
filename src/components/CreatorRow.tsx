@@ -1,10 +1,14 @@
 import { Heart, Images } from "lucide-react";
-import type { Creator, Fandom } from "../domain/types";
+import type { Creator } from "../domain/types";
 import { orderCreatorFandoms } from "../domain/fandomOrdering";
 import { safeURL } from "../domain/links";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LoadingImage } from "./LoadingImage";
 function BoothAvatar({ creator }: { creator: Creator }) {
+  const src = safeURL(creator.assets.icon);
+  const [failed, setFailed] = useState<string>();
+  const [loaded, setLoaded] = useState<string>();
+  const ready = !!src && loaded === src && failed !== src;
   const b = creator.booths[0] || "?";
   const section = b.includes("-") ? b.split("-")[0] : b[0];
   const colors = [
@@ -19,10 +23,33 @@ function BoothAvatar({ creator }: { creator: Creator }) {
   ];
   return (
     <span
-      className="avatar booth-avatar"
+      className={`avatar booth-avatar ${ready ? "has-icon" : ""}`}
       style={{ background: colors[section.charCodeAt(0) % colors.length] }}
     >
-      {section}
+      <span className="booth-letter">{section}</span>
+      {src && failed !== src && (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          width={40}
+          height={40}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          onLoad={() => setLoaded(src)}
+          onError={() => setFailed(src)}
+        />
+      )}
+      {ready && (
+        <span
+          className="booth-section-badge"
+          aria-hidden="true"
+          style={{ background: colors[section.charCodeAt(0) % colors.length] }}
+        >
+          {section}
+        </span>
+      )}
     </span>
   );
 }
@@ -58,18 +85,28 @@ export function CreatorRow({
   onGallery,
   favorite,
   onFavorite,
-  orderedFandoms,
+  fandomPriority,
+  fandomInterests,
+  originalFirst = true,
 }: {
   creator: Creator;
   onSelect: (c: Creator) => void;
   onGallery: (c: Creator) => void;
   favorite: boolean;
   onFavorite: (id: number) => void;
-  orderedFandoms?: Fandom[];
+  fandomPriority?: ReadonlyMap<number, number>;
+  fandomInterests?: ReadonlyMap<number, number>;
+  originalFirst?: boolean;
 }) {
-  const fandoms =
-    orderedFandoms ??
-    orderCreatorFandoms(creator.fandoms, { originalFirst: true });
+  const fandoms = useMemo(
+    () =>
+      orderCreatorFandoms(creator.fandoms, {
+        priority: fandomPriority,
+        interests: fandomInterests,
+        originalFirst,
+      }),
+    [creator.fandoms, fandomPriority, fandomInterests, originalFirst],
+  );
   return (
     <article
       className={`creator-row ${creator.assets.gallery.length ? "has-gallery" : ""}`}

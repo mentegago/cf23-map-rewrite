@@ -4,7 +4,6 @@ import type { AppModel } from "../state/useApp";
 import type { Creator } from "../domain/types";
 import { CreatorRow } from "./CreatorRow";
 import { SearchLinkCard } from "./SearchLinkCard";
-import { orderCreatorFandoms } from "../domain/fandomOrdering";
 import { useDismissKeyboardOnSwipe } from "../state/useDismissKeyboardOnSwipe";
 type Row =
   | { type: "creator"; creator: Creator; recommendation?: boolean }
@@ -128,16 +127,17 @@ export function Directory({
               ) : row.type === "creator" ? (
                 <CreatorRow
                   creator={row.creator}
-                  orderedFandoms={orderCreatorFandoms(row.creator.fandoms, {
-                    priority: row.recommendation
+                  fandomPriority={
+                    row.recommendation
                       ? app.recommendationFandomRanks.get(row.creator.id)
-                      : app.matchedFandomRanks,
-                    interests: app.interestFandomRanks,
-                    originalFirst:
-                      !row.recommendation &&
-                      !app.query.trim() &&
-                      app.fandomId === undefined,
-                  })}
+                      : app.matchedFandomRanks
+                  }
+                  fandomInterests={app.interestFandomRanks}
+                  originalFirst={
+                    !row.recommendation &&
+                    !app.query.trim() &&
+                    app.fandomId === undefined
+                  }
                   favorite={app.favorites.has(row.creator.id)}
                   onFavorite={(id) =>
                     app.toggleFavorite(
