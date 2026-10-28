@@ -21,3 +21,20 @@ test("compact booth queries prioritize their table and rows combine split halves
     "K-28a, K-28b",
   );
 });
+
+test("whole-word creator search puts Muse Indonesia before fandom sellers", async ({
+  page,
+}) => {
+  await page.route("https://**/*", (route) => route.abort());
+  await page.goto("/");
+  await page
+    .getByRole("textbox", { name: "Search name, booth, or fandom" })
+    .fill("Muse");
+  await expect(
+    page
+      .getByTestId("directory")
+      .locator(".creator-row")
+      .first()
+      .locator("strong"),
+  ).toHaveText("Muse Indonesia");
+});

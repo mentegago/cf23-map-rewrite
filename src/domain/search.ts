@@ -57,6 +57,66 @@ type Score = {
   canonical: boolean;
   fandomDepth?: number;
 };
+const resultTier = {
+  exactBooth: 0,
+  boothPrefix: 1,
+  exactCreator: 2,
+  creatorPhrase: 3,
+  exactFandom: 4,
+  creatorPrefix: 5,
+  fandomPrefix: 6,
+  creatorSubstring: 7,
+  fandomInitials: 8,
+  fuzzy: 9,
+} as const;
+const fandomResultTiers = [
+  resultTier.exactFandom,
+  resultTier.fandomPrefix,
+  resultTier.fandomInitials,
+  resultTier.fuzzy,
+];
+
+/** Coverage uses the matched words, not unrelated words elsewhere in the name. */
+function creatorScore(
+  query: string,
+  queryWords: string[],
+  name: string,
+): Score | null {
+  const normalized = normalize(name);
+  const nameWords = words(name);
+  const match = (tier: number, coverage: number, score = 1): Score => ({
+    tier,
+    score,
+    coverage,
+    canonical: true,
+  });
+  if (query === normalized) return match(resultTier.exactCreator, 1);
+  if (queryWords.length) {
+    const coverage = (accept: (word: string, target: string) => boolean) => {
+      let best = 0;
+      for (
+        let start = 0;
+        start <= nameWords.length - queryWords.length;
+        start++
+      ) {
+        const segment = nameWords.slice(start, start + queryWords.length);
+        if (queryWords.every((word, i) => accept(word, segment[i])))
+          best = Math.max(best, query.length / segment.join("").length);
+      }
+      return best;
+    };
+    if (coverage((word, target) => word === target))
+      return match(resultTier.creatorPhrase, 1);
+    const prefix = coverage((word, target) => target.startsWith(word));
+    if (prefix) return match(resultTier.creatorPrefix, prefix);
+    const substring = coverage((word, target) => target.includes(word));
+    if (substring) return match(resultTier.creatorSubstring, substring);
+  }
+  const score = fuzzyScore(query, name.toLowerCase());
+  return score >= 0.7
+    ? match(resultTier.fuzzy, query.length / normalized.length, score)
+    : null;
+}
 const compare = (a: Score, b: Score) =>
   a.tier - b.tier ||
   Number(b.canonical) - Number(a.canonical) ||
@@ -221,6 +281,7 @@ export class Catalog {
     const key = query.trim().toLowerCase();
     if (this.cache.has(key)) return this.cache.get(key)!;
     const q = normalize(query),
+      queryWords = words(query),
       matchBooth = createBoothMatcher(query),
       scores = new Map<Creator, Score>();
     if (!q) return [];
@@ -228,31 +289,23 @@ export class Catalog {
       const boothMatches = c.booths.map(matchBooth);
       if (boothMatches.some(Boolean))
         scores.set(c, {
-          tier: boothMatches.includes("exact") ? -2 : -1,
+          tier: boothMatches.includes("exact")
+            ? resultTier.exactBooth
+            : resultTier.boothPrefix,
           score: 2,
           coverage: 2,
           canonical: true,
         });
       else {
-        const score = fuzzyScore(q, c.name.toLowerCase());
-        if (score >= 0.7)
-          scores.set(c, {
-            tier:
-              q === normalize(c.name)
-                ? -1
-                : words(c.name).some((w) => w.startsWith(q))
-                  ? 1
-                  : 3,
-            score,
-            coverage: q.length / c.name.length,
-            canonical: true,
-          });
+        const score = creatorScore(q, queryWords, c.name);
+        if (score) scores.set(c, score);
       }
     }
     for (const { fandom, score } of this.fandomMatches(query)) {
       for (const c of this.byFandom.get(fandom.id) || []) {
         const candidate = {
           ...score,
+          tier: fandomResultTiers[score.tier],
           fandomDepth: this.fandomDepth(c, fandom.id),
         };
         const current = scores.get(c);
