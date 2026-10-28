@@ -1,5 +1,6 @@
 import { Heart, Images, Bookmark } from "lucide-react";
 import type { Creator } from "../domain/types";
+import { formatBooths } from "../domain/booths";
 import { orderCreatorFandoms } from "../domain/fandomOrdering";
 import { safeURL } from "../domain/links";
 import { useMemo, useState } from "react";
@@ -118,7 +119,7 @@ export function CreatorRow({
         <span className="row-copy">
           <strong>{creator.name}</strong>
           <span className="metadata">
-            {creator.booths.join(", ")}
+            {formatBooths(creator.booths)}
             {creator.day && `  /  ${creator.day}`}
           </span>
           <span className="fandom-summary">

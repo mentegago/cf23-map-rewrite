@@ -4,6 +4,8 @@ import type {
   Fandom,
   RegistryDocument,
 } from "./types";
+import { boothKey, createBoothMatcher } from "./booths";
+export { boothKey } from "./booths";
 export const compareNames = (a: string, b: string) =>
   a.toLowerCase() < b.toLowerCase()
     ? -1
@@ -12,7 +14,6 @@ export const compareNames = (a: string, b: string) =>
       : 0;
 export const normalize = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]/g, "");
-export const boothKey = (s: string) => normalize(s).replace(/([a-z])0+/g, "$1");
 const words = (s: string) => s.toLowerCase().match(/[a-z0-9]+/g) || [];
 const sep = (s: string) => /[\/\\_\- .:\t]/.test(s);
 /** Port of the original separator-aware subsequence score. */
@@ -220,12 +221,18 @@ export class Catalog {
     const key = query.trim().toLowerCase();
     if (this.cache.has(key)) return this.cache.get(key)!;
     const q = normalize(query),
-      bq = boothKey(query),
+      matchBooth = createBoothMatcher(query),
       scores = new Map<Creator, Score>();
     if (!q) return [];
     for (const c of this.creators) {
-      if (c.booths.some((b) => boothKey(b).startsWith(bq)))
-        scores.set(c, { tier: -1, score: 2, coverage: 2, canonical: true });
+      const boothMatches = c.booths.map(matchBooth);
+      if (boothMatches.some(Boolean))
+        scores.set(c, {
+          tier: boothMatches.includes("exact") ? -2 : -1,
+          score: 2,
+          coverage: 2,
+          canonical: true,
+        });
       else {
         const score = fuzzyScore(q, c.name.toLowerCase());
         if (score >= 0.7)
@@ -259,6 +266,10 @@ export class Catalog {
     if (this.cache.size >= 60) this.cache.clear();
     this.cache.set(key, result);
     return result;
+  }
+  hasExactBoothMatch(query: string) {
+    const match = createBoothMatcher(query);
+    return [...this.byBooth.keys()].some((code) => match(code) === "exact");
   }
   private fandomDepth(creator: Creator, fandomId: number) {
     return Math.min(

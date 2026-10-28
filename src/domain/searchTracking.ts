@@ -1,4 +1,4 @@
-import { boothKey, type Catalog } from "./search";
+import type { Catalog } from "./search";
 import { telemetryId } from "./eventId";
 import type {
   Emit,
@@ -124,8 +124,7 @@ export class SearchTracking {
       } else if (aliases.length > 1) resolution = "ambiguous";
       else if (c.catalog.creators.some((c) => normalize(c.name) === q))
         resolution = "creator";
-      else if (c.catalog.byBooth.has(boothKey(this.query)))
-        resolution = "booth";
+      else if (c.catalog.hasExactBoothMatch(this.query)) resolution = "booth";
       else {
         const prefixes = new Set(
           all

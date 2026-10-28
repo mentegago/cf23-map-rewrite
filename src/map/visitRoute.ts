@@ -6,6 +6,7 @@ export const VISIT_OPTIMIZATION_MS = 3000;
 
 import type { Creator, Feature, MapDocument } from "../domain/types";
 import { boothKey } from "../domain/search";
+import { formatBooths } from "../domain/booths";
 import { GridPathfinder } from "./gridPath";
 import { optimizeVisitOrder } from "./optimizeVisitOrder";
 
@@ -24,23 +25,6 @@ export interface VisitRoute {
   legs: RoutePoint[][];
   stops: VisitStop[];
   unreachable: number[];
-}
-
-function formatStopBooths(booths: string[]) {
-  const codes = new Set(booths.map((code) => code.toLowerCase()));
-  return booths
-    .flatMap((code) => {
-      const match = code.match(/^(.*-\d+)([ab])$/i);
-      if (!match) return [code];
-      const base = match[1];
-      if (
-        !codes.has(`${base}a`.toLowerCase()) ||
-        !codes.has(`${base}b`.toLowerCase())
-      )
-        return [code];
-      return match[2].toLowerCase() === "a" ? [`${base}ab`] : [];
-    })
-    .join(" / ");
 }
 
 /** The a/b label strip sits on the customer-facing edge of split booths.
@@ -270,7 +254,7 @@ export function buildVisitRoute(
     );
     result.stops.push({
       point: point(found),
-      booth: formatStopBooths(booths),
+      booth: formatBooths(booths, " / "),
       booths,
       creatorIds: ids,
     });
